@@ -91,22 +91,20 @@ int main(int argc, char** argv) {
 	//op.s = &unicode_large_mono;
 	op.s = &unicode_large_color;
 	raw_mode(1); //TODO: alt.screen, etc.
-	sol();
+	sol(); //TODO: restart, etc.
 	raw_mode(0);
 }
 
 void sol(void) {
-	f = (const struct playfield){0};
 	deal();
 
 	int from, to;
 	print_table();
 	while (!get_cmd(&from, &to)) {
 		if (action[from][to](from,to)) {
-			printf ("\033[?5h");
-			fflush (stdout);
+			printf ("\033[?5h"); fflush (stdout);
 			usleep (100000);
-			printf ("\033[?5l");
+			printf ("\033[?5l"); fflush (stdout);
 		}
 		print_table();
 	}
@@ -175,7 +173,7 @@ int f2t(int from, int to) { /* foundation to tableu */
 	int top_from = find_top(f.f[from]);
 	if ((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from]))
 	&& (get_rank(f.t[to][top_to]) == get_rank(f.f[from][top_from])+1)) {
-		f.t[to][top_to+1] = stack_take();
+		f.t[to][top_to+1] = stack_take(); //XXX: not stack_take!
 		return 0;
 	} else return 1;
 }
@@ -211,13 +209,41 @@ int t2t(int from, int to) {
 	return 1; /* no such move possible */
 }
 #elif defined SPIDER
-int t2t(int from, int to) { //TODO: implementation XXX
+int t2t(int from, int to) { //TODO: in dire need of cleanup
 	from--; to--; //remove off-by-one
-	f.t[from][find_top(f.t[from])] = NO_CARD;
-	return 1;
+	(from < 0) && (from = 9); // '0' is tenth ([9]) pile
+	(to < 0) && (to = 9); // ditto
+
+	int top_from = find_top(f.t[from]);
+	int top_to = find_top(f.t[to]);
+	for (int i = top_from; i >= 0; i--) {
+		if ((f.t[from][i+1] != NO_CARD) // if there is a card below (TODO: check maximum)
+		    && (get_rank(f.t[from][i+1]) != get_rank(f.t[from][i])-1) //and cards not consecutive?
+		   ) {
+			break;
+		}
+		if ((f.t[from][i+1] != NO_CARD) // if there is a card below (TODO: check maximum)
+		    && (get_suit(f.t[from][i+1]) != get_suit(f.t[from][i])) //and cards not same suit?
+		   ) {
+			break;
+		}
+
+		if(get_rank(f.t[from][i]) == get_rank(f.t[to][top_to])-1) { //TODO: to empty pile
+			for (;i <= top_from; i++) {
+				top_to++;
+				f.t[to][top_to] = f.t[from][i];
+				f.t[from][i] = NO_CARD;
+			}
+			turn_over(f.t[from]);
+			//TODO: test if k..a complete; move to foundation if so
+			return 0;
+		}
+	}
+
+	return 1; /* no such move possible */
 }
 int s2t(int from, int to) {
-	if (f.z <= 0) return 1; /* stack still has cards? */
+	if (f.z <= 0) return 1; /* stack out of cards */
 	for (int pile = 0; pile < NUM_PILES; pile++)
 		if (f.t[pile][0] == NO_CARD) return 1; /*no piles may be empty*/
 	for (int pile = 0; pile < NUM_PILES; pile++) {
@@ -230,9 +256,7 @@ int nop(int from, int to) { return 1; }
 
 int get_cmd (int* from, int* to) {
 	//returns 0 on success or an error code indicating game quit, new game,...
-	//TODO: only works for KLONDIKE
 	//TODO: check validity
-	//TODO: segfault on invalid input!
 	char f, t;
 	f = getchar();
 #ifdef SPIDER
@@ -258,32 +282,36 @@ int get_cmd (int* from, int* to) {
 }
 
 void deal(void) {
+	f = (const struct playfield){0}; /* clear playfield */
 	card_t deck[DECK_SIZE*NUM_DECKS];
 	int avail = DECK_SIZE*NUM_DECKS;
 	for (int i = 0; i < DECK_SIZE*NUM_DECKS; i++) deck[i] = (i%DECK_SIZE)+1;
+#ifdef SPIDER
+	//if spider-mode easy/medium:
+	for (int i = 0; i < DECK_SIZE*NUM_DECKS; i++) {
+		int easy = 0;
+		int medium = 1; //XXX
+		if (easy||medium) deck[i] = 1+((deck[i]-1) | 2);
+		if (easy        ) deck[i] = 1+((deck[i]-1) | 1);
+		// the 1+ -1 dance gets rid of the offset created by NO_CARD
+	}
+#endif
 	srandom (time(NULL));
 	for (int i = DECK_SIZE*NUM_DECKS-1; i > 0; i--) { //fisher-yates
 		int j = random() % (i+1);
 		if (j-i) deck[i]^=deck[j],deck[j]^=deck[i],deck[i]^=deck[j];
 	}
-	// deal cards
-	//foundation starts empty:
-	for (int i = 0; i < NUM_SUITS; i++)
-		for (int j = NUM_RANKS; j; j--) f.f[i][j] = NO_CARD;
 
+	/* deal cards: */
 	for (int i = 0; i < NUM_PILES; i++) {
 #ifdef KLONDIKE
-		//tableu: [0] = 0,1; [1] = 1,1; [2] = 2,1; ... [6] = 6,1
-		int closed = i;
+		int closed = i; // tableu pile n has n closed cards, then 1 open
 #elif defined SPIDER
-		//left 4 piles have 5 hidden + 1 shown
-		//right6 piles have 4 hidden + 1 shown
-		int closed = i<4?5:4;
+		int closed = i<4?5:4; //tableu pile 1-4 have 5, 5-10 have 4 closed cards
 #endif
 		
 		for (int j = 0; j < closed; j++) f.t[i][j] = -deck[--avail]; //face-down cards are negative
 		f.t[i][closed] = deck[--avail]; //the face-up card
-		for (int j = closed+1; j < MAX_HIDDEN+NUM_RANKS; j++) f.t[i][j] = NO_CARD;
 	}
 	//rest of the cards to the stock (should be 50 for spider):
 	for (f.z = 0; avail; f.z++) f.s[f.z] = deck[--avail];

@@ -10,9 +10,12 @@ keeping taken card slots empty allows them to be reinserted by undo()
  * TODO: extreme overlapping: if we are printing a sequence or multiple face
    down cards, only print `.overlap` lines of the ends, and `1` line for the
    middle cards
+ * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
+         when calculating legal moves, top cards, etc. 
  * TODO: hjkl keyboard mode
  * TODO: highlight `from` pile, so users can see at what input stage they are
  * TODO: spider keyboard: `<from><to>` stacks; 1-9,0=tableu, return=draw
+ * TODO: spider: easy/medium difficulty: only deal 1/2 suits instead of 4 -> deal()
  * TODO: use `#ifdef`s to differentiate games (sol, spider, ed-sol, ed-spider)
  * TODO: patience: allow taking from 0(foundation)
  * TODO: s/KLONDIKE/PATIENCE/g

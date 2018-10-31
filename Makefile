@@ -2,7 +2,7 @@
 
 CFLAGS := -Wall -Wextra -pedantic -std=c99 -g3 -Wno-unused-parameter
 
-all: sol
+all: sol spider
 
 #canfield:
 sol: sol.c sol.h schemes.h
