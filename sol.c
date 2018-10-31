@@ -90,9 +90,9 @@ int main(int argc, char** argv) {
 	//op.s = &unicode_small_mono;
 	//op.s = &unicode_large_mono;
 	op.s = &unicode_large_color;
-	raw_mode(1); //TODO: alt.screen, etc.
+	screen_setup(1);
 	sol(); //TODO: restart, etc.
-	raw_mode(0);
+	screen_setup(0);
 }
 
 void sol(void) {
@@ -100,11 +100,13 @@ void sol(void) {
 
 	int from, to;
 	print_table();
-	while (!get_cmd(&from, &to)) {
-		if (action[from][to](from,to)) {
-			printf ("\033[?5h"); fflush (stdout);
-			usleep (100000);
-			printf ("\033[?5l"); fflush (stdout);
+	for(;;) {
+		switch (get_cmd(&from, &to)) {
+		case CMD_MOVE:
+			if (action[from][to](from,to))
+				visbell();
+			break;
+		case CMD_QUIT: return;
 		}
 		print_table();
 	}
@@ -372,11 +374,34 @@ int label[NUM_PILES] = {0};//XXX
 	} while (line_had_card);
 }//}}}
 
+void visbell (void) {
+	printf ("\033[?5h"); fflush (stdout);
+	usleep (100000);
+	printf ("\033[?5l"); fflush (stdout);
+}
+
 void append_undo (int n, int f, int t) {
 	//check if we have to free redo buffer (.next)
 	//malloc
 	//update pointers
 	*NULL;
+}
+
+void screen_setup (int enable) {
+	if (enable) {
+		raw_mode(1);
+		printf ("\033[s\033[?47h"); /* save cursor, alternate screen */
+		printf ("\033[H\033[J"); /* reset cursor, clear screen */
+		printf ("\033[?1000h\033[?25l"); /* enable mouse, hide cursor */
+		if (op.s->init_seq)
+			printf (op.s->init_seq); /*swich charset, if necessary*/
+	} else {
+		if (op.s->reset_seq)
+			printf (op.s->reset_seq);/*reset charset, if necessary*/
+		printf ("\033[?9l\033[?25h"); /* disable mouse, show cursor */
+		printf ("\033[?47l\033[u"); /* primary screen, restore cursor */
+		raw_mode(0);
+	}
 }
 
 void raw_mode(int enable) { //{{{

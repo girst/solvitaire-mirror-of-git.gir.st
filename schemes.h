@@ -10,18 +10,20 @@ struct scheme {
 	char** card[_NUM_CARDS_internal];
 	char** facedown;
 	char** placeholder;
+	char* init_seq; /* for setting up charset */
+	char* reset_seq;
 };
 
 #define ULCARD(s, r) (char*[]) \
 {"╭───╮",\
  "│"s" "r"│",\
  "│ "s" │",\
- "╰───╯", NULL}
+ "╰───╯"}
 #define RULCARD(s, r) \
 	ULCARD("\033[91m" s "\033[0m", r)
 #define BULCARD(s, r) \
 	ULCARD("\033[37m" s "\033[0m", r)
-#define USCARD(c) (char*[]){c, NULL}
+#define USCARD(c) (char*[]){c}
 
 const struct scheme unicode_large_mono = {
 	.width = 5,
@@ -68,6 +70,8 @@ const struct scheme unicode_large_mono = {
 		"╎   ╎", //┆┊
 		"╰╌╌╌╯", NULL
 	},
+	.init_seq = NULL,
+	.reset_seq = NULL,
 };
 const struct scheme unicode_large_color = {
 	.width = 5,
@@ -114,13 +118,15 @@ const struct scheme unicode_large_color = {
 		"╎   ╎", //┆┊
 		"╰╌╌╌╯", NULL
 	},
+	.init_seq = NULL,
+	.reset_seq = NULL,
 };
 const struct scheme unicode_small_mono = {
 	.width = 2,
 	.height = 1,
 	.overlap = 1,
 	.card = {
-		[NO_CARD] = (char*[]){"  ", NULL},
+		[NO_CARD] = (char*[]){"  "},
 		[CLU_A] = USCARD("🃑 "), [DIA_A] = USCARD("🃁 "),
 		[HEA_A] = USCARD("🂱 "), [SPA_A] = USCARD("🂡 "),
 		[CLU_2] = USCARD("🃒 "), [DIA_2] = USCARD("🃂 "),
@@ -148,7 +154,9 @@ const struct scheme unicode_small_mono = {
 		[CLU_K] = USCARD("🃞 "), [DIA_K] = USCARD("🃎 "),
 		[HEA_K] = USCARD("🂾 "), [SPA_K] = USCARD("🂮 "),
 	},
-	.facedown = (char*[]){"🂠 ", NULL},
-	.placeholder = (char*[]){"❲❳"/*"▒ "*/, NULL},
+	.facedown = (char*[]){"🂠 "},
+	.placeholder = (char*[]){"❲❳"},
+	.init_seq = NULL,
+	.reset_seq = NULL,
 };
 #endif

@@ -77,7 +77,9 @@ int nop(int from, int to);
 int get_cmd (int* from, int* to);
 void deal(void);
 void print_table(void);
+void visbell (void);
 void append_undo (int n, int f, int t);
+void screen_setup (int enable);
 void raw_mode(int enable);
 
 #endif
