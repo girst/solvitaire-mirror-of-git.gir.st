@@ -4,6 +4,8 @@ play klondike and spider solitaire in your unicode terminal.
 
 ## TODO
 
+ + TODO: duplicate card ♠A found in tableu
+ * TODO: sigcont handler!
  * TODO: DATA STRUCTURES FOR UNDO
 CURRENT DS FOR STACK/WASTE ("move over") IS INCOMPATIBLE WITH UNDO!!!!
 keeping taken card slots empty allows them to be reinserted by undo()
@@ -12,7 +14,9 @@ keeping taken card slots empty allows them to be reinserted by undo()
    middle cards
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
+ * TODO: keyboard alias: twice same key == waste/pile -> foundation
  * TODO: hjkl keyboard mode
+ * TODO: mouse mode (mouse already enabled)
  * TODO: highlight `from` pile, so users can see at what input stage they are
  * TODO: spider keyboard: `<from><to>` stacks; 1-9,0=tableu, return=draw
  * TODO: spider: easy/medium difficulty: only deal 1/2 suits instead of 4 -> deal()

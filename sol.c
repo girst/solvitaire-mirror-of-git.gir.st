@@ -320,38 +320,37 @@ void deal(void) {
 	f.w = -1; /* @start: nothing on waste (no waste in spider -> const) */
 }
 
+#define print_hi(test, str) /*for highlighting during get_cmd() */ \
+	printf ("%s%s%s", test?"\033[7m":"", str, test?"\033[27m":"") //TODO
 void print_table(void) { //{{{
-printf("\033[2J\033[H");//TEMP XXX -- use raw term mode
+	printf("\033[2J\033[H"); /* clear screen, reset cursor */
 #ifdef KLONDIKE
-	//print stock, waste and foundation:
+	/* print stock, waste and foundation: */
 	for (int line = 0; line < op.s->height; line++) {
 		printf ("%s", ( /* stock */
 			(f.w < f.z-1)?op.s->facedown
 			:op.s->placeholder)[line]);
 		printf ("%s", ( /* waste */
-			((short)f.w >= 0)?op.s->card[f.s[f.w]] //TODO: sometimes segfaults because f.w == (int)((short)-1)
+			/* NOTE: cast, because f.w sometimes is (short)-1 !? */
+			((short)f.w >= 0)?op.s->card[f.s[f.w]]
 			:op.s->placeholder)[line]);
 		printf ("%s", op.s->card[NO_CARD][line]); /* spacer */
 		/* foundation: */
 		for (int pile = 0; pile < NUM_SUITS; pile++) {
-			for (int i = NUM_RANKS-1; i >=0; i--) {
-				if (f.f[pile][i]) {
-					printf ("%s", op.s->card[f.f[pile][i]][line]);
-					goto next;
-				}
-			}
-			printf ("%s", op.s->placeholder[line]);
-next:;
+			int card = find_top(f.f[pile]);
+			printf ("%s", 
+				(card < 0)?op.s->placeholder[line]
+				:op.s->card[f.f[pile][card]][line]);
 		}
 		printf("\n");
 	}
 	printf("\n");
 #endif
-	//print tableu piles:
+	/* print tableu piles: */
 	int row[NUM_PILES] = {0};
 	int line[NUM_PILES]= {0};
+	int label[NUM_PILES]={0};// :|
 	int line_had_card; // :|
-int label[NUM_PILES] = {0};//XXX
 	do {
 		line_had_card = 0;
 		for (int pile = 0; pile < NUM_PILES; pile++) {
@@ -362,12 +361,16 @@ int label[NUM_PILES] = {0};//XXX
 				:op.s->card[card]
 				)[line[pile]]);
 
-			if (++line[pile] >= (next?op.s->overlap:op.s->height)) {
+			if (++line[pile] >= (next?op.s->overlap:op.s->height) //normal overlap
+			|| (line[pile] >= 1 && f.t[pile][row[pile]] < 0)) { //extreme overlap (on closed)
 				//TODO: allow extreme overlap on sequences
 				line[pile]=0;
 				row[pile]++;
 			}
-			if(!card && !label[pile]) label[pile] = 1, printf ("\b\b%d ", (pile+1) % 10);//XXX: print tableu labels
+			if(!card && !label[pile]) { /* tableu labels: */
+				label[pile] = 1;
+				printf ("\b\b%d ", (pile+1) % 10); //XXX: hack
+			}
 			line_had_card |= !!card;
 		}
 		printf ("\n");
