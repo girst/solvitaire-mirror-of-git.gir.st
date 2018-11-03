@@ -59,6 +59,8 @@ enum special_cmds {
 	CMD_INVAL,
 	CMD_QUIT,
 	CMD_NEW,
+	CMD_HINT,
+	CMD_HELP,
 };
 
 enum difficulty {
@@ -83,6 +85,7 @@ int f2t(int from, int to);
 int w2t(int from, int to);
 int t2t(int from, int to);
 #elif defined SPIDER
+void remove_if_complete (card_t* pile);
 int t2t(int from, int to);
 int s2t(int from, int to);
 #endif

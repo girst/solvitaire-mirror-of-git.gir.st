@@ -4,30 +4,39 @@ play klondike and spider solitaire in your unicode terminal.
 
 ## TODO
 
- + TODO: duplicate card ♠A found in tableu
  * TODO: make piles 0-indexed in klondike as well
  * TODO: sigcont handler!
- * TODO: DATA STRUCTURES FOR UNDO
-CURRENT DS FOR STACK/WASTE ("move over") IS INCOMPATIBLE WITH UNDO!!!!
-keeping taken card slots empty allows them to be reinserted by undo()
- * TODO: extreme overlapping: if we are printing a sequence or multiple face
-   down cards, only print `.overlap` lines of the ends, and `1` line for the
-   middle cards
+ * TODO: extreme overlapping: if we are printing a sequence or multiple face down
+	 cards, only print `.overlap` lines of the ends, and `1` line for the
+         middle cards
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
  * TODO: hjkl keyboard mode
- * TODO: mouse mode (mouse already enabled)
+ * TODO: mouse mode
+ * TODO: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
+         for mouse, hjkl modes)
  * TODO: highlight `from` pile, so users can see at what input stage they are
- * TODO: spider keyboard: `<from><to>` stacks; 1-9,0=tableu, return=draw
- * TODO: spider: easy/medium difficulty: only deal 1/2 suits instead of 4 -> deal()
- * TODO: use `#ifdef`s to differentiate games (sol, spider, ed-sol, ed-spider)
- * TODO: patience: allow taking from 0(foundation)
- * TODO: scores (see !w), variants: draw 3, max. n overturns
- * TODO: undo
- * TODO: suggest moves
+ * TODO: scores, variants: draw 3, max. n overturns
+ * TODO: screen size > stack height => rendering issues!
+ * TODO: undo:
+         CURRENT DS FOR STACK/WASTE ("move over") IS INCOMPATIBLE WITH UNDO!!!!
+         keeping taken card slots empty allows them to be reinserted by undo()
+         also need field where to put it back into stack
+ * TODO: cancel command mode with `^C` (SIGINT handler)
+ * TODO: online (key-)help `?`, `-h`, `-v`
+ * TODO: suggest moves (`h` => hint)
  * TODO: vt220 mode
  * TODO: ed(1) mode (solEDaire): playable on a line printer; ascii/ibm only?
+
+ * DONE: use `#ifdef`s to differentiate games (sol, spider, ed-sol, ed-spider)
  * DONE: keyboard alias: twice same key == waste/pile -> foundation
+ * DONE: spider keyboard: `<from><to>` stacks; 1-9,0=tableu, return=draw
+ * DONE: spider: easy/medium difficulty: only deal 1/2 suits instead of 4 -> deal()
+ * DONE: patience: allow taking from 0(foundation)
+
+## BUGS
+
+ + TODO: duplicate card ♠A found in tableu: added check at start to monitor this
 
 ## Notes
 
