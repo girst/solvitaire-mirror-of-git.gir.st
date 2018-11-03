@@ -48,6 +48,12 @@ enum ranks {
 	NUM_RANKS
 };
 
+enum action_return {
+	OK,  /*move successful*/
+	ERR, /*invalid move*/
+	WON, /*game won*/
+};
+
 enum special_cmds {
 	CMD_MOVE,
 	CMD_INVAL,
@@ -55,11 +61,18 @@ enum special_cmds {
 	CMD_NEW,
 };
 
+enum difficulty {
+	NORMAL,
+	MEDIUM,
+	EASY,
+};
+
 typedef signed char card_t;
 
 void sol(void);
 int find_top(card_t* pile);
 void turn_over(card_t* pile);
+int check_won(void);
 #ifdef KLONDIKE
 card_t stack_take(void);
 int t2f(int from, int to);

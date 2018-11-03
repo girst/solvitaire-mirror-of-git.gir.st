@@ -5,6 +5,7 @@ play klondike and spider solitaire in your unicode terminal.
 ## TODO
 
  + TODO: duplicate card ♠A found in tableu
+ * TODO: make piles 0-indexed in klondike as well
  * TODO: sigcont handler!
  * TODO: DATA STRUCTURES FOR UNDO
 CURRENT DS FOR STACK/WASTE ("move over") IS INCOMPATIBLE WITH UNDO!!!!
@@ -14,7 +15,6 @@ keeping taken card slots empty allows them to be reinserted by undo()
    middle cards
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
- * TODO: keyboard alias: twice same key == waste/pile -> foundation
  * TODO: hjkl keyboard mode
  * TODO: mouse mode (mouse already enabled)
  * TODO: highlight `from` pile, so users can see at what input stage they are
@@ -22,11 +22,12 @@ keeping taken card slots empty allows them to be reinserted by undo()
  * TODO: spider: easy/medium difficulty: only deal 1/2 suits instead of 4 -> deal()
  * TODO: use `#ifdef`s to differentiate games (sol, spider, ed-sol, ed-spider)
  * TODO: patience: allow taking from 0(foundation)
- * TODO: s/KLONDIKE/PATIENCE/g
  * TODO: scores (see !w), variants: draw 3, max. n overturns
  * TODO: undo
+ * TODO: suggest moves
  * TODO: vt220 mode
  * TODO: ed(1) mode (solEDaire): playable on a line printer; ascii/ibm only?
+ * DONE: keyboard alias: twice same key == waste/pile -> foundation
 
 ## Notes
 
@@ -61,7 +62,7 @@ keeping taken card slots empty allows them to be reinserted by undo()
    otherwise if it is the last one, we draw the whole one.
    this will give a look like in `~/solitaire-tests`
 ```
-    .grid=7, //vertical alignment
+    .grid=7, /*vertical alignment*/
     .overlap=2,
     .cards = [
        ["╭───╮",
@@ -70,7 +71,7 @@ keeping taken card slots empty allows them to be reinserted by undo()
         "╰───╯",
           NULL],
     ]
-    //or:
+    /*or:*/
     .grid=2,
     .overlap=1,
     .cards = [

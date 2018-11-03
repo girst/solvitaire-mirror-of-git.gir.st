@@ -16,3 +16,6 @@ clean:
 
 getfuns:
 	grep -o '^\w.* \w.*(.*)[^/]*{' sol.c|sed 's/ *{$/;/'
+
+test:
+	grep --color=always 'TODO\|XXX\|\/xxx-slashes-xxx\/[^:]' *
