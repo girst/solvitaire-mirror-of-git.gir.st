@@ -4,39 +4,40 @@ play klondike and spider solitaire in your unicode terminal.
 
 ## TODO
 
- * TODO: make piles 0-indexed in klondike as well
- * TODO: sigcont handler!
+### P1
+ * HOLD: duplicate card ♠A found in tableu: added check at start to monitor this
+### P2
+ * TODO: undo:
+	 - insert append_undo() in x2y() functions
+	 - to encode stack position we need to overload f.u.f. can't do negative
+	   (-0), so +128 it is. 
+ * TODO: sigint, sigcont handler!
+ * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
+         when calculating legal moves, top cards, etc. 
+ * TODO: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
+         for mouse, hjkl modes)
+### P3
+ * TODO: hjkl keyboard mode
+ * TODO: mouse mode
  * TODO: extreme overlapping: if we are printing a sequence or multiple face down
 	 cards, only print `.overlap` lines of the ends, and `1` line for the
          middle cards
- * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
-         when calculating legal moves, top cards, etc. 
- * TODO: hjkl keyboard mode
- * TODO: mouse mode
- * TODO: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
-         for mouse, hjkl modes)
- * TODO: highlight `from` pile, so users can see at what input stage they are
- * TODO: scores, variants: draw 3, max. n overturns
  * TODO: screen size > stack height => rendering issues!
- * TODO: undo:
-         CURRENT DS FOR STACK/WASTE ("move over") IS INCOMPATIBLE WITH UNDO!!!!
-         keeping taken card slots empty allows them to be reinserted by undo()
-         also need field where to put it back into stack
- * TODO: cancel command mode with `^C` (SIGINT handler)
  * TODO: online (key-)help `?`, `-h`, `-v`
  * TODO: suggest moves (`h` => hint)
+### P4
+ * TODO: scores, variants: draw 3, max. n overturns
  * TODO: vt220 mode
  * TODO: ed(1) mode (solEDaire): playable on a line printer; ascii/ibm only?
 
+### DONE
  * DONE: use `#ifdef`s to differentiate games (sol, spider, ed-sol, ed-spider)
  * DONE: keyboard alias: twice same key == waste/pile -> foundation
  * DONE: spider keyboard: `<from><to>` stacks; 1-9,0=tableu, return=draw
  * DONE: spider: easy/medium difficulty: only deal 1/2 suits instead of 4 -> deal()
  * DONE: patience: allow taking from 0(foundation)
-
-## BUGS
-
- + TODO: duplicate card ♠A found in tableu: added check at start to monitor this
+ * DONE: highlight `from` pile, so users can see at what input stage they are
+ * DONE: make piles 0-indexed in klondike as well
 
 ## Notes
 
