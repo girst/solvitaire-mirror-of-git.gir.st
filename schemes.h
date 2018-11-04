@@ -18,9 +18,9 @@ struct scheme {
  "│ "s" │",\
  "╰───╯"}
 #define RULCARD(s, r) \
-	ULCARD("\033[91m" s "\033[0m", r)
+	ULCARD("\033[91m" s "\033[39m", r)
 #define BULCARD(s, r) \
-	ULCARD("\033[37m" s "\033[0m", r)
+	ULCARD("\033[37m" s "\033[39m", r)
 #define USCARD(c) (char*[]){c}
 
 const struct scheme unicode_large_mono = {
@@ -104,8 +104,8 @@ const struct scheme unicode_large_color = {
 	},
 	.facedown = (char*[]){
 		"╭───╮",
-		"│\033[94m▚▚▚\033[0m│",
-		"│\033[94m▚▚▚\033[0m│",
+		"│\033[94m▚▚▚\033[39m│",
+		"│\033[94m▚▚▚\033[39m│",
 		"╰───╯"
 	},
 	.placeholder = (char*[]){
