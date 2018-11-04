@@ -54,6 +54,27 @@ enum action_return {
 	WON, /*game won*/
 };
 
+#define NO_HI -1 /* print_table()'s highlighter also uses field_places */
+enum field_places {
+	TAB_1,
+	TAB_2,
+	TAB_3,
+	TAB_4,
+	TAB_5,
+	TAB_6,
+	TAB_7,
+#ifdef SPIDER
+	TAB_8,
+	TAB_9,
+	TAB_10,
+#endif
+	STOCK,
+	WASTE,
+#ifdef KLONDIKE
+	FOUNDATION,
+#endif
+	NUM_PLACES,
+};
 enum special_cmds {
 	CMD_MOVE,
 	CMD_INVAL,

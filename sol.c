@@ -53,40 +53,39 @@ struct opts {
 } op;
 
 // action table {{{
-#ifdef KLONDIKE
 /* stores a function pointer for every takeable action; called by game loop */
-int (*action[10][10])(int,int) = {
-	/*fnd   1    2    3    4    5    6    7   stk  wst*/
-/*fnd*/	{ nop, f2t, f2t, f2t, f2t, f2t, f2t, f2t, nop, nop },
-/* 1 */	{ t2f, t2f, t2t, t2t, t2t, t2t, t2t, t2t, nop, nop },
-/* 2 */	{ t2f, t2t, t2f, t2t, t2t, t2t, t2t, t2t, nop, nop },
-/* 3 */	{ t2f, t2t, t2t, t2f, t2t, t2t, t2t, t2t, nop, nop },
-/* 4 */	{ t2f, t2t, t2t, t2t, t2f, t2t, t2t, t2t, nop, nop },
-/* 5 */	{ t2f, t2t, t2t, t2t, t2t, t2f, t2t, t2t, nop, nop },
-/* 6 */	{ t2f, t2t, t2t, t2t, t2t, t2t, t2f, t2t, nop, nop },
-/* 7 */	{ t2f, t2t, t2t, t2t, t2t, t2t, t2t, t2f, nop, nop },
-/*stk*/	{ nop, nop, nop, nop, nop, nop, nop, nop, nop, s2w },
-/*wst*/	{ w2f, w2t, w2t, w2t, w2t, w2t, w2t, w2t, w2s, w2f },
-};
+int (*action[NUM_PLACES][10])(int,int) = {
+#ifdef KLONDIKE
+	/* 1    2    3    4    5    6    7   stk  wst  fnd*/
+/* 1 */	{ t2f, t2t, t2t, t2t, t2t, t2t, t2t, nop, nop, t2f },
+/* 2 */	{ t2t, t2f, t2t, t2t, t2t, t2t, t2t, nop, nop, t2f },
+/* 3 */	{ t2t, t2t, t2f, t2t, t2t, t2t, t2t, nop, nop, t2f },
+/* 4 */	{ t2t, t2t, t2t, t2f, t2t, t2t, t2t, nop, nop, t2f },
+/* 5 */	{ t2t, t2t, t2t, t2t, t2f, t2t, t2t, nop, nop, t2f },
+/* 6 */	{ t2t, t2t, t2t, t2t, t2t, t2f, t2t, nop, nop, t2f },
+/* 7 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2f, nop, nop, t2f },
+/*stk*/	{ nop, nop, nop, nop, nop, nop, nop, nop, s2w, nop },
+/*wst*/	{ w2t, w2t, w2t, w2t, w2t, w2t, w2t, w2s, w2f, w2f },
+/*fnd*/	{ f2t, f2t, f2t, f2t, f2t, f2t, f2t, nop, nop, nop },
 #elif defined SPIDER
-int (*action[11][10])(int,int) = {
-	/* 0    1    2    3    4    5    6    7    8    9 */
-/* 0 */	{ nop, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
-/* 1 */	{ t2t, nop, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
-/* 2 */	{ t2t, t2t, nop, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
-/* 3 */	{ t2t, t2t, t2t, nop, t2t, t2t, t2t, t2t, t2t, t2t },
-/* 4 */	{ t2t, t2t, t2t, t2t, nop, t2t, t2t, t2t, t2t, t2t },
-/* 5 */	{ t2t, t2t, t2t, t2t, t2t, nop, t2t, t2t, t2t, t2t },
-/* 6 */	{ t2t, t2t, t2t, t2t, t2t, t2t, nop, t2t, t2t, t2t },
-/* 7 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, nop, t2t, t2t },
-/* 8 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, nop, t2t },
-/* 9 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, nop },
+	/* 1    2    3    4    5    6    7    8    9    10*/
+/* 1 */	{ nop, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
+/* 2 */	{ t2t, nop, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
+/* 3 */	{ t2t, t2t, nop, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
+/* 4 */	{ t2t, t2t, t2t, nop, t2t, t2t, t2t, t2t, t2t, t2t },
+/* 5 */	{ t2t, t2t, t2t, t2t, nop, t2t, t2t, t2t, t2t, t2t },
+/* 6 */	{ t2t, t2t, t2t, t2t, t2t, nop, t2t, t2t, t2t, t2t },
+/* 7 */	{ t2t, t2t, t2t, t2t, t2t, t2t, nop, t2t, t2t, t2t },
+/* 8 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, nop, t2t, t2t },
+/* 9 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, nop, t2t },
+/*10 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, nop },
 /*stk*/	{ s2t, s2t, s2t, s2t, s2t, s2t, s2t, s2t, s2t, s2t },
-};
 #endif
+};
 // }}}
 
 int main(int argc, char** argv) {
+	(void) argc;(void) argv;
 	op.s = &unicode_large_color;
 #ifdef SPIDER
 	op.m = MEDIUM; //TODO: make configurable
@@ -101,7 +100,7 @@ void sol(void) {
 	deal();
 
 	int from, to;
-	print_table(-2);
+	print_table(NO_HI);
 	for(;;) {
 		switch (get_cmd(&from, &to)) {
 		case CMD_MOVE:
@@ -109,7 +108,7 @@ void sol(void) {
 			case OK:  break;
 			case ERR: visbell(); break;
 			case WON: 
-				print_table(-2);
+				print_table(NO_HI);
 				win_anim();
 				getchar(); /* consume char left by win_anim() */
 				return;
@@ -117,7 +116,7 @@ void sol(void) {
 			break;
 		case CMD_QUIT: return;
 		}
-		print_table(-2);
+		print_table(NO_HI);
 	}
 }
 
@@ -168,7 +167,7 @@ card_t stack_take(void) { /*NOTE: assert(f.w >= 0) */
 	return card;
 }
 int t2f(int from, int to) { /* tableu to foundation */
-	from--; //remove off-by-one
+	(void) to; //don't need
 	int top_from = find_top(f.t[from]);
 	to = get_suit(f.t[from][top_from]);
 	int top_to   = find_top(f.f[to]);
@@ -182,6 +181,7 @@ int t2f(int from, int to) { /* tableu to foundation */
 	} else return ERR;
 }
 int w2f(int from, int to) { /* waste to foundation */
+	(void) from; (void) to; //don't need
 	if (f.w < 0) return ERR;
 	to = get_suit(f.s[f.w]);
 	int top_to = find_top(f.f[to]);
@@ -194,24 +194,24 @@ int w2f(int from, int to) { /* waste to foundation */
 	
 }
 int s2w(int from, int to) { /* stock to waste */
+	(void) from; (void) to; //don't need
 	if (f.z == 0) return ERR;
 	f.w++;
 	if (f.w == f.z) f.w = -1;
 	return OK;
 }
 int w2s(int from, int to) { /* waste to stock (undoes stock to waste) */
+	(void) from; (void) to; //don't need
 	if (f.z == 0) return ERR;
 	f.w--;
 	if (f.w < -1) f.w = f.z-1;
 	return OK;
 }
 int f2t(int from, int to) { /* foundation to tableu */
-	to--; //remove off-by-one
 	int top_to = find_top(f.t[to]);
 	printf ("take from (1-4): "); fflush (stdout);
-	from = getchar() - '0';
-	if (from > 4 || from < 1) return ERR;
-	from--; //remove off-by-one
+	from = getchar() - '1';
+	if (from < 0 || from > 3) return ERR;
 	int top_from = find_top(f.f[from]);
 	
 	if ((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from]))
@@ -222,7 +222,7 @@ int f2t(int from, int to) { /* foundation to tableu */
 	} else return ERR;
 }
 int w2t(int from, int to) { /* waste to tableu */
-	to--; //remove off-by-one
+	(void) from; //don't need
 	int top_to = find_top(f.t[to]);
 	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w]))
 	   && (get_rank(f.t[to][top_to]) == get_rank(f.s[f.w])+1))
@@ -232,7 +232,6 @@ int w2t(int from, int to) { /* waste to tableu */
 	} else return ERR;
 }
 int t2t(int from, int to) { /* tableu to tableu */
-	from--; to--; //remove off-by-one
 	int top_to = find_top(f.t[to]);
 	int top_from = find_top(f.t[from]);
 	for (int i = top_from; i >=0; i--) {
@@ -284,7 +283,6 @@ void remove_if_complete (card_t* pile) { //TODO: cleanup
 int t2t(int from, int to) { //TODO: in dire need of cleanup
 	//TODO: segfaulted once on large column
 	//TODO: sometimes moving doesn't work (ERR when it should be OK) XXX
-	from--; to--; //remove off-by-one
 	(from < 0) && (from = 9); /* '0' is tenth ([9]) pile */
 	(to < 0) && (to = 9); /* ditto */
 
@@ -334,6 +332,7 @@ int t2t(int from, int to) { //TODO: in dire need of cleanup
 	return ERR; /* no such move possible */
 }
 int s2t(int from, int to) { //TODO: check remove, won
+	(void) from; (void) to; //don't need
 	if (f.z <= 0) return ERR; /* stack out of cards */
 	for (int pile = 0; pile < NUM_PILES; pile++)
 		if (f.t[pile][0]==NO_CARD) return ERR; /*no piles may be empty*/
@@ -343,44 +342,56 @@ int s2t(int from, int to) { //TODO: check remove, won
 	return OK;
 }
 #endif
-int nop(int from, int to) { return ERR; }
+int nop(int from, int to) { (void)from;(void)to; return ERR; }
 // }}}
 
 int get_cmd (int* from, int* to) {
 	//returns 0 on success or an error code indicating game quit, new game,...
 	//TODO: check validity, escape sequences (mouse, cursor keys)
-	//TODO: should return enums, then make piles 0-n
-	char f, t;
-	//printf ("from: "); fflush (stdout);
+	int f, t;
 	f = getchar();
-	if (f=='\n') { /* shortcut for dealing from stock */
-#ifdef KLONDIKE
-		*from = 8;
-		*to = 9;
-#elif defined SPIDER
-		*from = 10;
-		*to = 0;
-#endif
-		return CMD_MOVE;
-	}
+
 	switch (f) {
+	case '1': *from = TAB_1; break;
+	case '2': *from = TAB_2; break;
+	case '3': *from = TAB_3; break;
+	case '4': *from = TAB_4; break;
+	case '5': *from = TAB_5; break;
+	case '6': *from = TAB_6; break;
+	case '7': *from = TAB_7; break;
+#ifdef SPIDER
+	case '8': *from = TAB_8; break;
+	case '9': *from = TAB_9; break;
+	case '0': *from = TAB_10; break;
+#elif defined KLONDIKE
+	case '9': *from = WASTE; break;
+	case '0': *from = FOUNDATION; break;
+	case '8': /* fallthrough */
+#endif
+	case '\n': /* shortcut for dealing from stock */
+		*from = STOCK;
+		*to = WASTE;
+		return CMD_MOVE;
 	case 'q': return CMD_QUIT;
 	case 'r': return CMD_NEW;  //TODO
 	case 'h': return CMD_HINT; //TODO
 	case '?': return CMD_HELP; //TODO
 	case '/': return CMD_FIND; //TODO: highlight card of given rank (even non-movable)
-	default: if (f < '0' || f > '9') return CMD_INVAL;
+	case '\033': return CMD_INVAL; //TODO: cntlseq
+	default: return CMD_INVAL;
 	}
-	//printf ("\r     \rto: "); fflush (stdout);
-	print_table(f-'1');
-	t =
-#ifdef KLONDIKE
-	    (f=='8')?'9':
-#endif
-	                  getchar();
+	print_table(*from);
+
+	t = getchar();
 	if (t < '0' || t > '9') return CMD_INVAL;
-	*from = f-'0';
-	*to = t-'0';
+	if (t == '0')
+#ifdef KLONDIKE
+		*to = FOUNDATION;
+#elif defined SPIDER
+		*to = TAB_10;
+#endif
+	else
+		*to = t-'1';
 	return CMD_MOVE;
 }
 
@@ -470,12 +481,12 @@ void print_table(int highlight) { //{{{
 #ifdef KLONDIKE
 	/* print stock, waste and foundation: */
 	for (int line = 0; line < op.s->height; line++) {
-		//printf ("%s", ( /* stock */
-		print_hi (highlight == 7, ( //TODO: stupid magic number
+		/* stock: */
+		print_hi (highlight == STOCK, (
 			(f.w < f.z-1)?op.s->facedown
 			:op.s->placeholder)[line]);
-		//printf ("%s", ( /* waste */
-		print_hi (highlight == 8, ( //TODO: stupid magic number
+		/* waste: */
+		print_hi (highlight == WASTE, (
 			/* NOTE: cast, because f.w sometimes is (short)-1 !? */
 			((short)f.w >= 0)?op.s->card[f.s[f.w]]
 			:op.s->placeholder)[line]);
@@ -483,8 +494,7 @@ void print_table(int highlight) { //{{{
 		/* foundation: */
 		for (int pile = 0; pile < NUM_SUITS; pile++) {
 			int card = find_top(f.f[pile]);
-			//printf ("%s", 
-			print_hi (highlight == -1,  //TODO: stupid magic number
+			print_hi (highlight == FOUNDATION,
 				(card < 0)?op.s->placeholder[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
@@ -502,9 +512,7 @@ void print_table(int highlight) { //{{{
 		for (int pile = 0; pile < NUM_PILES; pile++) {
 			card_t card = f.t[pile][row[pile]];
 			card_t next = f.t[pile][row[pile]+1];
-			//printf ("%s", (
-			//TODO: pile 10 not highlighted!
-			//print_hi (highlight == pile && card>0, (
+
 			print_hi (highlight == pile && is_movable(f.t[pile],row[pile]), (
 				(card<0)?op.s->facedown
 				:op.s->card[card]
@@ -538,6 +546,7 @@ void visbell (void) {
 }
 
 void append_undo (int n, int f, int t) {
+	(void)n;(void)f;(void)t;
 	//check if we have to free redo buffer (.next)
 	//malloc
 	//update pointers
@@ -550,9 +559,7 @@ void screen_setup (int enable) {
 		printf ("\033[s\033[?47h"); /* save cursor, alternate screen */
 		printf ("\033[H\033[J"); /* reset cursor, clear screen */
 		//TODO//printf ("\033[?1000h\033[?25l"); /* enable mouse, hide cursor */
-		//printf (op.s->init_seq); /*swich charset, if necessary*/
 	} else {
-		//printf (op.s->reset_seq);/*reset charset, if necessary*/
 		//TODO//printf ("\033[?9l\033[?25h"); /* disable mouse, show cursor */
 		printf ("\033[?47l\033[u"); /* primary screen, restore cursor */
 		raw_mode(0);
