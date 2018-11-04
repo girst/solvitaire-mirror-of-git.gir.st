@@ -61,6 +61,7 @@ enum special_cmds {
 	CMD_NEW,
 	CMD_HINT,
 	CMD_HELP,
+	CMD_FIND,
 };
 
 enum difficulty {
@@ -93,7 +94,7 @@ int s2t(int from, int to);
 int nop(int from, int to);
 int get_cmd (int* from, int* to);
 void deal(void);
-void print_table(void);
+void print_table(int highlight);
 void visbell (void);
 void append_undo (int n, int f, int t);
 void screen_setup (int enable);
