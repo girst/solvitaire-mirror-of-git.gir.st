@@ -173,7 +173,7 @@ int t2f(int from, int to) { /* tableu to foundation */
 	to = get_suit(f.t[from][top_from]);
 	int top_to   = find_top(f.f[to]);
 	if ((top_to < 0 && get_rank(f.t[from][top_from]) == RANK_A)
-	|| (get_rank(f.f[to][top_to]) == get_rank(f.t[from][top_from])-1)) {
+	|| (top_to >= 0 && get_rank(f.f[to][top_to]) == get_rank(f.t[from][top_from])-1)) {
 		f.f[to][top_to+1] = f.t[from][top_from];
 		f.t[from][top_from] = NO_CARD;
 		turn_over(f.t[from]);
@@ -186,7 +186,7 @@ int w2f(int from, int to) { /* waste to foundation */
 	to = get_suit(f.s[f.w]);
 	int top_to = find_top(f.f[to]);
 	if ((top_to < 0 && get_rank(f.s[f.w]) == RANK_A)
-	|| (get_rank(f.f[to][top_to]) == get_rank(f.s[f.w])-1)) {
+	|| (top_to >= 0 && get_rank(f.f[to][top_to]) == get_rank(f.s[f.w])-1)) {
 		f.f[to][top_to+1] = stack_take();
 		if (check_won()) return WON;
 		return OK;
