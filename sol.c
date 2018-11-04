@@ -1,4 +1,5 @@
 #define _DEFAULT_SOURCE
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -109,8 +110,9 @@ void sol(void) {
 			case ERR: visbell(); break;
 			case WON: 
 				print_table();
-				printf ("\033[7mYOU WON!\n");
-				//return; //TODO: do something nice
+				win_anim();
+				getchar(); //consume the char left by win_anim()
+				return;
 			}
 			break;
 		case CMD_QUIT: return;
@@ -133,6 +135,26 @@ int check_won(void) {
 		if (f.f[pile][NUM_RANKS-1] == NO_CARD) return 0;
 
 	return 1;
+}
+void win_anim(void) {
+	printf ("\033[?25l"); /* hide cursor */
+	for (;;) {
+		/* set cursor to random location */
+		int row = 1+random()%(24-op.s->width);
+		int col = 1+random()%(80-op.s->height);
+
+		/* draw random card */
+		int face = 1 + random() % 52;
+		for (int l = 0; l < op.s->height; l++) {
+			printf ("\033[%d;%dH", row+l, col);
+			printf ("%s", op.s->card[face][l]);
+		}
+		fflush (stdout);
+
+		/* exit on keypress */
+		struct pollfd p = {STDIN_FILENO, POLLIN};
+		if (poll (&p, 1, 80)) return;
+	}
 }
 // takeable actions {{{
 #ifdef KLONDIKE
@@ -489,11 +511,9 @@ void screen_setup (int enable) {
 		printf ("\033[s\033[?47h"); /* save cursor, alternate screen */
 		printf ("\033[H\033[J"); /* reset cursor, clear screen */
 		//TODO//printf ("\033[?1000h\033[?25l"); /* enable mouse, hide cursor */
-		if (op.s->init_seq)
-			printf (op.s->init_seq); /*swich charset, if necessary*/
+		//printf (op.s->init_seq); /*swich charset, if necessary*/
 	} else {
-		if (op.s->reset_seq)
-			printf (op.s->reset_seq);/*reset charset, if necessary*/
+		//printf (op.s->reset_seq);/*reset charset, if necessary*/
 		//TODO//printf ("\033[?9l\033[?25h"); /* disable mouse, show cursor */
 		printf ("\033[?47l\033[u"); /* primary screen, restore cursor */
 		raw_mode(0);

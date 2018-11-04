@@ -5,13 +5,11 @@
 
 struct scheme {
 	int width; /* column alignment */
-	int height; /* height of a card */ //TODO: obsoletes NULL termination
+	int height; /* height of a card */
 	int overlap; /* no of lines to draw when cards overlapp */
 	char** card[_NUM_CARDS_internal];
 	char** facedown;
 	char** placeholder;
-	char* init_seq; /* for setting up charset */
-	char* reset_seq;
 };
 
 #define ULCARD(s, r) (char*[]) \
@@ -70,8 +68,6 @@ const struct scheme unicode_large_mono = {
 		"╎   ╎",
 		"╰╌╌╌╯"
 	},
-	.init_seq = NULL,
-	.reset_seq = NULL,
 };
 const struct scheme unicode_large_color = {
 	.width = 5,
@@ -118,8 +114,6 @@ const struct scheme unicode_large_color = {
 		"╎   ╎",
 		"╰╌╌╌╯"
 	},
-	.init_seq = NULL,
-	.reset_seq = NULL,
 };
 const struct scheme unicode_small_mono = {
 	.width = 2,
@@ -156,46 +150,5 @@ const struct scheme unicode_small_mono = {
 	},
 	.facedown = (char*[]){"🂠 "},
 	.placeholder = (char*[]){"❲❳"},
-	.init_seq = NULL,
-	.reset_seq = NULL,
-};
-
-const struct scheme vt220_small = { //TODO: this is a placeholder
-	.width = 2,
-	.height = 1,
-	.overlap = 1,
-	.card = {
-		[NO_CARD] = (char*[]){"  "},
-		[CLU_A] = USCARD("CA"), [DIA_A] = USCARD("DA"),
-		[HEA_A] = USCARD("HA"), [SPA_A] = USCARD("SA"),
-		[CLU_2] = USCARD("C2"), [DIA_2] = USCARD("D2"),
-		[HEA_2] = USCARD("H2"), [SPA_2] = USCARD("S2"),
-		[CLU_3] = USCARD("C3"), [DIA_3] = USCARD("D3"),
-		[HEA_3] = USCARD("H3"), [SPA_3] = USCARD("S3"),
-		[CLU_4] = USCARD("C4"), [DIA_4] = USCARD("D4"),
-		[HEA_4] = USCARD("H4"), [SPA_4] = USCARD("S4"),
-		[CLU_5] = USCARD("C5"), [DIA_5] = USCARD("D5"),
-		[HEA_5] = USCARD("H5"), [SPA_5] = USCARD("S5"),
-		[CLU_6] = USCARD("C6"), [DIA_6] = USCARD("D6"),
-		[HEA_6] = USCARD("H6"), [SPA_6] = USCARD("S6"),
-		[CLU_7] = USCARD("C7"), [DIA_7] = USCARD("D7"),
-		[HEA_7] = USCARD("H7"), [SPA_7] = USCARD("S7"),
-		[CLU_8] = USCARD("C8"), [DIA_8] = USCARD("D8"),
-		[HEA_8] = USCARD("H8"), [SPA_8] = USCARD("S8"),
-		[CLU_9] = USCARD("C9"), [DIA_9] = USCARD("D9"),
-		[HEA_9] = USCARD("H9"), [SPA_9] = USCARD("S9"),
-		[CLU_X] = USCARD("CX"), [DIA_X] = USCARD("DX"),
-		[HEA_X] = USCARD("HX"), [SPA_X] = USCARD("SX"),
-		[CLU_J] = USCARD("CJ"), [DIA_J] = USCARD("DJ"),
-		[HEA_J] = USCARD("HJ"), [SPA_J] = USCARD("SJ"),
-		[CLU_Q] = USCARD("CQ"), [DIA_Q] = USCARD("DQ"),
-		[HEA_Q] = USCARD("HQ"), [SPA_Q] = USCARD("SQ"),
-		[CLU_K] = USCARD("CK"), [DIA_K] = USCARD("DK"),
-		[HEA_K] = USCARD("HK"), [SPA_K] = USCARD("SK"),
-	},
-	.facedown = (char*[]){"##"},
-	.placeholder = (char*[]){"()"},
-	.init_seq = NULL,
-	.reset_seq = NULL,
 };
 #endif

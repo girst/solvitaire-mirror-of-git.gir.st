@@ -75,6 +75,7 @@ void sol(void);
 int find_top(card_t* pile);
 void turn_over(card_t* pile);
 int check_won(void);
+void win_anim(void);
 #ifdef KLONDIKE
 card_t stack_take(void);
 int t2f(int from, int to);
