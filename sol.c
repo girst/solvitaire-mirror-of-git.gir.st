@@ -31,19 +31,18 @@
 	((get_suit(card) ^ get_suit(card)>>1) & 1)
 
 struct playfield {
-	//TODO: stock and waste are incompatible with undo{}
 	card_t s[MAX_STOCK]; /* stock */
 	int z; /* stock size */
 	int w; /* waste; index into stock (const -1 in spider) */
-	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation (XXX@spider:complete set gets put on seperate pile, so undo is easy) */
+	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation */
 	card_t t[NUM_PILES][PILE_SIZE]; /* tableu piles */
 	struct undo {
-		int from; /* pile cards were taken from */
-		int to; /* pile cards were moved to */
+		int f; /* pile cards were taken from (overloaded:128+n=stock) */
+		int t; /* pile cards were moved to */
 		int n; /* number of cards moved */
 		struct undo* prev;
 		struct undo* next;
-	} u;
+	}* u;
 } f;
 struct opts {
 #ifdef SPIDER
@@ -253,7 +252,7 @@ int t2t(int from, int to) { /* tableu to tableu */
 }
 #elif defined SPIDER
 void remove_if_complete (card_t* pile) { //TODO: cleanup
-	static int foundation = 0; /* foundation to put pile onto */
+	static int foundation = 0; /* where to put pile onto (1 set per stack)*/
 	/* test if K...A complete; move to foundation if so */
 	int top_from = find_top(pile);
 	if (get_rank(pile[top_from]) != RANK_A) return;
@@ -283,14 +282,12 @@ void remove_if_complete (card_t* pile) { //TODO: cleanup
 int t2t(int from, int to) { //TODO: in dire need of cleanup
 	//TODO: segfaulted once on large column
 	//TODO: sometimes moving doesn't work (ERR when it should be OK) XXX
-	(from < 0) && (from = 9); /* '0' is tenth ([9]) pile */
-	(to < 0) && (to = 9); /* ditto */
 
 	int top_from = find_top(f.t[from]);
 	int top_to = find_top(f.t[to]);
 	int empty_to = -1; //awful, nondescriptive name :/
 	if (top_to < 0) { /* empty pile? */
-		printf ("\rup to (a23456789xjqk): "); //TODO: automatically do it if only 1 card movable XXX: cant move ace
+		printf ("\rup to (a23456789xjqk): "); //TODO: automatically do it if only 1 card movable
 		empty_to = getchar();
 		switch (empty_to) {
 		case 'a': case 'A': empty_to = RANK_A; break;
@@ -347,7 +344,7 @@ int nop(int from, int to) { (void)from;(void)to; return ERR; }
 
 int get_cmd (int* from, int* to) {
 	//returns 0 on success or an error code indicating game quit, new game,...
-	//TODO: check validity, escape sequences (mouse, cursor keys)
+	//TODO: escape sequences (mouse, cursor keys)
 	int f, t;
 	f = getchar();
 

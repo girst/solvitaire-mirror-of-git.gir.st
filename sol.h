@@ -67,10 +67,11 @@ enum field_places {
 	TAB_8,
 	TAB_9,
 	TAB_10,
-#endif
+	STOCK,
+#define WASTE 0; /* need it for get_cmd(), but don't count it in NUM_PLACES */
+#elif defined KLONDIKE
 	STOCK,
 	WASTE,
-#ifdef KLONDIKE
 	FOUNDATION,
 #endif
 	NUM_PLACES,
