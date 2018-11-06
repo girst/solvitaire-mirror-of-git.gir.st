@@ -129,7 +129,7 @@ void turn_over(card_t* pile) {
 	if (pile[top] < 0) pile[top] *= -1;
 }
 int check_won(void) {
-	for (int pile = 0; pile < NUM_DECKS*NUM_COLORS; pile++)
+	for (int pile = 0; pile < NUM_DECKS*NUM_SUITS; pile++)
 		if (f.f[pile][NUM_RANKS-1] == NO_CARD) return 0;
 
 	return 1;
