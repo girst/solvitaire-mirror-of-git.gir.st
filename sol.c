@@ -269,7 +269,7 @@ void remove_if_complete (card_t* pile) { //TODO: cleanup
 		}
 		if (i+RANK_K == top_from
 		    && get_rank(pile[top_from-RANK_K]) == RANK_K) { //ace to king ok, remove it
-			for (int i = top_from, j = 0; i >= top_from-NUM_RANKS; i--, j++) {
+			for (int i = top_from, j = 0; i > top_from-NUM_RANKS; i--, j++) {
 				f.f[foundation][j] = pile[i];
 				pile[i] = NO_CARD;
 			}
