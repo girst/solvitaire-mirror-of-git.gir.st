@@ -410,27 +410,6 @@ void deal(void) {
 		int j = random() % (i+1);
 		if (j-i) deck[i]^=deck[j],deck[j]^=deck[i],deck[i]^=deck[j];
 	}
-///////////////////////////////////////////////XXX
-//sometimes we see duplicate cards. this tries to catch that
-int count[_NUM_CARDS_internal] = {0};
-for (int i = 0; i < DECK_SIZE*NUM_DECKS; i++)
-	count[deck[i]]++;
-for (int i = 0; i < _NUM_CARDS_internal; i++){ //0 is NO_CARD
-#ifdef SPIDER
-	int x = op.m==MEDIUM?2:op.m==EASY?4:1;
-#else
-	int x = 1;
-#endif
-	if (deck[i] == NO_CARD) continue;
-	if (count[deck[i]] != NUM_DECKS*x) {
-		screen_setup(0);
-		printf ("found duplicate card with seed %lx!\n", seed);
-		for (int i = 1; i < _NUM_CARDS_internal; i++)
-			printf ("%3d of %2d\n", count[deck[i]], deck[i]);
-		exit(1);
-	}
-}
-///////////////////////////////////////////////XXX
 
 	/* deal cards: */
 	for (int i = 0; i < NUM_PILES; i++) {
@@ -489,11 +468,14 @@ void print_table(int highlight) { //{{{
 	}
 	printf("\n");
 #elif SPIDER
-	//TODO: spider: print stack size, maybe foundation (horiz. overlap?)
 	for (int line = 0; line < op.s->height; line++) {
+		/* available stock: */
 		for (int i = f.z/10; i; i--) {
-			printf ("%s", op.s->facedown[line]);
+			if (i==1) printf ("%s", op.s->facedown[line]);
+			else      printf ("%s", op.s->halfstack[line]);
 		}
+		/* foundation (overlapping): */ //TODO: fill from the right
+		//TODO
 		printf("\n");
 	}
 	printf("\n");
