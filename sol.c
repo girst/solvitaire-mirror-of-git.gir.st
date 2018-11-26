@@ -151,8 +151,11 @@ void win_anim(void) {
 
 		/* exit on keypress */
 		struct pollfd p = {STDIN_FILENO, POLLIN, 0};
-		if (poll (&p, 1, 80)) return;
+		if (poll (&p, 1, 80)) goto fin;
 	}
+fin:
+	printf ("\033[?25h"); /* show cursor */
+	return;
 }
 // takeable actions {{{
 #ifdef KLONDIKE
