@@ -37,7 +37,8 @@ struct playfield {
 	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation */
 	card_t t[NUM_PILES][PILE_SIZE]; /* tableu piles */
 	struct undo {
-		int f; /* pile cards were taken from (overloaded:128+n=stock) */
+		/* NOTE: .f & .t are overloaded; 64+n=foundation; 128+n=stock */
+		int f; /* pile cards were taken from */
 		int t; /* pile cards were moved to */
 		int n; /* number of cards moved */
 		struct undo* prev;
@@ -254,22 +255,22 @@ int t2t(int from, int to) { /* tableu to tableu */
 	return ERR; /* no such move possible */
 }
 #elif defined SPIDER
+int is_consecutive (card_t* pile, int pos) {
+	if (pos+1 >= PILE_SIZE) return 1; /* card is last */
+	if (pile[pos+1] == NO_CARD) return 1; /* card is first */
+
+	if (get_rank(pile[pos+1]) != get_rank(pile[pos])-1) return 0; /*rank consecutive?*/
+	if (get_suit(pile[pos+1]) != get_suit(pile[pos])) return 0; /*same suit?*/
+
+	return 1;
+}
 void remove_if_complete (card_t* pile) { //TODO: cleanup
 	static int foundation = 0; /* where to put pile onto (1 set per stack)*/
 	/* test if K...A complete; move to foundation if so */
 	int top_from = find_top(pile);
 	if (get_rank(pile[top_from]) != RANK_A) return;
 	for (int i = top_from; i>=0; i--) {
-		if ((i+1 < PILE_SIZE && pile[i+1] != NO_CARD) // card below or last? XXX: copied from t2t()--make function
-		    && (get_rank(pile[i+1]) != get_rank(pile[i])-1) //cards not consecutive?
-		   ) {
-			return;
-		}
-		if ((i+1 < PILE_SIZE && pile[i+1] != NO_CARD) // card below  or last?
-		    && (get_suit(pile[i+1]) != get_suit(pile[i])) //cards not same suit?
-		   ) {
-			return;
-		}
+		if (!is_consecutive (pile, i)) return;
 		if (i+RANK_K == top_from
 		    && get_rank(pile[top_from-RANK_K]) == RANK_K) { //ace to king ok, remove it
 			for (int i = top_from, j = 0; i > top_from-NUM_RANKS; i--, j++) {
@@ -304,16 +305,7 @@ int t2t(int from, int to) { //TODO: in dire need of cleanup
 		if (empty_to < RANK_A || empty_to > RANK_K) return ERR;
 	}
 	for (int i = top_from; i >= 0; i--) {
-		if ((i+1 < PILE_SIZE && f.t[from][i+1] != NO_CARD) // card below or last?
-		    && (get_rank(f.t[from][i+1]) != get_rank(f.t[from][i])-1) //cards not consecutive?
-		   ) {
-			break;
-		}
-		if ((i+1 < PILE_SIZE && f.t[from][i+1] != NO_CARD) // card below  or last?
-		    && (get_suit(f.t[from][i+1]) != get_suit(f.t[from][i])) //cards not same suit?
-		   ) {
-			break;
-		}
+		if (!is_consecutive(f.t[from], i)) break;
 
 		if ((get_rank(f.t[from][i]) == get_rank(f.t[to][top_to])-1) // consecutive?
 		|| (empty_to >= RANK_A && get_rank(f.t[from][i]) == empty_to)) { //to empty pile and rank ok?
@@ -348,10 +340,12 @@ int nop(int from, int to) { (void)from;(void)to; return ERR; }
 int get_cmd (int* from, int* to) {
 	//returns 0 on success or an error code indicating game quit, new game,...
 	//TODO: escape sequences (mouse, cursor keys)
+	//TODO: don't allow taking from empty piles
 	int f, t;
 	f = getchar();
 
 	switch (f) {
+	/* direct addressing: */
 	case '1': *from = TAB_1; break;
 	case '2': *from = TAB_2; break;
 	case '3': *from = TAB_3; break;
@@ -372,6 +366,8 @@ int get_cmd (int* from, int* to) {
 		*from = STOCK;
 		*to = WASTE;
 		return CMD_MOVE;
+	/* cursor keys addressing: */
+	//TODO
 	case 'q': return CMD_QUIT;
 	case 'r': return CMD_NEW;  //TODO
 	case 'h': return CMD_HINT; //TODO
@@ -457,18 +453,9 @@ int is_movable(card_t* pile, int n) { //TODO cleanup, code deduplication, needs 
 	return(pile[n] > NO_CARD); /*non-movable cards don't exist in klondike*/
 #elif defined SPIDER
 	int top = find_top(pile);
-	for (int i = top; i; i--) {
+	for (int i = top; i >= 0; i--) {
 		if (pile[i] <= NO_CARD) return 0; //card face down?
-		if ((i+1 < PILE_SIZE && pile[i+1] != NO_CARD) // card below or last? //COPIED FROM t2t
-		    && (get_rank(pile[i+1]) != get_rank(pile[i])-1) //cards not consecutive?
-		   ) {
-			return 0;
-		}
-		if ((i+1 < PILE_SIZE && pile[i+1] != NO_CARD) // card below  or last?
-		    && (get_suit(pile[i+1]) != get_suit(pile[i])) //cards not same suit?
-		   ) {
-			return 0;
-		}
+		if (!is_consecutive(pile, i)) return 0;
 		if (i == n) return 1; //card reached, must be movable
 	}
 	return 0;
@@ -497,6 +484,15 @@ void print_table(int highlight) { //{{{
 			print_hi (highlight == FOUNDATION,
 				(card < 0)?op.s->placeholder[line]
 				:op.s->card[f.f[pile][card]][line]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+#elif SPIDER
+	//TODO: spider: print stack size, maybe foundation (horiz. overlap?)
+	for (int line = 0; line < op.s->height; line++) {
+		for (int i = f.z/10; i; i--) {
+			printf ("%s", op.s->facedown[line]);
 		}
 		printf("\n");
 	}

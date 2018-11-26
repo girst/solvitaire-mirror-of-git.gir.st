@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-CFLAGS := -Wall -Wextra -pedantic -std=c99 -g3 -Wno-unused-parameter
+CFLAGS := -Wall -Wextra -pedantic -std=c99 -g3 #-Wno-unused-parameter
 
 all: sol spider
 
@@ -18,4 +18,4 @@ getfuns:
 	grep -o '^\w.* \w.*(.*)[^/]*{' sol.c|sed 's/ *{$/;/'
 
 test:
-	grep --color=always 'TODO\|XXX\|\/xxx-slashes-xxx\/[^:]' *
+	grep -n --color=always 'TODO\|XXX\|\/xxx-slashes-xxx\/[^:]' *
