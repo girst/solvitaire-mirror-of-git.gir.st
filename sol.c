@@ -512,11 +512,14 @@ void print_table(int highlight) { //{{{
 		for (int pile = 0; pile < NUM_PILES; pile++) {
 			card_t card = f.t[pile][row[pile]];
 			card_t next = f.t[pile][row[pile]+1];
+			int movable = is_movable(f.t[pile], row[pile]);
 
-			print_hi (highlight == pile && is_movable(f.t[pile],row[pile]), (
+			if (movable) printf ("\033[1m"); /* bold */ //TODO: interferes with grey color!
+			print_hi (highlight == pile && movable, (
 				(card<0)?op.s->facedown
 				:op.s->card[card]
 				)[line[pile]]);
+			printf ("\033[22m"); /* normal intensity (no bold) */
 
 			if (++line[pile] >= (next?op.s->overlap:op.s->height) //normal overlap
 #if 0 //XXX
