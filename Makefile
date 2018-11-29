@@ -14,8 +14,10 @@ spider: sol.c sol.h schemes.h
 clean:
 	rm -f sol spider
 
-getfuns:
-	grep -o '^\w.* \w.*(.*)[^/]*{' sol.c|sed 's/ *{$/;/'
+.PHONY: getfuns test
+getfuns: sol.c
+	@grep -o '^\w.* \w.*(.*)[^/]*{\|^#if.*\|^#e[ln].*' $<|sed 's/ *{$$/;/' \
+	| perl -0777 -pe 's{#if[^\n]*\n(#elif[^\n]*\n)?#endif[^\n]*\n}{}igs'
 
 test:
 	grep -n --color=always 'TODO\|XXX\|\/xxx-slashes-xxx\/[^:]' *
