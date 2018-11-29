@@ -37,10 +37,9 @@ struct playfield {
 	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation */
 	card_t t[NUM_PILES][PILE_SIZE]; /* tableu piles */
 	struct undo {
-		/* NOTE: .f & .t are overloaded; 64+n=foundation; 128+n=stock */
 		int f; /* pile cards were taken from */
 		int t; /* pile cards were moved to */
-		int n; /* number of cards moved */
+		int n; /* number of cards moved (if tableu; else index of stock/foundation) */
 		struct undo* prev;
 		struct undo* next;
 	}* u;

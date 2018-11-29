@@ -9,8 +9,7 @@ play klondike and spider solitaire in your unicode terminal.
 ### P2
  * TODO: undo:
 	 - insert append_undo() in x2y() functions
-	 - to encode stack position we need to overload f.u.f. can't do negative
-	   (-0), so +128 it is. 
+	 - to encode stack position we need to overload `f.u.n` as index.
  * TODO: sigint, sigcont handler! atexit() to avoid inconsistent term state
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
