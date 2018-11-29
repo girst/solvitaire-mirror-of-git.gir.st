@@ -440,19 +440,20 @@ int is_movable(card_t* pile, int n) { //TODO cleanup, code deduplication, needs 
 	return 0;
 #endif
 }
-#define print_hi(test, str) /* for highlighting during get_cmd() */ \
-	printf ("%s%s%s", (test)?"\033[7m":"", str, (test)?"\033[27m":"")
+#define print_hi(invert, bold, str) /* for highlighting during get_cmd() */ \
+	printf ("%s%s%s%s%s", (bold)?"\033[1m":"", (invert)?"\033[7m":"", str, \
+		(invert)?"\033[27m":"", (bold)?"\033[22m":"")
 void print_table(int highlight) { //{{{
 	printf("\033[2J\033[H"); /* clear screen, reset cursor */
 #ifdef KLONDIKE
 	/* print stock, waste and foundation: */
 	for (int line = 0; line < op.s->height; line++) {
 		/* stock: */
-		print_hi (highlight == STOCK, (
+		print_hi (highlight == STOCK, 1, (
 			(f.w < f.z-1)?op.s->facedown
 			:op.s->placeholder)[line]);
 		/* waste: */
-		print_hi (highlight == WASTE, (
+		print_hi (highlight == WASTE, 1, (
 			/* NOTE: cast, because f.w sometimes is (short)-1 !? */
 			((short)f.w >= 0)?op.s->card[f.s[f.w]]
 			:op.s->placeholder)[line]);
@@ -460,7 +461,7 @@ void print_table(int highlight) { //{{{
 		/* foundation: */
 		for (int pile = 0; pile < NUM_SUITS; pile++) {
 			int card = find_top(f.f[pile]);
-			print_hi (highlight == FOUNDATION,
+			print_hi (highlight == FOUNDATION, 1,
 				(card < 0)?op.s->placeholder[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
@@ -492,12 +493,10 @@ void print_table(int highlight) { //{{{
 			card_t next = f.t[pile][row[pile]+1];
 			int movable = is_movable(f.t[pile], row[pile]);
 
-			if (movable) printf ("\033[1m"); /* bold */ //TODO: interferes with grey color!
-			print_hi (highlight == pile && movable, (
+			print_hi (highlight == pile && movable, movable, (
 				(card<0)?op.s->facedown
 				:op.s->card[card]
 				)[line[pile]]);
-			printf ("\033[22m"); /* normal intensity (no bold) */
 
 			if (++line[pile] >= (next?op.s->overlap:op.s->height) //normal overlap
 #if 0 //XXX
