@@ -113,6 +113,9 @@ void sol(void) {
 				return;
 			}
 			break;
+		case CMD_INVAL:
+			visbell();
+			break;
 		case CMD_QUIT: return;
 		}
 		print_table(NO_HI);
@@ -340,24 +343,24 @@ int get_cmd (int* from, int* to) {
 	//returns 0 on success or an error code indicating game quit, new game,...
 	//TODO: escape sequences (mouse, cursor keys)
 	//TODO: don't allow taking from empty piles
-	int f, t;
-	f = getchar();
+	int _f, t;
+	_f = getchar();
 
-	switch (f) {
-	/* direct addressing: */
-	case '1': *from = TAB_1; break;
-	case '2': *from = TAB_2; break;
-	case '3': *from = TAB_3; break;
-	case '4': *from = TAB_4; break;
-	case '5': *from = TAB_5; break;
-	case '6': *from = TAB_6; break;
-	case '7': *from = TAB_7; break;
+	switch (_f) {
+	/* direct addressing: */ //TODO: cleanup empty pile check
+	case '1': if (!f.t[0][0]) return CMD_INVAL; *from = TAB_1; break;
+	case '2': if (!f.t[1][0]) return CMD_INVAL; *from = TAB_2; break;
+	case '3': if (!f.t[2][0]) return CMD_INVAL; *from = TAB_3; break;
+	case '4': if (!f.t[3][0]) return CMD_INVAL; *from = TAB_4; break;
+	case '5': if (!f.t[4][0]) return CMD_INVAL; *from = TAB_5; break;
+	case '6': if (!f.t[5][0]) return CMD_INVAL; *from = TAB_6; break;
+	case '7': if (!f.t[6][0]) return CMD_INVAL; *from = TAB_7; break;
 #ifdef SPIDER
-	case '8': *from = TAB_8; break;
-	case '9': *from = TAB_9; break;
-	case '0': *from = TAB_10; break;
+	case '8': if (!f.t[7][0]) return CMD_INVAL; *from = TAB_8; break;
+	case '9': if (!f.t[8][0]) return CMD_INVAL; *from = TAB_9; break;
+	case '0': if (!f.t[9][0]) return CMD_INVAL; *from = TAB_10;break;
 #elif defined KLONDIKE
-	case '9': *from = WASTE; break;
+	case '9': if (f.w < 0) return CMD_INVAL; *from = WASTE; break;
 	case '0': *from = FOUNDATION; break;
 	case '8': /* fallthrough */
 #endif
