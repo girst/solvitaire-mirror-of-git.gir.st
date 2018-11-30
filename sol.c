@@ -53,7 +53,7 @@ struct opts {
 
 // action table {{{
 /* stores a function pointer for every takeable action; called by game loop */
-int (*action[NUM_PLACES][10])(int,int) = {
+int (*action[NUM_PLACES][10])(int,int,int) = {
 #ifdef KLONDIKE
 	/* 1    2    3    4    5    6    7   stk  wst  fnd*/
 /* 1 */	{ t2f, t2t, t2t, t2t, t2t, t2t, t2t, nop, nop, t2f },
@@ -98,12 +98,12 @@ int main(int argc, char** argv) {
 void sol(void) {
 	deal();
 
-	int from, to;
+	int from, to, opt;
 	print_table(NO_HI);
 	for(;;) {
-		switch (get_cmd(&from, &to)) {
+		switch (get_cmd(&from, &to, &opt)) {
 		case CMD_MOVE:
-			switch (action[from][to](from,to)) {
+			switch (action[from][to](from,to,opt)) {
 			case OK:  break;
 			case ERR: visbell(); break;
 			case WON: 
@@ -171,8 +171,8 @@ card_t stack_take(void) { /*NOTE: assert(f.w >= 0) */
 	f.w--; /* make previous card visible again */
 	return card;
 }
-int t2f(int from, int to) { /* tableu to foundation */
-	(void) to; //don't need
+int t2f(int from, int to, int opt) { /* tableu to foundation */
+	(void) to; (void) opt; //don't need
 	int top_from = find_top(f.t[from]);
 	to = get_suit(f.t[from][top_from]);
 	int top_to   = find_top(f.f[to]);
@@ -185,8 +185,8 @@ int t2f(int from, int to) { /* tableu to foundation */
 		return OK;
 	} else return ERR;
 }
-int w2f(int from, int to) { /* waste to foundation */
-	(void) from; (void) to; //don't need
+int w2f(int from, int to, int opt) { /* waste to foundation */
+	(void) from; (void) to; (void) opt; //don't need
 	if (f.w < 0) return ERR;
 	to = get_suit(f.s[f.w]);
 	int top_to = find_top(f.f[to]);
@@ -198,25 +198,23 @@ int w2f(int from, int to) { /* waste to foundation */
 	} else return ERR;
 	
 }
-int s2w(int from, int to) { /* stock to waste */
-	(void) from; (void) to; //don't need
+int s2w(int from, int to, int opt) { /* stock to waste */
+	(void) from; (void) to; (void) opt; //don't need
 	if (f.z == 0) return ERR;
 	f.w++;
 	if (f.w == f.z) f.w = -1;
 	return OK;
 }
-int w2s(int from, int to) { /* waste to stock (undoes stock to waste) */
-	(void) from; (void) to; //don't need
+int w2s(int from, int to, int opt) { /* waste to stock (undoes stock to waste) */
+	(void) from; (void) to; (void) opt; //don't need
 	if (f.z == 0) return ERR;
 	f.w--;
 	if (f.w < -1) f.w = f.z-1;
 	return OK;
 }
-int f2t(int from, int to) { /* foundation to tableu */
+int f2t(int from, int to, int opt) { /* foundation to tableu */
 	int top_to = find_top(f.t[to]);
-	printf ("take from (1-4): "); fflush (stdout);
-	from = getchar() - '1';
-	if (from < 0 || from > 3) return ERR;
+	from = opt;
 	int top_from = find_top(f.f[from]);
 	
 	if ((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from]))
@@ -226,8 +224,8 @@ int f2t(int from, int to) { /* foundation to tableu */
 		return OK;
 	} else return ERR;
 }
-int w2t(int from, int to) { /* waste to tableu */
-	(void) from; //don't need
+int w2t(int from, int to, int opt) { /* waste to tableu */
+	(void) from; (void) opt; //don't need
 	int top_to = find_top(f.t[to]);
 	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w]))
 	   && (get_rank(f.t[to][top_to]) == get_rank(f.s[f.w])+1))
@@ -236,7 +234,8 @@ int w2t(int from, int to) { /* waste to tableu */
 		return OK;
 	} else return ERR;
 }
-int t2t(int from, int to) { /* tableu to tableu */
+int t2t(int from, int to, int opt) { /* tableu to tableu */
+	(void) opt; //don't need
 	int top_to = find_top(f.t[to]);
 	int top_from = find_top(f.t[from]);
 	for (int i = top_from; i >=0; i--) {
@@ -285,27 +284,14 @@ void remove_if_complete (card_t* pile) { //TODO: cleanup
 		}
 	}
 }
-int t2t(int from, int to) { //TODO: in dire need of cleanup
+int t2t(int from, int to, int opt) { //TODO: in dire need of cleanup
 	//TODO: segfaulted once on large column
 	//TODO: sometimes moving doesn't work (ERR when it should be OK) XXX
 
 	int top_from = find_top(f.t[from]);
 	int top_to = find_top(f.t[to]);
-	int empty_to = -1; //awful, nondescriptive name :/
-	if (top_to < 0) { /* empty pile? */
-		printf ("\rup to (a23456789xjqk): "); //TODO: automatically do it if only 1 card movable
-		empty_to = getchar();
-		switch (empty_to) {
-		case 'a': case 'A': empty_to = RANK_A; break;
-		case '0': /* fallthrough */
-		case 'x': case 'X': empty_to = RANK_X; break;
-		case 'j': case 'J': empty_to = RANK_J; break;
-		case 'q': case 'Q': empty_to = RANK_Q; break;
-		case 'k': case 'K': empty_to = RANK_K; break;
-		default: empty_to -= '1';
-		}
-		if (empty_to < RANK_A || empty_to > RANK_K) return ERR;
-	}
+	int empty_to = (top_to < 0)? opt: -1; /* empty pile? */
+
 	for (int i = top_from; i >= 0; i--) {
 		if (!is_consecutive(f.t[from], i)) break;
 
@@ -325,21 +311,23 @@ int t2t(int from, int to) { //TODO: in dire need of cleanup
 
 	return ERR; /* no such move possible */
 }
-int s2t(int from, int to) { //TODO: check remove, won
-	(void) from; (void) to; //don't need
+int s2t(int from, int to, int opt) {
+	(void) from; (void) to; (void) opt; //don't need
 	if (f.z <= 0) return ERR; /* stack out of cards */
 	for (int pile = 0; pile < NUM_PILES; pile++)
 		if (f.t[pile][0]==NO_CARD) return ERR; /*no piles may be empty*/
 	for (int pile = 0; pile < NUM_PILES; pile++) {
 		f.t[pile][find_top(f.t[pile])+1] = f.s[--f.z];
+		remove_if_complete (f.t[pile]); //XXX: needs testing
+		if (check_won()) return WON;
 	}
 	return OK;
 }
 #endif
-int nop(int from, int to) { (void)from;(void)to; return ERR; }
+int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
 // }}}
 
-int get_cmd (int* from, int* to) {
+int get_cmd (int* from, int* to, int* opt) {
 	//returns 0 on success or an error code indicating game quit, new game,...
 	//TODO: escape sequences (mouse, cursor keys)
 	//TODO: don't allow taking from empty piles
@@ -390,6 +378,31 @@ int get_cmd (int* from, int* to) {
 #endif
 	else
 		*to = t-'1';
+#ifdef KLONDIKE
+	if (*from == FOUNDATION) {
+		//TODO: automatically choose if only 1 possibility
+		printf ("take from (1-4): "); fflush (stdout);
+		*opt = getchar() - '1';
+		if (*opt < 0 || *opt > 3) return CMD_INVAL;
+		// `opt` is the foundation index (0..3)
+	}
+#elif defined SPIDER
+	if (*to < STOCK && f.t[*to][0] == NO_CARD) { //'*to<STOCK' tests for TAB_*
+		printf ("\rup to (a23456789xjqk): "); //TODO: automatically do it if only 1 card movable
+		*opt = getchar();
+		switch (*opt) {
+		case 'a': case 'A': *opt = RANK_A; break;
+		case '0': /* fallthrough */
+		case 'x': case 'X': *opt = RANK_X; break;
+		case 'j': case 'J': *opt = RANK_J; break;
+		case 'q': case 'Q': *opt = RANK_Q; break;
+		case 'k': case 'K': *opt = RANK_K; break;
+		default: *opt -= '1';
+		}
+		if (*opt < RANK_A || *opt > RANK_K) return ERR;
+		//`opt` is the card up-to-and-including which cards to move
+	}
+#endif
 	return CMD_MOVE;
 }
 
@@ -406,8 +419,8 @@ void deal(void) {
 	}
 #endif
 	srandom (time(NULL));
-/*XXX*/	long seed = time(NULL);
-/*XXX*/	srandom (seed);
+	long seed = time(NULL);
+	srandom (seed);
 	for (int i = DECK_SIZE*NUM_DECKS-1; i > 0; i--) { //fisher-yates
 		int j = random() % (i+1);
 		if (j-i) deck[i]^=deck[j],deck[j]^=deck[i],deck[i]^=deck[j];
@@ -477,7 +490,7 @@ void print_table(int highlight) { //{{{
 			if (i==1) printf ("%s", op.s->facedown[line]);
 			else      printf ("%s", op.s->halfstack[line]);
 		}
-		/* spacer: */ //TODO: urgh! cleanup!
+		/* spacer: */ //TODO: urgh! cleanup! also breaks on unicode_small_mono!
 		int xx = 0; for(int i=0;i<NUM_DECKS*NUM_SUITS;i++)if(f.f[i][RANK_K])xx++;
 		int HALFWIDTH = 2; int RIGHTWIDTH = 3;
 		for (int i = f.z?(f.z/10-1)*HALFWIDTH + op.s->width:0;

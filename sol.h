@@ -101,20 +101,20 @@ int check_won(void);
 void win_anim(void);
 #ifdef KLONDIKE
 card_t stack_take(void);
-int t2f(int from, int to);
-int w2f(int from, int to);
-int s2w(int from, int to);
-int w2s(int from, int to);
-int f2t(int from, int to);
-int w2t(int from, int to);
-int t2t(int from, int to);
+int t2f(int from, int to, int opt);
+int w2f(int from, int to, int opt);
+int s2w(int from, int to, int opt);
+int w2s(int from, int to, int opt);
+int f2t(int from, int to, int opt);
+int w2t(int from, int to, int opt);
+int t2t(int from, int to, int opt);
 #elif defined SPIDER
 void remove_if_complete (card_t* pile);
-int t2t(int from, int to);
-int s2t(int from, int to);
+int t2t(int from, int to, int opt);
+int s2t(int from, int to, int opt);
 #endif
-int nop(int from, int to);
-int get_cmd (int* from, int* to);
+int nop(int from, int to, int opt);
+int get_cmd (int* from, int* to, int* opt);
 void deal(void);
 void print_table(int highlight);
 void visbell (void);

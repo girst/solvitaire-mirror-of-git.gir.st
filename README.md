@@ -13,8 +13,6 @@ play klondike and spider solitaire in your unicode terminal.
  * TODO: sigint, sigcont handler! atexit() to avoid inconsistent term state
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
- * TODO: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
-         for mouse, hjkl modes)
 ### P3
  * TODO: hjkl keyboard mode
  * TODO: mouse mode
@@ -37,6 +35,8 @@ play klondike and spider solitaire in your unicode terminal.
  * DONE: patience: allow taking from 0(foundation)
  * DONE: highlight `from` pile, so users can see at what input stage they are
  * DONE: make piles 0-indexed in klondike as well
+ * DONE: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
+         for mouse, hjkl modes)
 
 ## Notes
 
