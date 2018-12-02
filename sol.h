@@ -110,6 +110,7 @@ int f2t(int from, int to, int opt);
 int w2t(int from, int to, int opt);
 int t2t(int from, int to, int opt);
 #elif defined SPIDER
+int is_consecutive (card_t* pile, int pos);
 void remove_if_complete (card_t* pile);
 int t2t(int from, int to, int opt);
 int s2t(int from, int to, int opt);
