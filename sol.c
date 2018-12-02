@@ -380,10 +380,32 @@ int get_cmd (int* from, int* to, int* opt) {
 		*to = t-'1';
 #ifdef KLONDIKE
 	if (*from == FOUNDATION) {
-		//TODO: automatically choose if only 1 possibility
-		printf ("take from (1-4): "); fflush (stdout);
-		*opt = getchar() - '1';
-		if (*opt < 0 || *opt > 3) return CMD_INVAL;
+		int top = find_top(f.t[*to]);
+		if (top < 0) return CMD_INVAL;
+		int color = get_color(f.t[*to][top]);
+		int choice_1 = 1-color; /* selects piles of   */
+		int choice_2 = 2+color; /* the opposite color */
+		int top_c1 = find_top(f.f[choice_1]);
+		int top_c2 = find_top(f.f[choice_2]);
+
+		int can_take_from = 0;
+		if (top_c1 >= 0 && get_rank(f.t[*to][top])-1
+		                == get_rank(f.f[choice_1][top_c1]))
+			can_take_from |= 1<<0;
+		if (top_c2 >= 0 && get_rank(f.t[*to][top])-1
+		                == get_rank(f.f[choice_2][top_c2]))
+			can_take_from |= 1<<1;
+		switch (can_take_from) {
+		case (1<<0): *opt = choice_1; break; /* choice_1 only */
+		case (1<<1): *opt = choice_2; break; /* choice_2 only */
+		case (1<<1 | 1<<0): /* both */
+		 /* both foundations match, ask user which pile to pick from */
+			printf ("take from (1-4): "); fflush (stdout);
+			*opt = getchar() - '1';
+			if (*opt < 0 || *opt > 3) return CMD_INVAL;
+			break;
+		default: return CMD_INVAL; /* none matched */
+		}
 		// `opt` is the foundation index (0..3)
 	}
 #elif defined SPIDER
