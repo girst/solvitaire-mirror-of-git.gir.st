@@ -348,7 +348,7 @@ int get_cmd (int* from, int* to, int* opt) {
 	case '9': if (!f.t[8][0]) return CMD_INVAL; *from = TAB_9; break;
 	case '0': if (!f.t[9][0]) return CMD_INVAL; *from = TAB_10;break;
 #elif defined KLONDIKE
-	case '9': if (f.w < 0) return CMD_INVAL; *from = WASTE; break;
+	case '9': *from = WASTE; break;
 	case '0': *from = FOUNDATION; break;
 	case '8': /* fallthrough */
 #endif
