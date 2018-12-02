@@ -388,25 +388,20 @@ int get_cmd (int* from, int* to, int* opt) {
 		int top_c1 = find_top(f.f[choice_1]);
 		int top_c2 = find_top(f.f[choice_2]);
 
-		int can_take_from = 0;
-		if (top_c1 >= 0 && get_rank(f.t[*to][top])-1
-		                == get_rank(f.f[choice_1][top_c1]))
-			can_take_from |= 1<<0;
-		if (top_c2 >= 0 && get_rank(f.t[*to][top])-1
-		                == get_rank(f.f[choice_2][top_c2]))
-			can_take_from |= 1<<1;
-		switch (can_take_from) {
-		case (1<<0): *opt = choice_1; break; /* choice_1 only */
-		case (1<<1): *opt = choice_2; break; /* choice_2 only */
-		case (1<<1 | 1<<0): /* both */
-		 /* both foundations match, ask user which pile to pick from */
+		switch ((top_c1 >= 0 && get_rank(f.t[*to][top])-1
+			             == get_rank(f.f[choice_1][top_c1])) << 0 |
+			(top_c2 >= 0 && get_rank(f.t[*to][top])-1
+			             == get_rank(f.f[choice_2][top_c2])) << 1) {
+		case (       1<<0): *opt = choice_1; break; /* choice_1 only */
+		case (1<<1       ): *opt = choice_2; break; /* choice_2 only */
+		case (1<<1 | 1<<0): /* both, ask user which to pick from */
 			printf ("take from (1-4): "); fflush (stdout);
 			*opt = getchar() - '1';
 			if (*opt < 0 || *opt > 3) return CMD_INVAL;
 			break;
 		default: return CMD_INVAL; /* none matched */
 		}
-		// `opt` is the foundation index (0..3)
+		/* `opt` is the foundation index (0..3) */
 	}
 #elif defined SPIDER
 	if (*to < STOCK && f.t[*to][0] == NO_CARD) { /*moving to empty tableu?*/
