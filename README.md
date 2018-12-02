@@ -5,7 +5,6 @@ play klondike and spider solitaire in your unicode terminal.
 ## TODO
 
 ### P1
- * HOLD: duplicate card ♠A found in tableu: added check at start to monitor this
 ### P2
  * TODO: undo:
 	 - insert append_undo() in x2y() functions
@@ -35,6 +34,8 @@ play klondike and spider solitaire in your unicode terminal.
  * DONE: patience: allow taking from 0(foundation)
  * DONE: highlight `from` pile, so users can see at what input stage they are
  * DONE: make piles 0-indexed in klondike as well
+ * HOLD: duplicate card ♠A found in tableu: added check at start to monitor this
+         Cannot reproduce, removed check
  * DONE: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
          for mouse, hjkl modes)
 

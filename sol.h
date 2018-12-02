@@ -116,6 +116,7 @@ int s2t(int from, int to, int opt);
 int nop(int from, int to, int opt);
 int get_cmd (int* from, int* to, int* opt);
 void deal(void);
+int is_movable(card_t* pile, int n);
 void print_table(int highlight);
 void visbell (void);
 void append_undo (int n, int f, int t);

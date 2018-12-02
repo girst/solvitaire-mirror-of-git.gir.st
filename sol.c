@@ -387,20 +387,26 @@ int get_cmd (int* from, int* to, int* opt) {
 		// `opt` is the foundation index (0..3)
 	}
 #elif defined SPIDER
-	if (*to < STOCK && f.t[*to][0] == NO_CARD) { //'*to<STOCK' tests for TAB_*
-		printf ("\rup to (a23456789xjqk): "); //TODO: automatically do it if only 1 card movable
-		*opt = getchar();
-		switch (*opt) {
-		case 'a': case 'A': *opt = RANK_A; break;
-		case '0': /* fallthrough */
-		case 'x': case 'X': *opt = RANK_X; break;
-		case 'j': case 'J': *opt = RANK_J; break;
-		case 'q': case 'Q': *opt = RANK_Q; break;
-		case 'k': case 'K': *opt = RANK_K; break;
-		default: *opt -= '1';
+	if (*to < STOCK && f.t[*to][0] == NO_CARD) { /*moving to empty tableu?*/
+		int top = find_top(f.t[*from]);
+		if (top < 0) return CMD_INVAL;
+		if (top >= 0 && !is_movable(f.t[*from], top-1)) {
+			*opt = get_rank(f.t[*from][top]);
+		} else { /* only ask the user if it's unclear */
+			printf ("\rup to (a23456789xjqk): ");
+			*opt = getchar();
+			switch (*opt) {
+			case 'a': case 'A': *opt = RANK_A; break;
+			case '0': /* fallthrough */
+			case 'x': case 'X': *opt = RANK_X; break;
+			case 'j': case 'J': *opt = RANK_J; break;
+			case 'q': case 'Q': *opt = RANK_Q; break;
+			case 'k': case 'K': *opt = RANK_K; break;
+			default: *opt -= '1';
+			}
+			if (*opt < RANK_A || *opt > RANK_K) return ERR;
 		}
-		if (*opt < RANK_A || *opt > RANK_K) return ERR;
-		//`opt` is the card up-to-and-including which cards to move
+		/* `opt` is the rank of the highest card to move */
 	}
 #endif
 	return CMD_MOVE;
