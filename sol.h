@@ -55,6 +55,7 @@ enum action_return {
 };
 
 #define NO_HI -1 /* print_table()'s highlighter also uses field_places */
+/* WARN: stock must always follow immediately after `TAB_*` for is_tableu() */
 enum field_places {
 	TAB_1,
 	TAB_2,

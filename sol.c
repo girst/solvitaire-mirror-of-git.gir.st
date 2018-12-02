@@ -30,6 +30,8 @@
 #define get_color(card) \
 	((get_suit(card) ^ get_suit(card)>>1) & 1)
 
+#define is_tableu(where) (where < STOCK)
+
 struct playfield {
 	card_t s[MAX_STOCK]; /* stock */
 	int z; /* stock size */
@@ -336,17 +338,17 @@ int get_cmd (int* from, int* to, int* opt) {
 
 	switch (_f) {
 	/* direct addressing: */ //TODO: cleanup empty pile check
-	case '1': if (!f.t[0][0]) return CMD_INVAL; *from = TAB_1; break;
-	case '2': if (!f.t[1][0]) return CMD_INVAL; *from = TAB_2; break;
-	case '3': if (!f.t[2][0]) return CMD_INVAL; *from = TAB_3; break;
-	case '4': if (!f.t[3][0]) return CMD_INVAL; *from = TAB_4; break;
-	case '5': if (!f.t[4][0]) return CMD_INVAL; *from = TAB_5; break;
-	case '6': if (!f.t[5][0]) return CMD_INVAL; *from = TAB_6; break;
-	case '7': if (!f.t[6][0]) return CMD_INVAL; *from = TAB_7; break;
+	case '1': *from = TAB_1; break;
+	case '2': *from = TAB_2; break;
+	case '3': *from = TAB_3; break;
+	case '4': *from = TAB_4; break;
+	case '5': *from = TAB_5; break;
+	case '6': *from = TAB_6; break;
+	case '7': *from = TAB_7; break;
 #ifdef SPIDER
-	case '8': if (!f.t[7][0]) return CMD_INVAL; *from = TAB_8; break;
-	case '9': if (!f.t[8][0]) return CMD_INVAL; *from = TAB_9; break;
-	case '0': if (!f.t[9][0]) return CMD_INVAL; *from = TAB_10;break;
+	case '8': *from = TAB_8; break;
+	case '9': *from = TAB_9; break;
+	case '0': *from = TAB_10;break;
 #elif defined KLONDIKE
 	case '9': *from = WASTE; break;
 	case '0': *from = FOUNDATION; break;
@@ -366,6 +368,7 @@ int get_cmd (int* from, int* to, int* opt) {
 	case '\033': return CMD_INVAL; //TODO: cntlseq
 	default: return CMD_INVAL;
 	}
+	if (is_tableu(*from) && f.t[*from][0] == NO_CARD) return CMD_INVAL;
 	print_table(*from);
 
 	t = getchar();
@@ -404,7 +407,7 @@ int get_cmd (int* from, int* to, int* opt) {
 		/* `opt` is the foundation index (0..3) */
 	}
 #elif defined SPIDER
-	if (*to < STOCK && f.t[*to][0] == NO_CARD) { /*moving to empty tableu?*/
+	if (is_tableu(*to) && f.t[*to][0] == NO_CARD) { /*moving to empty tableu?*/
 		int top = find_top(f.t[*from]);
 		if (top < 0) return CMD_INVAL;
 		if (top >= 0 && !is_movable(f.t[*from], top-1)) {
