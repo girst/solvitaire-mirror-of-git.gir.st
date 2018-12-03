@@ -80,6 +80,7 @@ enum field_places {
 enum special_cmds {
 	CMD_MOVE,
 	CMD_INVAL,
+	CMD_NONE,
 	CMD_QUIT,
 	CMD_NEW,
 	CMD_HINT,

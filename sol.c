@@ -41,7 +41,8 @@ struct playfield {
 	struct undo {
 		int f; /* pile cards were taken from */
 		int t; /* pile cards were moved to */
-		int n; /* number of cards moved (if tableu; else index of stock/foundation) */
+		int n; /* if tableu: number of cards moved */
+		       /* else: index into stock/foundation */
 		struct undo* prev;
 		struct undo* next;
 	}* u;
@@ -163,6 +164,7 @@ fin:
 	return;
 }
 // takeable actions {{{
+//TODO XXX: deduplicate code (e.g. rank_consecutive() macro)
 #ifdef KLONDIKE
 card_t stack_take(void) { /*NOTE: assert(f.w >= 0) */
 	card_t card = f.s[f.w];
@@ -174,7 +176,7 @@ card_t stack_take(void) { /*NOTE: assert(f.w >= 0) */
 	return card;
 }
 int t2f(int from, int to, int opt) { /* tableu to foundation */
-	(void) to; (void) opt; //don't need
+	(void) to; (void) opt; /* don't need */
 	int top_from = find_top(f.t[from]);
 	to = get_suit(f.t[from][top_from]);
 	int top_to   = find_top(f.f[to]);
@@ -188,7 +190,7 @@ int t2f(int from, int to, int opt) { /* tableu to foundation */
 	} else return ERR;
 }
 int w2f(int from, int to, int opt) { /* waste to foundation */
-	(void) from; (void) to; (void) opt; //don't need
+	(void) from; (void) to; (void) opt; /* don't need */
 	if (f.w < 0) return ERR;
 	to = get_suit(f.s[f.w]);
 	int top_to = find_top(f.f[to]);
@@ -201,20 +203,21 @@ int w2f(int from, int to, int opt) { /* waste to foundation */
 	
 }
 int s2w(int from, int to, int opt) { /* stock to waste */
-	(void) from; (void) to; (void) opt; //don't need
+	(void) from; (void) to; (void) opt; /* don't need */
 	if (f.z == 0) return ERR;
 	f.w++;
 	if (f.w == f.z) f.w = -1;
 	return OK;
 }
-int w2s(int from, int to, int opt) { /* waste to stock (undoes stock to waste) */
-	(void) from; (void) to; (void) opt; //don't need
+int w2s(int from, int to, int opt) { /* waste to stock (undo stock to waste) */
+	(void) from; (void) to; (void) opt; /* don't need */
 	if (f.z == 0) return ERR;
 	f.w--;
 	if (f.w < -1) f.w = f.z-1;
 	return OK;
 }
 int f2t(int from, int to, int opt) { /* foundation to tableu */
+	(void) from; /* don't need */
 	int top_to = find_top(f.t[to]);
 	from = opt;
 	int top_from = find_top(f.f[from]);
@@ -227,7 +230,7 @@ int f2t(int from, int to, int opt) { /* foundation to tableu */
 	} else return ERR;
 }
 int w2t(int from, int to, int opt) { /* waste to tableu */
-	(void) from; (void) opt; //don't need
+	(void) from; (void) opt; /* don't need */
 	int top_to = find_top(f.t[to]);
 	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w]))
 	   && (get_rank(f.t[to][top_to]) == get_rank(f.s[f.w])+1))
@@ -237,7 +240,7 @@ int w2t(int from, int to, int opt) { /* waste to tableu */
 	} else return ERR;
 }
 int t2t(int from, int to, int opt) { /* tableu to tableu */
-	(void) opt; //don't need
+	(void) opt; /* don't need */
 	int top_to = find_top(f.t[to]);
 	int top_from = find_top(f.t[from]);
 	for (int i = top_from; i >=0; i--) {
@@ -262,8 +265,10 @@ int is_consecutive (card_t* pile, int pos) {
 	if (pos+1 >= PILE_SIZE) return 1; /* card is last */
 	if (pile[pos+1] == NO_CARD) return 1; /* card is first */
 
-	if (get_rank(pile[pos+1]) != get_rank(pile[pos])-1) return 0; /*rank consecutive?*/
-	if (get_suit(pile[pos+1]) != get_suit(pile[pos])) return 0; /*same suit?*/
+	/* ranks consecutive? */
+	if (get_rank(pile[pos+1]) != get_rank(pile[pos])-1) return 0;
+	/* same suit? */
+	if (get_suit(pile[pos+1]) != get_suit(pile[pos])) return 0;
 
 	return 1;
 }
@@ -274,9 +279,9 @@ void remove_if_complete (card_t* pile) { //TODO: cleanup
 	if (get_rank(pile[top_from]) != RANK_A) return;
 	for (int i = top_from; i>=0; i--) {
 		if (!is_consecutive (pile, i)) return;
-		if (i+RANK_K == top_from
-		    && get_rank(pile[top_from-RANK_K]) == RANK_K) { //ace to king ok, remove it
-			for (int i = top_from, j = 0; i > top_from-NUM_RANKS; i--, j++) {
+		if (i+RANK_K == top_from /* if ace to king: remove it */
+		    && get_rank(pile[top_from-RANK_K]) == RANK_K) {
+			for(int i=top_from, j=0; i>top_from-NUM_RANKS; i--,j++){
 				f.f[foundation][j] = pile[i];
 				pile[i] = NO_CARD;
 			}
@@ -297,8 +302,9 @@ int t2t(int from, int to, int opt) { //TODO: in dire need of cleanup
 	for (int i = top_from; i >= 0; i--) {
 		if (!is_consecutive(f.t[from], i)) break;
 
-		if ((get_rank(f.t[from][i]) == get_rank(f.t[to][top_to])-1) // consecutive?
-		|| (empty_to >= RANK_A && get_rank(f.t[from][i]) == empty_to)) { //to empty pile and rank ok?
+		/* is consecutive OR to empty pile and rank ok? */
+		if ((get_rank(f.t[from][i]) == get_rank(f.t[to][top_to])-1)
+		|| (empty_to >= RANK_A && get_rank(f.t[from][i]) == empty_to)) {
 			for (;i <= top_from; i++) {
 				top_to++;
 				f.t[to][top_to] = f.t[from][i];
@@ -314,7 +320,7 @@ int t2t(int from, int to, int opt) { //TODO: in dire need of cleanup
 	return ERR; /* no such move possible */
 }
 int s2t(int from, int to, int opt) {
-	(void) from; (void) to; (void) opt; //don't need
+	(void) from; (void) to; (void) opt; /* don't need */
 	if (f.z <= 0) return ERR; /* stack out of cards */
 	for (int pile = 0; pile < NUM_PILES; pile++)
 		if (f.t[pile][0]==NO_CARD) return ERR; /*no piles may be empty*/
@@ -330,14 +336,13 @@ int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
 // }}}
 
 int get_cmd (int* from, int* to, int* opt) {
-	//returns 0 on success or an error code indicating game quit, new game,...
 	//TODO: escape sequences (mouse, cursor keys)
 	//TODO: don't allow taking from empty piles
 	int _f, t;
 	_f = getchar();
 
 	switch (_f) {
-	/* direct addressing: */ //TODO: cleanup empty pile check
+	/* direct addressing: */
 	case '1': *from = TAB_1; break;
 	case '2': *from = TAB_2; break;
 	case '3': *from = TAB_3; break;
@@ -372,6 +377,7 @@ int get_cmd (int* from, int* to, int* opt) {
 	print_table(*from);
 
 	t = getchar();
+	if (t == ' ') return CMD_NONE; /* cancel a command (without visbell) */
 	if (t < '0' || t > '9') return CMD_INVAL;
 	if (t == '0')
 #ifdef KLONDIKE
@@ -407,12 +413,13 @@ int get_cmd (int* from, int* to, int* opt) {
 		/* `opt` is the foundation index (0..3) */
 	}
 #elif defined SPIDER
-	if (is_tableu(*to) && f.t[*to][0] == NO_CARD) { /*moving to empty tableu?*/
+	/* moving to empty tableu? */
+	if (is_tableu(*to) && f.t[*to][0] == NO_CARD) {
 		int top = find_top(f.t[*from]);
 		if (top < 0) return CMD_INVAL;
 		if (top >= 0 && !is_movable(f.t[*from], top-1)) {
 			*opt = get_rank(f.t[*from][top]);
-		} else { /* only ask the user if it's unclear */
+		} else { /* only ask the user if it's unclear: */
 			printf ("\rup to (a23456789xjqk): ");
 			*opt = getchar();
 			switch (*opt) {
@@ -447,7 +454,7 @@ void deal(void) {
 	srandom (time(NULL));
 	long seed = time(NULL);
 	srandom (seed);
-	for (int i = DECK_SIZE*NUM_DECKS-1; i > 0; i--) { //fisher-yates
+	for (int i = DECK_SIZE*NUM_DECKS-1; i > 0; i--) { /* fisher-yates */
 		int j = random() % (i+1);
 		if (j-i) deck[i]^=deck[j],deck[j]^=deck[i],deck[i]^=deck[j];
 	}
@@ -468,15 +475,15 @@ void deal(void) {
 	f.w = -1; /* @start: nothing on waste (no waste in spider -> const) */
 }
 
-int is_movable(card_t* pile, int n) { //TODO cleanup, code deduplication, needs entry in sol.h
+int is_movable(card_t* pile, int n) {
 #ifdef KLONDIKE
 	return(pile[n] > NO_CARD); /*non-movable cards don't exist in klondike*/
 #elif defined SPIDER
 	int top = find_top(pile);
 	for (int i = top; i >= 0; i--) {
-		if (pile[i] <= NO_CARD) return 0; //card face down?
+		if (pile[i] <= NO_CARD) return 0; /*no card or card face down?*/
 		if (!is_consecutive(pile, i)) return 0;
-		if (i == n) return 1; //card reached, must be movable
+		if (i == n) return 1; /* card reached, must be movable */
 	}
 	return 0;
 #endif
@@ -536,8 +543,8 @@ void print_table(int highlight) { //{{{
 	/* print tableu piles: */
 	int row[NUM_PILES] = {0};
 	int line[NUM_PILES]= {0};
-	int label[NUM_PILES]={0};// :|
-	int line_had_card; // :|
+	int label[NUM_PILES]={0};
+	int line_had_card;
 	do {
 		line_had_card = 0;
 		for (int pile = 0; pile < NUM_PILES; pile++) {
@@ -550,11 +557,14 @@ void print_table(int highlight) { //{{{
 				:op.s->card[card]
 				)[line[pile]]);
 
-			if (++line[pile] >= (next?op.s->overlap:op.s->height) //normal overlap
+			/* normal overlap: */
+			if (++line[pile] >= (next?op.s->overlap:op.s->height)
 #if 0 //XXX
+			/* extreme overlap on closed cards: */
 			|| (line[pile] >= 1 &&
 			    f.t[pile][row[pile]] < 0 &&
-			    f.t[pile][row[pile]+1] <0) //extreme overlap on closed
+			    f.t[pile][row[pile]+1] <0)
+			/* extreme overlap on sequences: */
 			|| (0) //extreme overlap on sequence TODO
 #endif
 			) {
