@@ -517,8 +517,9 @@ void print_table(int highlight) { //{{{
 			else      printf ("%s", op.s->halfstack[line]);
 		}
 		/* spacer: */ //TODO: urgh! cleanup! also breaks on unicode_small_mono!
-		int xx = 0; for(int i=0;i<NUM_DECKS*NUM_SUITS;i++)if(f.f[i][RANK_K])xx++;
-		int HALFWIDTH = 2; int RIGHTWIDTH = 3;
+		int xx = 0; for(int i=0;i<NUM_DECKS*NUM_SUITS;i++)if(f.f[i][RANK_K])xx++; //XXX (number of finished foundations)
+		int HALFWIDTH  = op.s->halfwidth[0]; //TODO: magic values!
+		int RIGHTWIDTH = op.s->halfwidth[1]; //TODO: magic values!
 		for (int i = f.z?(f.z/10-1)*HALFWIDTH + op.s->width:0;
 		     i < NUM_PILES*op.s->width - ((xx?(xx-1)*RIGHTWIDTH:0)+op.s->width);
 		     i++)
@@ -526,7 +527,7 @@ void print_table(int highlight) { //{{{
 		/* foundation (overlapping): */
 		for (int i = 0; i < NUM_DECKS*NUM_SUITS; i++) {
 			int overlap = i? op.s->halfcard[line]: 0;
-			if (f.f[i][RANK_K]) printf ("%s",
+			if (f.f[i][RANK_K]) printf ("%.*s", op.s->halfwidth[2],
 				op.s->card[f.f[i][RANK_K]][line]+overlap);
 		}
 		printf("\n");

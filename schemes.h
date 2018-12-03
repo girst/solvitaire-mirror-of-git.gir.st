@@ -12,6 +12,8 @@ struct scheme {
 	char** placeholder;
 	char** halfstack; /* left half of stack (for spider) */
 	int* halfcard; /* byte offset of right half of cards (for spider) */
+	int halfwidth[3]; /* printed width of halfstack([0]) and halfcard([1]),
+	                     byte width of halfcard([2]) */
 };
 
 #define ULCARD(s, r) (char*[]) \
@@ -77,6 +79,7 @@ const struct scheme unicode_large_mono = {
 		"╰─"
 	},
 	.halfcard = (int[]){6, 6, 4, 6},
+	.halfwidth = {2, 3, 999},
 };
 const struct scheme unicode_large_color = {
 	.width = 5,
@@ -130,6 +133,7 @@ const struct scheme unicode_large_color = {
 		"╰─"
 	},
 	.halfcard = (int[]){6, 16, 4, 6},
+	.halfwidth = {2, 3, 999},
 };
 const struct scheme unicode_small_mono = {
 	.width = 2,
@@ -166,7 +170,8 @@ const struct scheme unicode_small_mono = {
 	},
 	.facedown = (char*[]){"🂠 "},
 	.placeholder = (char*[]){"❲❳"},
-	.halfstack = (char*[]){"🂠 "},
+	.halfstack = (char*[]){"🂠"},
 	.halfcard = (int[]){0},
+	.halfwidth = {1, 1, 4},
 };
 #endif
