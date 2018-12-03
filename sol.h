@@ -100,6 +100,7 @@ void sol(void);
 int find_top(card_t* pile);
 void turn_over(card_t* pile);
 int check_won(void);
+int is_consecutive (card_t* pile, int pos);
 void win_anim(void);
 #ifdef KLONDIKE
 card_t stack_take(void);
@@ -111,7 +112,6 @@ int f2t(int from, int to, int opt);
 int w2t(int from, int to, int opt);
 int t2t(int from, int to, int opt);
 #elif defined SPIDER
-int is_consecutive (card_t* pile, int pos);
 void remove_if_complete (card_t* pile);
 int t2t(int from, int to, int opt);
 int s2t(int from, int to, int opt);

@@ -140,6 +140,22 @@ int check_won(void) {
 
 	return 1;
 }
+int is_consecutive (card_t* pile, int pos) {
+#ifdef KLONDIKE
+	(void) pile; (void) pos; //XXX
+	return 0; //TODO XXX XXX TODO IMPORTANT!!!
+#elif defined SPIDER
+	if (pos+1 >= PILE_SIZE) return 1; /* card is last */
+	if (pile[pos+1] == NO_CARD) return 1; /* card is first */
+
+	/* ranks consecutive? */
+	if (get_rank(pile[pos+1]) != get_rank(pile[pos])-1) return 0;
+	/* same suit? */
+	if (get_suit(pile[pos+1]) != get_suit(pile[pos])) return 0;
+
+	return 1;
+#endif
+}
 void win_anim(void) {
 	printf ("\033[?25l"); /* hide cursor */
 	for (;;) {
@@ -261,17 +277,6 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 	return ERR; /* no such move possible */
 }
 #elif defined SPIDER
-int is_consecutive (card_t* pile, int pos) {
-	if (pos+1 >= PILE_SIZE) return 1; /* card is last */
-	if (pile[pos+1] == NO_CARD) return 1; /* card is first */
-
-	/* ranks consecutive? */
-	if (get_rank(pile[pos+1]) != get_rank(pile[pos])-1) return 0;
-	/* same suit? */
-	if (get_suit(pile[pos+1]) != get_suit(pile[pos])) return 0;
-
-	return 1;
-}
 void remove_if_complete (card_t* pile) { //TODO: cleanup
 	static int foundation = 0; /* where to put pile onto (1 set per stack)*/
 	/* test if K...A complete; move to foundation if so */
@@ -557,16 +562,21 @@ void print_table(int highlight) { //{{{
 				:op.s->card[card]
 				)[line[pile]]);
 
+			int extreme_overlap = 0; //TODO: activate iff space constrained (per pile)
 			/* normal overlap: */
 			if (++line[pile] >= (next?op.s->overlap:op.s->height)
-#if 0 //XXX
 			/* extreme overlap on closed cards: */
-			|| (line[pile] >= 1 &&
+			|| (extreme_overlap &&
+			    line[pile] >= 1 &&
 			    f.t[pile][row[pile]] < 0 &&
 			    f.t[pile][row[pile]+1] <0)
 			/* extreme overlap on sequences: */
-			|| (0) //extreme overlap on sequence TODO
-#endif
+			|| (extreme_overlap &&
+			    line[pile] >= 1 && row[pile] > 0 &&
+			    f.t[pile][row[pile]-1] > NO_CARD &&
+			    is_consecutive (f.t[pile], row[pile]) &&
+			    is_consecutive (f.t[pile], row[pile]-1) &&
+			    f.t[pile][row[pile]+1] != NO_CARD)
 			) {
 				line[pile]=0;
 				row[pile]++;
