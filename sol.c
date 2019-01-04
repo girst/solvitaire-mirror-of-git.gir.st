@@ -157,7 +157,7 @@ int sol(void) {
 			}
 			break;
 		case CMD_HINT: //TODO: show a possible (and sensible) move
-		case CMD_JOIN: //TODO: join any pile to here
+		case CMD_JOIN: //TODO: join any pile to here (longest if possible)
 		case CMD_INVAL: visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
 		case CMD_AGAIN: //TODO: restart with same seed
@@ -524,9 +524,18 @@ from_l:	print_table(&active, &inactive);
 		inactive = active;
 		break;
 	/* misc keys: */
-	case 'q': return CMD_QUIT;  //TODO: should be : command
-	case 'n': return CMD_NEW;   //TODO: should be : command
-	case 'r': return CMD_AGAIN; //TODO: should be : command
+	case ':':
+		{char buf[256];
+		fprintf (stderr, ":");
+		raw_mode(0); /* turn on echo */
+		fgets (buf, 256, stdin);
+		raw_mode(1);
+		switch(buf[0]) {
+		case 'q': return CMD_QUIT;
+		case 'n': return CMD_NEW;
+		case 'r': return CMD_AGAIN;
+		default:  return CMD_INVAL;
+		}}
 	case 'J': return CMD_JOIN;
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
