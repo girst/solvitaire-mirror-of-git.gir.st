@@ -119,7 +119,6 @@ enum special_cmds {
 	CMD_NEW,
 	CMD_AGAIN,
 	CMD_HINT,
-	CMD_HELP,
 	CMD_JOIN,
 };
 

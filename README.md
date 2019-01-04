@@ -17,7 +17,6 @@ play klondike and spider solitaire in your unicode terminal.
 	 cards, only print `.overlap` lines of the ends, and `1` line for the
          middle cards
  * TODO: screen size > stack height => rendering issues!
- * TODO: online (key-)help `?`, `-h`, `-v`
  * TODO: suggest moves (`h` => hint)
 ### P4
  * TODO: scores, variants: draw 3, max. n overturns
@@ -43,6 +42,8 @@ play klondike and spider solitaire in your unicode terminal.
  * DONE: sigint, sigcont handler! atexit() to avoid inconsistent term state
  * DONE: hjkl keyboard mode
  * DONE: more vim mode keys (first/last tableu)
+ * DONE: online (key-)help `?`, `-h`, `-v` (NOTE: implemented -h, rest deemed
+         not usedul)
 
 ## Notes
 

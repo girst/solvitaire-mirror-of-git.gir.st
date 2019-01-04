@@ -157,7 +157,6 @@ int sol(void) {
 			}
 			break;
 		case CMD_HINT: //TODO: show a possible (and sensible) move
-		case CMD_HELP: //TODO: display keyhelp
 		case CMD_JOIN: //TODO: join any pile to here
 		case CMD_INVAL: visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
@@ -529,8 +528,8 @@ from_l:	print_table(&active, &inactive);
 	case 'n': return CMD_NEW;   //TODO: should be : command
 	case 'r': return CMD_AGAIN; //TODO: should be : command
 	case 'J': return CMD_JOIN;
-	case 'K': return CMD_HINT;
-	case '?': return CMD_HELP;
+	case 'K': /* fallthrough */
+	case '?': return CMD_HINT;
 	case EOF: return CMD_NONE; /* sent by SIGCONT */
 	default: return CMD_INVAL;
 	}
@@ -552,7 +551,8 @@ to_l:	print_table(&active, &inactive);
 	case ' ':
 		*to = active.pile;
 		break; /* continues with the foundation/empty tableu check */
-	case 'K': return CMD_HELP;
+	case 'K': /* fallthrough */
+	case '?': return CMD_HINT;
 	case 'G'&0x1f: return CMD_NONE; /* cancel move with ^G */
 	case EOF: return CMD_NONE; /* sent by SIGCONT */
 	default:
