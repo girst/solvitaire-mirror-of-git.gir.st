@@ -21,3 +21,5 @@ getfuns: sol.c
 
 test:
 	grep -n --color=always 'TODO\|XXX\|\/xxx-slashes-xxx\/[^:]' *
+longtest: test
+	sed 's/\t/        /g' sol.c|grep -n --color=always '^.\{81\}'|awk '{print "\033[35msol.c\033[36m:" $$0}'

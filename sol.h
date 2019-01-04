@@ -16,6 +16,7 @@
 #define LONGHELP \
 	"OPTIONS:\n" \
 	LONGHELP_SPECIFIC \
+	"    -o(ption) (consv=conserve vertical space)\n" \
 	"    -s(cheme) (color|mono|small)\n" \
 	"    -h(elp)\n" \
 	"\n"
@@ -24,7 +25,7 @@
 	"    hjkl  : move cursor\n" \
 	"    H, L  : move cursor to first/last tableu pile\n" \
 	"    J, K  : join to here, show hint\n" \
-	"    r, q  : new game, quit\n" \
+	"    n, q  : new game, quit\n" \
 	"    space : select at cursor\n" \
 	"    return: draw from stock\n" \
 	DIRECT_ADDR_KEYHELP
@@ -116,6 +117,7 @@ enum special_cmds {
 	CMD_NONE,
 	CMD_QUIT,
 	CMD_NEW,
+	CMD_AGAIN,
 	CMD_HINT,
 	CMD_HELP,
 	CMD_JOIN,

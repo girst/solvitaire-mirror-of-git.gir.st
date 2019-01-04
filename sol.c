@@ -54,6 +54,7 @@ struct opts {
 #ifdef SPIDER
 	int m; /* difficulty mode */
 #endif
+	int v; /* conserve vertical space */
 	const struct scheme* s;
 } op;
 
@@ -95,10 +96,11 @@ int main(int argc, char** argv) {
 #ifdef SPIDER
 	op.m = MEDIUM;
 #endif
+	op.v = 0;
 
 	int optget;
 	opterr = 0; /* don't print message on unrecognized option */
-	while ((optget = getopt (argc, argv, "+:hd:s:")) != -1) {
+	while ((optget = getopt (argc, argv, "+:hd:o:s:")) != -1) {
 		switch (optget) {
 #ifdef SPIDER
 		case 'd': /* difficulty */
@@ -107,6 +109,9 @@ int main(int argc, char** argv) {
 			if(!strcmp(optarg,   "hard")) op.m = NORMAL;
 			break;
 #endif
+		case 'o': /* misc. options */
+			if(!strcmp(optarg, "consv")) op.v = 1;
+			break;
 		case 's': /* scheme */
 			if(!strcmp(optarg,"color")) op.s = &unicode_large_color;
 			if(!strcmp(optarg, "mono")) op.s = &unicode_large_mono;
@@ -156,6 +161,7 @@ int sol(void) {
 		case CMD_JOIN: //TODO: join any pile to here
 		case CMD_INVAL: visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
+		case CMD_AGAIN: //TODO: restart with same seed
 		case CMD_QUIT:  return GAME_QUIT;
 		}
 		print_table(NO_HI, NO_HI);
@@ -519,8 +525,9 @@ from_l:	print_table(&active, &inactive);
 		inactive = active;
 		break;
 	/* misc keys: */
-	case 'q': return CMD_QUIT;
-	case 'r': return CMD_NEW;
+	case 'q': return CMD_QUIT;  //TODO: should be : command
+	case 'n': return CMD_NEW;   //TODO: should be : command
+	case 'r': return CMD_AGAIN; //TODO: should be : command
 	case 'J': return CMD_JOIN;
 	case 'K': return CMD_HINT;
 	case '?': return CMD_HELP;
@@ -753,7 +760,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) { /
 				:op.s->card[card]
 				)[line[pile]]);
 
-			int extreme_overlap = 0; //TODO: activate iff space constrained (per pile)
+			int extreme_overlap = op.v && find_top(f.t[pile])>10;
 			/* normal overlap: */
 			if (++line[pile] >= (next?op.s->overlap:op.s->height)
 			/* extreme overlap on closed cards: */

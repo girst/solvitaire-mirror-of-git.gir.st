@@ -34,6 +34,10 @@ play klondike and spider solitaire in your unicode terminal.
  * DONE: make piles 0-indexed in klondike as well
  * HOLD: duplicate card ♠A found in tableu: added check at start to monitor this
          Cannot reproduce, removed check
+ * HOLD: bugs in spider's t2t()
+         * once segfaulted on large column
+         * sometimes doesn't work (ERR when it should be OK)
+         Cannot reproduce
  * DONE: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
          for mouse, hjkl modes)
  * DONE: sigint, sigcont handler! atexit() to avoid inconsistent term state

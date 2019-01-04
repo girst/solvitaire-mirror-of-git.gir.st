@@ -24,7 +24,9 @@ struct scheme {
 #define RULCARD(s, r) \
 	ULCARD("\033[91m" s "\033[39m", r)
 #define BULCARD(s, r) \
-	ULCARD("\033[37m" s "\033[39m", r)
+	ULCARD("\033[2m" s "\033[22m", r)  //WARN: using faint breaks bold
+//	ULCARD("\033[90m" s "\033[39m", r) //WARN: low contrast on black backgr.
+//	ULCARD("\033[37m" s "\033[39m", r) //WARN: unusable on white background
 #define USCARD(c) (char*[]){c}
 
 const struct scheme unicode_large_mono = {
