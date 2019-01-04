@@ -9,11 +9,9 @@ play klondike and spider solitaire in your unicode terminal.
  * TODO: undo:
 	 - insert append_undo() in x2y() functions
 	 - to encode stack position we need to overload `f.u.n` as index.
- * TODO: sigint, sigcont handler! atexit() to avoid inconsistent term state
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
 ### P3
- * TODO: hjkl keyboard mode
  * TODO: mouse mode
  * TODO: extreme overlapping: if we are printing a sequence or multiple face down
 	 cards, only print `.overlap` lines of the ends, and `1` line for the
@@ -38,6 +36,9 @@ play klondike and spider solitaire in your unicode terminal.
          Cannot reproduce, removed check
  * DONE: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
          for mouse, hjkl modes)
+ * DONE: sigint, sigcont handler! atexit() to avoid inconsistent term state
+ * DONE: hjkl keyboard mode
+ * DONE: more vim mode keys (first/last tableu)
 
 ## Notes
 

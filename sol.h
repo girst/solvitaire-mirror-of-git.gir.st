@@ -22,6 +22,9 @@
 #define KEYHELP \
 	"Keybindings:\n" \
 	"    hjkl  : move cursor\n" \
+	"    H, L  : move cursor to first/last tableu pile\n" \
+	"    J, K  : join to here, show hint\n" \
+	"    r, q  : new game, quit\n" \
 	"    space : select at cursor\n" \
 	"    return: draw from stock\n" \
 	DIRECT_ADDR_KEYHELP
@@ -115,7 +118,7 @@ enum special_cmds {
 	CMD_NEW,
 	CMD_HINT,
 	CMD_HELP,
-	CMD_FIND,
+	CMD_JOIN,
 };
 
 enum difficulty {
@@ -134,6 +137,7 @@ const struct cursor no_hi = {-1, -1};
 #define NO_HI &no_hi
 
 int sol(void);
+void quit(void);
 int find_top(card_t* pile);
 int first_movable(card_t* pile);
 void turn_over(card_t* pile);
@@ -164,5 +168,7 @@ void visbell (void);
 void append_undo (int n, int f, int t);
 void screen_setup (int enable);
 void raw_mode(int enable);
+void signal_handler (int signum);
+void signal_setup(void);
 
 #endif

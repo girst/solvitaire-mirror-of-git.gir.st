@@ -1,5 +1,7 @@
 #define _DEFAULT_SOURCE
+#define _POSIX_C_SOURCE /* for sigaction */
 #include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -118,7 +120,9 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	//TODO: signal setup, atexit()
+	signal_setup();
+	atexit (*quit);
+
 newgame:
 	screen_setup(1);
 
@@ -127,14 +131,10 @@ newgame:
 	case GAME_WON:
 		print_table(NO_HI, NO_HI);
 		win_anim();
-		if (getchar()=='q') goto quit;
+		if (getchar()=='q') return 0;
 		goto newgame;
-	case GAME_QUIT: goto quit;
+	case GAME_QUIT: return 0;
 	}
-
-quit:
-	screen_setup(0); //TODO: handled by atexit() in the future
-	return 0;
 }
 
 int sol(void) {
@@ -151,12 +151,20 @@ int sol(void) {
 			case WON: return GAME_WON;
 			}
 			break;
+		case CMD_HINT: //TODO: show a possible (and sensible) move
+		case CMD_HELP: //TODO: display keyhelp
+		case CMD_JOIN: //TODO: join any pile to here
 		case CMD_INVAL: visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
 		case CMD_QUIT:  return GAME_QUIT;
 		}
 		print_table(NO_HI, NO_HI);
 	}
+}
+
+void quit(void) {
+	screen_setup(0);
+	//TODO: free undo data structures
 }
 
 int find_top(card_t* pile) {
@@ -338,9 +346,6 @@ void remove_if_complete (card_t* pile) { //TODO: cleanup
 	}
 }
 int t2t(int from, int to, int opt) { //TODO: in dire need of cleanup
-	//TODO: segfaulted once on large column
-	//TODO: sometimes moving doesn't work (ERR when it should be OK) XXX
-
 	int top_from = find_top(f.t[from]);
 	int top_to = find_top(f.t[to]);
 	int empty_to = (top_to < 0)? opt: -1; /* empty pile? */
@@ -454,7 +459,12 @@ void cursor_right (struct cursor* cursor) {
 	if (cursor->pile < TAB_MAX) cursor->pile++;
 	cursor->opt = 0;
 }
-#endif //}}}
+#endif
+void cursor_to (struct cursor* cursor, int pile) {
+	cursor->pile = pile;
+	cursor->opt = 0;
+}
+//}}}
 #pragma GCC diagnostic pop
 int get_cmd (int* from, int* to, int* opt) {
 	//TODO: escape sequences (mouse, cursor keys)
@@ -494,8 +504,9 @@ from_l:	print_table(&active, &inactive);
 	case 'j': cursor_down (&active); goto from_l;
 	case 'k': cursor_up   (&active); goto from_l;
 	case 'l': cursor_right(&active); goto from_l;
-	//TODO: first/last tableu (H/L? 0/^/$?)
-	//TODO: real cursor keys
+	case 'H': cursor_to(&active,TAB_1);  goto from_l; /* leftmost  tableu */
+	case 'L': cursor_to(&active,TAB_MAX);goto from_l; /* rigthmost tableu */
+	//TODO: real cursor keys, home/end
 	case ' ': /* continue with second cursor */
 		*from = active.pile;
 		if (*from == STOCK) {
@@ -509,11 +520,11 @@ from_l:	print_table(&active, &inactive);
 		break;
 	/* misc keys: */
 	case 'q': return CMD_QUIT;
-	case 'r': return CMD_NEW;  //TODO
-	case 'H': return CMD_HINT; //TODO
-	case '?': return CMD_HELP; //TODO
-	case '/': return CMD_FIND; //TODO: highlight card of given rank (even non-movable)
-	case '\033': return CMD_INVAL; //TODO: cntlseq
+	case 'r': return CMD_NEW;
+	case 'J': return CMD_JOIN;
+	case 'K': return CMD_HINT;
+	case '?': return CMD_HELP;
+	case EOF: return CMD_NONE; /* sent by SIGCONT */
 	default: return CMD_INVAL;
 	}
 	inactive.pile = *from; /* for direct addressing highlighting */
@@ -528,9 +539,15 @@ to_l:	print_table(&active, &inactive);
 	case 'j': cursor_down (&active); goto to_l;
 	case 'k': cursor_up   (&active); goto to_l;
 	case 'l': cursor_right(&active); goto to_l; 
+	case 'H': cursor_to(&active,TAB_1);  goto to_l;
+	case 'L': cursor_to(&active,TAB_MAX);goto to_l;
+	case 'J': /* fallthrough; key makes no sense on destination */
 	case ' ':
 		*to = active.pile;
 		break; /* continues with the foundation/empty tableu check */
+	case 'K': return CMD_HELP;
+	case 'G'&0x1f: return CMD_NONE; /* cancel move with ^G */
+	case EOF: return CMD_NONE; /* sent by SIGCONT */
 	default:
 		if (t < '0' || t > '9') return CMD_INVAL;
 		if (t == '0')
@@ -794,7 +811,7 @@ void screen_setup (int enable) {
 	}
 }
 
-void raw_mode(int enable) { //{{{
+void raw_mode(int enable) {
 	static struct termios saved_term_mode;
 	struct termios raw_term_mode;
 
@@ -808,6 +825,33 @@ void raw_mode(int enable) { //{{{
 	} else {
 		tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_term_mode);
 	}
-} //}}}
+}
+
+void signal_handler (int signum) {
+	switch (signum) {
+	case SIGCONT:
+		screen_setup(0);
+		screen_setup(1);
+		print_table(NO_HI, NO_HI);
+		break;
+	case SIGINT:
+		exit(128+SIGINT);
+	}
+}
+void signal_setup(void) {
+	struct sigaction saction;
+
+	saction.sa_handler = signal_handler;
+	sigemptyset(&saction.sa_mask);
+	saction.sa_flags = 0;
+	if (sigaction(SIGCONT, &saction, NULL) < 0) {
+		perror ("SIGCONT");
+		exit (1);
+	}
+	if (sigaction(SIGINT, &saction, NULL) < 0) {
+		perror ("SIGINT");
+		exit (1);
+	}
+}
 
 //vim: foldmethod=marker
