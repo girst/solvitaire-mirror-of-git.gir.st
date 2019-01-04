@@ -1,6 +1,31 @@
 #ifndef __SOL_H__
 #define __SOL_H__
 
+#define SHORTHELP "%s [OPTIONS]\n"
+#ifdef KLONDIKE
+#define LONGHELP_SPECIFIC ""
+#define DIRECT_ADDR_KEYHELP \
+	"    1 .. 7: directly address tableu\n" \
+	"    8,9,0 : directly address stock/waste/foundation\n"
+#elif defined SPIDER
+#define LONGHELP_SPECIFIC \
+	"    -d(ifficulty) (eady|medium|hard)\n"
+#define DIRECT_ADDR_KEYHELP \
+	"    1 .. 0: directly address tableu\n"
+#endif
+#define LONGHELP \
+	"OPTIONS:\n" \
+	LONGHELP_SPECIFIC \
+	"    -s(cheme) (color|mono|small)\n" \
+	"    -h(elp)\n" \
+	"\n"
+#define KEYHELP \
+	"Keybindings:\n" \
+	"    hjkl  : move cursor\n" \
+	"    space : select at cursor\n" \
+	"    return: draw from stock\n" \
+	DIRECT_ADDR_KEYHELP
+
 #define DECK_SIZE 52
 enum cards {
 	NO_CARD,
@@ -53,6 +78,11 @@ enum action_return {
 	ERR, /*invalid move*/
 	WON, /*game won*/
 };
+enum game_states {
+	GAME_NEW,
+	GAME_WON,
+	GAME_QUIT,
+};
 
 /* WARN: stock must always follow immediately after `TAB_*`! */
 #define TAB_MAX (STOCK-1)
@@ -103,7 +133,7 @@ struct cursor {
 const struct cursor no_hi = {-1, -1};
 #define NO_HI &no_hi
 
-void sol(void);
+int sol(void);
 int find_top(card_t* pile);
 int first_movable(card_t* pile);
 void turn_over(card_t* pile);

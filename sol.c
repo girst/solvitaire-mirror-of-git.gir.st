@@ -2,6 +2,7 @@
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <termios.h>
 #include <unistd.h>
@@ -87,18 +88,56 @@ int (*action[NUM_PLACES][10])(int,int,int) = {
 // }}}
 
 int main(int argc, char** argv) {
-	(void) argc;(void) argv;
+	/* opinionated defaults: */
 	op.s = &unicode_large_color;
 #ifdef SPIDER
-	op.m = MEDIUM; //TODO: make configurable
-	op.m = EASY;
+	op.m = MEDIUM;
 #endif
+
+	int optget;
+	opterr = 0; /* don't print message on unrecognized option */
+	while ((optget = getopt (argc, argv, "+:hd:s:")) != -1) {
+		switch (optget) {
+#ifdef SPIDER
+		case 'd': /* difficulty */
+			if(!strcmp(optarg,   "easy")) op.m = EASY;
+			if(!strcmp(optarg, "medium")) op.m = MEDIUM;
+			if(!strcmp(optarg,   "hard")) op.m = NORMAL;
+			break;
+#endif
+		case 's': /* scheme */
+			if(!strcmp(optarg,"color")) op.s = &unicode_large_color;
+			if(!strcmp(optarg, "mono")) op.s = &unicode_large_mono;
+			if(!strcmp(optarg,"small")) op.s = &unicode_small_mono;
+			break;
+		case 'h':
+		case ':': //missing optarg
+		default:
+			fprintf (stderr, SHORTHELP LONGHELP KEYHELP, argv[0]);
+			return optget != 'h';
+		}
+	}
+
+	//TODO: signal setup, atexit()
+newgame:
 	screen_setup(1);
-	sol(); //TODO: restart, etc.
-	screen_setup(0);
+
+	switch(sol()) {
+	case GAME_NEW: goto newgame;
+	case GAME_WON:
+		print_table(NO_HI, NO_HI);
+		win_anim();
+		if (getchar()=='q') goto quit;
+		goto newgame;
+	case GAME_QUIT: goto quit;
+	}
+
+quit:
+	screen_setup(0); //TODO: handled by atexit() in the future
+	return 0;
 }
 
-void sol(void) {
+int sol(void) {
 	deal();
 
 	int from, to, opt;
@@ -109,17 +148,12 @@ void sol(void) {
 			switch (action[from][to](from,to,opt)) {
 			case OK:  break;
 			case ERR: visbell(); break;
-			case WON: 
-				print_table(NO_HI, NO_HI);
-				win_anim();
-				getchar(); /* consume char left by win_anim() */
-				return;
+			case WON: return GAME_WON;
 			}
 			break;
-		case CMD_INVAL:
-			visbell();
-			break;
-		case CMD_QUIT: return;
+		case CMD_INVAL: visbell(); break;
+		case CMD_NEW:   return GAME_NEW;
+		case CMD_QUIT:  return GAME_QUIT;
 		}
 		print_table(NO_HI, NO_HI);
 	}
@@ -460,6 +494,8 @@ from_l:	print_table(&active, &inactive);
 	case 'j': cursor_down (&active); goto from_l;
 	case 'k': cursor_up   (&active); goto from_l;
 	case 'l': cursor_right(&active); goto from_l;
+	//TODO: first/last tableu (H/L? 0/^/$?)
+	//TODO: real cursor keys
 	case ' ': /* continue with second cursor */
 		*from = active.pile;
 		if (*from == STOCK) {
