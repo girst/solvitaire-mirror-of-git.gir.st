@@ -97,16 +97,15 @@ enum difficulty {
 typedef signed char card_t;
 
 struct cursor {
-	int /*enum field_places*/ pile;
-//TODO: rename offset to opt
-	int offset; /* 0 means all cards, 1 starting from second, etc. */
-	           /* overloaded to mean which foundation if !on_tableu */
+	int pile;
+	int opt; /* klondike: foundation id; spider: move nth movable card */
 };
 const struct cursor no_hi = {-1, -1};
 #define NO_HI &no_hi
 
 void sol(void);
 int find_top(card_t* pile);
+int first_movable(card_t* pile);
 void turn_over(card_t* pile);
 int check_won(void);
 int is_consecutive (card_t* pile, int pos);
@@ -129,6 +128,7 @@ int nop(int from, int to, int opt);
 int get_cmd (int* from, int* to, int* opt);
 void deal(void);
 int is_movable(card_t* pile, int n);
+void print_hi(int invert, int grey_bg, int bold, char* str);
 void print_table(const struct cursor* active, const struct cursor* inactive);
 void visbell (void);
 void append_undo (int n, int f, int t);
