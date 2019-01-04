@@ -54,8 +54,8 @@ enum action_return {
 	WON, /*game won*/
 };
 
-#define NO_HI -1 /* print_table()'s highlighter also uses field_places */
-/* WARN: stock must always follow immediately after `TAB_*` for is_tableu() */
+/* WARN: stock must always follow immediately after `TAB_*`! */
+#define TAB_MAX (STOCK-1)
 enum field_places {
 	TAB_1,
 	TAB_2,
@@ -96,6 +96,15 @@ enum difficulty {
 
 typedef signed char card_t;
 
+struct cursor {
+	int /*enum field_places*/ pile;
+//TODO: rename offset to opt
+	int offset; /* 0 means all cards, 1 starting from second, etc. */
+	           /* overloaded to mean which foundation if !on_tableu */
+};
+const struct cursor no_hi = {-1, -1};
+#define NO_HI &no_hi
+
 void sol(void);
 int find_top(card_t* pile);
 void turn_over(card_t* pile);
@@ -120,7 +129,7 @@ int nop(int from, int to, int opt);
 int get_cmd (int* from, int* to, int* opt);
 void deal(void);
 int is_movable(card_t* pile, int n);
-void print_table(int highlight);
+void print_table(const struct cursor* active, const struct cursor* inactive);
 void visbell (void);
 void append_undo (int n, int f, int t);
 void screen_setup (int enable);

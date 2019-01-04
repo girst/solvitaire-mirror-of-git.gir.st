@@ -30,7 +30,7 @@
 #define get_color(card) \
 	((get_suit(card) ^ get_suit(card)>>1) & 1)
 
-#define is_tableu(where) (where < STOCK)
+#define is_tableu(where) (where <= TAB_MAX)
 
 struct playfield {
 	card_t s[MAX_STOCK]; /* stock */
@@ -102,7 +102,7 @@ void sol(void) {
 	deal();
 
 	int from, to, opt;
-	print_table(NO_HI);
+	print_table(NO_HI, NO_HI);
 	for(;;) {
 		switch (get_cmd(&from, &to, &opt)) {
 		case CMD_MOVE:
@@ -110,7 +110,7 @@ void sol(void) {
 			case OK:  break;
 			case ERR: visbell(); break;
 			case WON: 
-				print_table(NO_HI);
+				print_table(NO_HI, NO_HI);
 				win_anim();
 				getchar(); /* consume char left by win_anim() */
 				return;
@@ -121,7 +121,7 @@ void sol(void) {
 			break;
 		case CMD_QUIT: return;
 		}
-		print_table(NO_HI);
+		print_table(NO_HI, NO_HI);
 	}
 }
 
@@ -340,10 +340,88 @@ int s2t(int from, int to, int opt) {
 int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
 // }}}
 
+#pragma GCC diagnostic ignored "-Wswitch" //not ideal :|
+#ifdef KLONDIKE
+void cursor_left (struct cursor* cursor) {
+	if (is_tableu(cursor->pile)) {
+		if (cursor->pile > 0) cursor->pile--;
+		cursor->offset = 0;
+	} else { /* stock/waste/foundation*/
+		switch (cursor->pile) {
+		case WASTE: cursor->pile = STOCK; cursor->offset = 0; break;
+		case FOUNDATION:
+			if (cursor->offset <= 0)
+				cursor->pile = WASTE;
+			else
+				cursor->offset--;
+		}
+	}
+}
+void cursor_down (struct cursor* cursor) {
+	if (!is_tableu(cursor->pile)) {
+		switch (cursor->pile) {
+		case STOCK: cursor->pile = TAB_1; break;
+		case WASTE: cursor->pile = TAB_2; break;
+		case FOUNDATION:
+			cursor->pile = TAB_4 + cursor->offset;
+		}
+		cursor->offset = 0;
+	}
+}
+void cursor_up (struct cursor* cursor) {
+	if (is_tableu(cursor->pile)) {
+		switch (cursor->pile) { //ugly :|
+		case TAB_1: cursor->pile = STOCK; break;
+		case TAB_2: cursor->pile = WASTE; break;
+		case TAB_3: cursor->pile = WASTE; break;
+		case TAB_4: case TAB_5: case TAB_6: case TAB_7:
+			cursor->offset=cursor->pile-TAB_4;
+			cursor->pile = FOUNDATION;
+			break;
+		}
+	}
+}
+void cursor_right (struct cursor* cursor) {
+	if (is_tableu(cursor->pile)) {
+		if (cursor->pile < TAB_MAX) cursor->pile++;
+	} else {
+		switch (cursor->pile) {
+		case STOCK: cursor->pile = WASTE; break;
+		case WASTE: cursor->pile = FOUNDATION;cursor->offset = 0; break;
+		case FOUNDATION:
+			if (cursor->offset < NUM_DECKS*NUM_SUITS)
+				cursor->offset++;
+		}
+	}
+}
+#elif defined SPIDER
+/*NOTE: one can't highlight the stock due to me being too lazy to implement it*/
+void cursor_left (struct cursor* cursor) {
+	if (cursor->pile > 0) cursor->pile--;
+	cursor->offset = 0;
+}
+void cursor_down (struct cursor* cursor) {
+	//XXX: if more than 1 card selected: (offset < number-of-movable-cards)
+		cursor->offset++;
+}
+void cursor_up (struct cursor* cursor) {
+	if (cursor->offset > 0) cursor->offset--;
+}
+void cursor_right (struct cursor* cursor) {
+	if (cursor->pile < TAB_MAX) cursor->pile++;
+	cursor->offset = 0;
+}
+#endif
+#pragma GCC diagnostic pop
 int get_cmd (int* from, int* to, int* opt) {
 	//TODO: escape sequences (mouse, cursor keys)
 	//TODO: don't allow taking from empty piles
+	//XXX TODO: set offset to -1 if it was done with direct addressing!
 	int _f, t;
+	struct cursor inactive = {-1,-1};
+	static struct cursor active = {0,0};
+	active.offset = 0; /* always reset offset, but not other values */
+start:	print_table(&active, &inactive);
 	_f = getchar();
 
 	switch (_f) {
@@ -369,20 +447,51 @@ int get_cmd (int* from, int* to, int* opt) {
 		*to = WASTE;
 		return CMD_MOVE;
 	/* cursor keys addressing: */
-	//TODO
+	case 'h': cursor_left (&active); goto start;
+	case 'j': cursor_down (&active); goto start;
+	case 'k': cursor_up   (&active); goto start;
+	case 'l': cursor_right(&active); goto start;
+	case ' ': /* continue with second cursor */
+		*from = active.pile;
+		if (*from == STOCK) {
+			*to = WASTE;
+			return CMD_MOVE;
+		}
+#ifdef KLONDIKE
+		*opt = active.offset; /* when FOUNDATION */
+#endif
+		inactive = active;
+		break;
+	/* misc keys: */
 	case 'q': return CMD_QUIT;
 	case 'r': return CMD_NEW;  //TODO
-	case 'h': return CMD_HINT; //TODO
+	case 'H': return CMD_HINT; //TODO
 	case '?': return CMD_HELP; //TODO
 	case '/': return CMD_FIND; //TODO: highlight card of given rank (even non-movable)
 	case '\033': return CMD_INVAL; //TODO: cntlseq
 	default: return CMD_INVAL;
 	}
+	inactive.pile = *from; /* make direct addressing highlight still work */ //TODO: all-foundation highlight broken
 	if (is_tableu(*from) && f.t[*from][0] == NO_CARD) return CMD_INVAL;
-	print_table(*from);
+second:	print_table(&active, &inactive);
 
 	t = getchar();
-	if (t == ' ') return CMD_NONE; /* cancel a command (without visbell) */
+	if (t == 'h') { cursor_left (&active); goto second; }
+	if (t == 'j') { cursor_down (&active); goto second; }
+	if (t == 'k') { cursor_up   (&active); goto second; }
+	if (t == 'l') { cursor_right(&active); goto second; }
+	if (t == ' ') {//NOTE: behaviour change--return CMD_NONE; /* cancel a command (without visbell) */
+		*to = active.pile;
+#ifdef SPIDER
+		//TODO: moving cards from a directly addressed pile onto a cursor addressed empty pile does not work
+		if (is_tableu(*to) && f.t[*to][0] == NO_CARD) {
+			int i = 0;
+			for (;f.t[*from][i] && !is_movable(f.t[*from], i); i++);
+			*opt = get_rank(f.t[*from][i+inactive.offset]);
+		}
+#endif
+		return CMD_MOVE;
+	}
 	if (t < '0' || t > '9') return CMD_INVAL;
 	if (t == '0')
 #ifdef KLONDIKE
@@ -493,20 +602,23 @@ int is_movable(card_t* pile, int n) {
 	return 0;
 #endif
 }
-#define print_hi(invert, bold, str) /* for highlighting during get_cmd() */ \
-	printf ("%s%s%s%s%s", (bold)?"\033[1m":"", (invert)?"\033[7m":"", str, \
-		(invert)?"\033[27m":"", (bold)?"\033[22m":"")
-void print_table(int highlight) { //{{{
+#define print_hi(invert, grey_bg, bold, str) /* for highlighting during get_cmd() */ \
+	printf ("%s%s%s%s%s%s%s", \
+		(bold)?"\033[1m":"", (invert)?"\033[7m":"", (grey_bg)?"\033[100m":"", \
+		str, \
+		(grey_bg)?"\033[49m":"", (invert)?"\033[27m":"", (bold)?"\033[22m":"")
+//TODO: empty highlight (for cursor mode) doesn't show anything (highlight pile number?)
+void print_table(const struct cursor* active, const struct cursor* inactive) { //{{{
 	printf("\033[2J\033[H"); /* clear screen, reset cursor */
 #ifdef KLONDIKE
 	/* print stock, waste and foundation: */
 	for (int line = 0; line < op.s->height; line++) {
 		/* stock: */
-		print_hi (highlight == STOCK, 1, (
+		print_hi (active->pile == STOCK, inactive->pile == STOCK, 1, (
 			(f.w < f.z-1)?op.s->facedown
 			:op.s->placeholder)[line]);
 		/* waste: */
-		print_hi (highlight == WASTE, 1, (
+		print_hi (active->pile == WASTE, inactive->pile == WASTE, 1, (
 			/* NOTE: cast, because f.w sometimes is (short)-1 !? */
 			((short)f.w >= 0)?op.s->card[f.s[f.w]]
 			:op.s->placeholder)[line]);
@@ -514,14 +626,14 @@ void print_table(int highlight) { //{{{
 		/* foundation: */
 		for (int pile = 0; pile < NUM_SUITS; pile++) {
 			int card = find_top(f.f[pile]);
-			print_hi (highlight == FOUNDATION, 1,
+			print_hi (active->pile == FOUNDATION && active->offset == pile, inactive->pile == FOUNDATION && inactive->offset == pile, 1,
 				(card < 0)?op.s->placeholder[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
 		printf("\n");
 	}
 	printf("\n");
-#elif SPIDER
+#elif defined SPIDER
 	int fdone; for (fdone = NUM_DECKS*NUM_SUITS; fdone; fdone--)
 		if (f.f[fdone-1][RANK_K]) break;  /*number of completed stacks*/
 	int spacer_from = f.z?(f.z/10-1) * op.s->halfwidth[0] + op.s->width:0;
@@ -545,6 +657,15 @@ void print_table(int highlight) { //{{{
 	}
 	printf("\n");
 #endif
+#ifdef KLONDIKE
+#define DO_HI(cursor) cursor->pile == pile && (movable || empty)
+#define INC_OFFSET
+#elif defined SPIDER
+	int offset[NUM_PILES]={1,1,1,1,1,1,1,1,1,1}; // :|
+#define DO_HI(cursor) cursor->pile == pile && (movable || empty) \
+	&& offset[pile] > cursor->offset
+#define INC_OFFSET if (movable) offset[pile]++
+#endif
 	/* print tableu piles: */
 	int row[NUM_PILES] = {0};
 	int line[NUM_PILES]= {0};
@@ -556,9 +677,11 @@ void print_table(int highlight) { //{{{
 			card_t card = f.t[pile][row[pile]];
 			card_t next = f.t[pile][row[pile]+1];
 			int movable = is_movable(f.t[pile], row[pile]);
+			int empty   = !card && row[pile] == 0;
 
-			print_hi (highlight == pile && movable, movable, (
-				(card<0)?op.s->facedown
+			print_hi (DO_HI(active), DO_HI(inactive), movable, (
+				(!card && row[pile] == 0)?op.s->placeholder
+				:(card<0)?op.s->facedown
 				:op.s->card[card]
 				)[line[pile]]);
 
@@ -580,8 +703,10 @@ void print_table(int highlight) { //{{{
 			) {
 				line[pile]=0;
 				row[pile]++;
+				INC_OFFSET;
 			}
-			if(!card && !label[pile]) { /* tableu labels: */
+			/* tableu labels: */
+			if(!card && !label[pile] && row[pile]>0&&line[pile]>0) {
 				label[pile] = 1;
 				printf ("\b\b%d ", (pile+1) % 10); //XXX: hack
 			}
