@@ -10,11 +10,16 @@ play klondike and spider solitaire in your unicode terminal.
 	 - insert append_undo() in x2y() functions
 	 - to encode stack position we need to overload `f.u.n` as index.
 	   (similar for foundation: overload `f.u.n` as foundation id)
+	 - w2f(): have to encode both stock index and foundation id <-XXX
+	          don't want to add a struct field for this one case; 
+	          for the time being (i.e. forever) I'm ORing waste index and
+	          (foundation id<<16). ugly but works :/
 	 - turning over cards: this needs to be encoded, because the card might 
 	   be consecutive and there's no way to tell what its previous state was. 
 	   at least 3 methods possible:
 	    * indicate that a card was turned (can be at most 1) by negating u.n
-	      pros: no wasted space, negation pattern already used for closed cards
+	      pros: no wasted space (it's just a boolean value), negation pattern 
+	            already used for closed cards
 	      cons: dirty C hack, less obvious than in other places, no need to
 	            conserve memory this tightly
 	    - another flag in f.u (.c for was-closed?)

@@ -104,7 +104,8 @@ enum field_places {
 	TAB_10,
 	STOCK,
 #define WASTE 0; /* need it for get_cmd(), but don't count it in NUM_PLACES */
-#define TABLEU NUM_PLACES; /* for undo .t when .f==STACK */
+#define TABLEU -2 /* for undo .t when .f==STACK */
+#define FOUNDATION -3 /* for undo .t when stack complete */
 #elif defined KLONDIKE
 	STOCK,
 	WASTE,
@@ -157,7 +158,7 @@ int f2t(int from, int to, int opt);
 int w2t(int from, int to, int opt);
 int t2t(int from, int to, int opt);
 #elif defined SPIDER
-void remove_if_complete (card_t* pile);
+void remove_if_complete (int pileno);
 int t2t(int from, int to, int opt);
 int s2t(int from, int to, int opt);
 #endif

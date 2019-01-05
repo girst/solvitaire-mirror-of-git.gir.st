@@ -187,9 +187,12 @@ int first_movable(card_t* pile) {
 	for (;pile[i] && !is_movable(pile, i); i++);
 	return i;
 }
-void turn_over(card_t* pile) {
+int turn_over(card_t* pile) {
 	int top = find_top(pile);
-	if (pile[top] < 0) pile[top] *= -1;
+	if (pile[top] < 0) {
+		pile[top] *= -1;
+		return 1;
+	} else return 0;
 }
 int check_won(void) {
 	for (int pile = 0; pile < NUM_DECKS*NUM_SUITS; pile++)
@@ -254,7 +257,9 @@ int t2f(int from, int to, int opt) { /* tableu to foundation */
 	|| (top_to >= 0 && rank_next(f.f[to][top_to],f.t[from][top_from]))) {
 		f.f[to][top_to+1] = f.t[from][top_from];
 		f.t[from][top_from] = NO_CARD;
-		turn_over(f.t[from]);
+		turn_over(f.t[from])
+			?append_undo(from, FOUNDATION, -to)
+			:append_undo(from, FOUNDATION,  to);
 		if (check_won()) return WON;
 		return OK;
 	} else return ERR;
@@ -266,6 +271,7 @@ int w2f(int from, int to, int opt) { /* waste to foundation */
 	int top_to = find_top(f.f[to]);
 	if ((top_to < 0 && get_rank(f.s[f.w]) == RANK_A)
 	|| (top_to >= 0 && rank_next(f.f[to][top_to], f.s[f.w]))) {
+		append_undo(WASTE, FOUNDATION, f.w | to<<16); //ugly encoding :|
 		f.f[to][top_to+1] = stack_take();
 		if (check_won()) return WON;
 		return OK;
@@ -296,6 +302,7 @@ int f2t(int from, int to, int opt) { /* foundation to tableu */
 	&& (rank_next(f.f[from][top_from], f.t[to][top_to]))) {
 		f.t[to][top_to+1] = f.f[from][top_from];
 		f.f[from][top_from] = NO_CARD;
+		append_undo(FOUNDATION, to, from);
 		return OK;
 	} else return ERR;
 }
@@ -305,6 +312,7 @@ int w2t(int from, int to, int opt) { /* waste to tableu */
 	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w]))
 	   && (rank_next(f.s[f.w], f.t[to][top_to])))
 	|| (top_to < 0 && get_rank(f.s[f.w]) == RANK_K)) {
+		append_undo(WASTE, to, f.w);
 		f.t[to][top_to+1] = stack_take();
 		return OK;
 	} else return ERR;
@@ -313,6 +321,7 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 	(void) opt; /* don't need */
 	int top_to = find_top(f.t[to]);
 	int top_from = find_top(f.t[from]);
+	int count = 0; //NOTE: could probably be factored out
 	for (int i = top_from; i >=0; i--) {
 		if (((get_color(f.t[to][top_to]) != get_color(f.t[from][i]))
 		   && (rank_next(f.t[from][i], f.t[to][top_to]))
@@ -323,16 +332,20 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 				top_to++;
 				f.t[to][top_to] = f.t[from][i];
 				f.t[from][i] = NO_CARD;
+				count++;
 			}
-			turn_over(f.t[from]);
+			turn_over(f.t[from])
+				?append_undo(from, to, -count)
+				:append_undo(from, to,  count);
 			return OK;
 		}
 	}
 	return ERR; /* no such move possible */
 }
 #elif defined SPIDER
-void remove_if_complete (card_t* pile) { //cleanup!
+void remove_if_complete (int pileno) { //cleanup!
 	static int foundation = 0; /* where to put pile onto (1 set per stack)*/
+	card_t* pile = f.t[pileno];
 	/* test if K...A complete; move to foundation if so */
 	int top_from = find_top(pile);
 	if (get_rank(pile[top_from]) != RANK_A) return;
@@ -344,8 +357,10 @@ void remove_if_complete (card_t* pile) { //cleanup!
 				f.f[foundation][j] = pile[i];
 				pile[i] = NO_CARD;
 			}
+			turn_over(pile)
+				?append_undo(pileno, FOUNDATION, -foundation)
+				:append_undo(pileno, FOUNDATION,  foundation);
 			foundation++;
-			turn_over(pile);
 			return;
 		}
 	}
@@ -354,6 +369,7 @@ int t2t(int from, int to, int opt) { //in dire need of cleanup
 	int top_from = find_top(f.t[from]);
 	int top_to = find_top(f.t[to]);
 	int empty_to = (top_to < 0)? opt: -1; /* empty pile? */
+	int count = 0; //NOTE: could probably be factored out
 
 	for (int i = top_from; i >= 0; i--) {
 		if (!is_consecutive(f.t[from], i)) break;
@@ -365,9 +381,12 @@ int t2t(int from, int to, int opt) { //in dire need of cleanup
 				top_to++;
 				f.t[to][top_to] = f.t[from][i];
 				f.t[from][i] = NO_CARD;
+				count++;
 			}
-			turn_over(f.t[from]);
-			remove_if_complete (f.t[to]);
+			turn_over(f.t[from])
+				?append_undo(from, to, -count)
+				:append_undo(from, to,  count);
+			remove_if_complete(to);
 			if (check_won()) return WON;
 			return OK;
 		}
@@ -382,9 +401,10 @@ int s2t(int from, int to, int opt) {
 		if (f.t[pile][0]==NO_CARD) return ERR; /*no piles may be empty*/
 	for (int pile = 0; pile < NUM_PILES; pile++) {
 		f.t[pile][find_top(f.t[pile])+1] = f.s[--f.z];
-		remove_if_complete (f.t[pile]);
+		remove_if_complete(pile);
 		if (check_won()) return WON;
 	}
+	append_undo(STOCK, TABLEU, 1); /*NOTE: puts 1 card on each tableu pile*/
 	return OK;
 }
 #endif
