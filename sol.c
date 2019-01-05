@@ -234,7 +234,7 @@ fin:
 	return;
 }
 // takeable actions {{{
-//TODO XXX: deduplicate code (e.g. rank_consecutive() macro)
+//cleanup: deduplicate code (e.g. rank_consecutive() macro)
 #ifdef KLONDIKE
 card_t stack_take(void) { /*NOTE: assert(f.w >= 0) */
 	card_t card = f.s[f.w];
@@ -331,7 +331,7 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 	return ERR; /* no such move possible */
 }
 #elif defined SPIDER
-void remove_if_complete (card_t* pile) { //TODO: cleanup
+void remove_if_complete (card_t* pile) { //cleanup!
 	static int foundation = 0; /* where to put pile onto (1 set per stack)*/
 	/* test if K...A complete; move to foundation if so */
 	int top_from = find_top(pile);
@@ -350,7 +350,7 @@ void remove_if_complete (card_t* pile) { //TODO: cleanup
 		}
 	}
 }
-int t2t(int from, int to, int opt) { //TODO: in dire need of cleanup
+int t2t(int from, int to, int opt) { //in dire need of cleanup
 	int top_from = find_top(f.t[from]);
 	int top_to = find_top(f.t[to]);
 	int empty_to = (top_to < 0)? opt: -1; /* empty pile? */
@@ -755,6 +755,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) { /
 	int line[NUM_PILES]= {0};
 	int label[NUM_PILES]={0};
 	int line_had_card;
+	int did_placeholders = 0;
 	do {
 		line_had_card = 0;
 		for (int pile = 0; pile < NUM_PILES; pile++) {
@@ -795,9 +796,10 @@ void print_table(const struct cursor* active, const struct cursor* inactive) { /
 				printf ("\b\b%d ", (pile+1) % 10); //XXX: hack
 			}
 			line_had_card |= !!card;
+			did_placeholders |= row[pile] > 0;
 		}
 		printf ("\n");
-	} while (line_had_card);
+	} while (line_had_card || !did_placeholders);
 }//}}}
 
 void visbell (void) {
@@ -832,7 +834,8 @@ void raw_mode(int enable) {
 	struct termios raw_term_mode;
 
 	if (enable) {
-		tcgetattr(STDIN_FILENO, &saved_term_mode);
+		if (saved_term_mode.c_lflag == 0)/*don't overwrite stored mode*/
+			tcgetattr(STDIN_FILENO, &saved_term_mode);
 		raw_term_mode = saved_term_mode;
 		raw_term_mode.c_lflag &= ~(ICANON | ECHO);
 		raw_term_mode.c_cc[VMIN] = 1 ;
