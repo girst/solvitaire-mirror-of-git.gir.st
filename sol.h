@@ -1,36 +1,22 @@
 #ifndef __SOL_H__
 #define __SOL_H__
 
-#define SHORTHELP "%s [OPTIONS]\n"
-#ifdef KLONDIKE
-#define LONGHELP_SPECIFIC ""
-#define DIRECT_ADDR_KEYHELP \
-	"    1 .. 7: directly address tableu\n" \
-	"    8,9,0 : directly address stock/waste/foundation\n"
-#elif defined SPIDER
-#define LONGHELP_SPECIFIC \
-	"    -d(ifficulty) (eady|medium|hard)\n"
-#define DIRECT_ADDR_KEYHELP \
-	"    1 .. 0: directly address tableu\n"
-#endif
-#define LONGHELP \
-	"OPTIONS:\n" \
-	LONGHELP_SPECIFIC \
-	"    -o(ption) (consv=conserve vertical space)\n" \
-	"    -s(cheme) (color|mono|small)\n" \
-	"    -h(elp)\n" \
-	"\n"
-#define KEYHELP \
-	"Keybindings:\n" \
-	"    hjkl  : move cursor\n" \
-	"    H, L  : move cursor to first/last tableu pile\n" \
-	"    J, K  : join to here, show hint\n" \
-	"    n, q  : new game, quit\n" \
-	"    space : select at cursor\n" \
-	"    return: draw from stock\n" \
-	DIRECT_ADDR_KEYHELP
-
+// enums and constants {{{
 #define DECK_SIZE 52
+#ifdef KLONDIKE
+#define NUM_PILES 7
+#define MAX_HIDDEN 6 /*how many cards are turned over at most in a tableu pile*/
+#define MAX_STOCK 24 /*how many cards can be in the stock at most (=@start)*/
+#define NUM_DECKS 1
+#define PILE_SIZE MAX_HIDDEN+NUM_RANKS
+#elif defined SPIDER
+#define MAX_HIDDEN 5
+#define NUM_PILES 10
+#define MAX_STOCK 50 /*how many cards can be dealt onto the piles*/
+#define NUM_DECKS 2
+#define PILE_SIZE DECK_SIZE*NUM_DECKS /* no maximum stack size in spider :/ */
+#endif
+
 enum cards {
 	NO_CARD,
 	CLU_A,	DIA_A,	HEA_A,	SPA_A,
@@ -129,15 +115,69 @@ enum difficulty {
 	MEDIUM,
 	EASY,
 };
+//}}}
 
 typedef signed char card_t;
 
+struct playfield {
+	card_t s[MAX_STOCK]; /* stock */
+	int z; /* stock size */
+	int w; /* waste; index into stock (const -1 in spider) */
+	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation */
+	card_t t[NUM_PILES][PILE_SIZE]; /* tableu piles */
+	struct undo {
+		int f; /* pile cards were taken from */
+		int t; /* pile cards were moved to */
+		int n; /* if tableu: number of cards moved */
+		       /* else: index into stock/foundation */
+		struct undo* prev;
+		struct undo* next;
+	}* u;
+};
+struct opts {
+#ifdef SPIDER
+	int m; /* difficulty mode */
+#endif
+	int v; /* conserve vertical space */
+	const struct scheme* s;
+};
 struct cursor {
 	int pile;
 	int opt; /* klondike: foundation id; spider: move nth movable card */
 };
 const struct cursor no_hi = {-1, -1};
 #define NO_HI &no_hi
+
+// help texts {{{
+#define SHORTHELP "%s [OPTIONS]\n"
+#ifdef KLONDIKE
+#define LONGHELP_SPECIFIC ""
+#define DIRECT_ADDR_KEYHELP \
+	"    1 .. 7: directly address tableu\n" \
+	"    8,9,0 : directly address stock/waste/foundation\n"
+#elif defined SPIDER
+#define LONGHELP_SPECIFIC \
+	"    -d(ifficulty) (eady|medium|hard)\n"
+#define DIRECT_ADDR_KEYHELP \
+	"    1 .. 0: directly address tableu\n"
+#endif
+#define LONGHELP \
+	"OPTIONS:\n" \
+	LONGHELP_SPECIFIC \
+	"    -o(ption) (consv=conserve vertical space)\n" \
+	"    -s(cheme) (color|mono|small)\n" \
+	"    -h(elp)\n" \
+	"\n"
+#define KEYHELP \
+	"Keybindings:\n" \
+	"    hjkl  : move cursor\n" \
+	"    H, L  : move cursor to first/last tableu pile\n" \
+	"    J, K  : join to here, show hint\n" \
+	"    n, q  : new game, quit\n" \
+	"    space : select at cursor\n" \
+	"    return: draw from stock\n" \
+	DIRECT_ADDR_KEYHELP
+//}}}
 
 int sol(void);
 void quit(void);

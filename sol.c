@@ -12,44 +12,8 @@
 #include "sol.h"
 #include "schemes.h"
 
-// constants and data structures {{{
-#ifdef KLONDIKE
-#define NUM_PILES 7
-#define MAX_HIDDEN 6 /*how many cards are turned over at most in a tableu pile*/
-#define MAX_STOCK 24 /*how many cards can be in the stock at most (=@start)*/
-#define NUM_DECKS 1
-#define PILE_SIZE MAX_HIDDEN+NUM_RANKS
-#elif defined SPIDER
-#define MAX_HIDDEN 5
-#define NUM_PILES 10
-#define MAX_STOCK 50 /*how many cards can be dealt onto the piles*/
-#define NUM_DECKS 2
-#define PILE_SIZE DECK_SIZE*NUM_DECKS /* no maximum stack size in spider :/ */
-#endif
-
-struct playfield {
-	card_t s[MAX_STOCK]; /* stock */
-	int z; /* stock size */
-	int w; /* waste; index into stock (const -1 in spider) */
-	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation */
-	card_t t[NUM_PILES][PILE_SIZE]; /* tableu piles */
-	struct undo {
-		int f; /* pile cards were taken from */
-		int t; /* pile cards were moved to */
-		int n; /* if tableu: number of cards moved */
-		       /* else: index into stock/foundation */
-		struct undo* prev;
-		struct undo* next;
-	}* u;
-} f;
-struct opts {
-#ifdef SPIDER
-	int m; /* difficulty mode */
-#endif
-	int v; /* conserve vertical space */
-	const struct scheme* s;
-} op;
-//}}}
+struct playfield f;
+struct opts op;
 
 // action table {{{
 /* stores a function pointer for every takeable action; called by game loop */
