@@ -103,7 +103,7 @@ enum field_places {
 	TAB_9,
 	TAB_10,
 	STOCK,
-#define WASTE 0; /* need it for get_cmd(), but don't count it in NUM_PLACES */
+#define WASTE 0 /* need it for get_cmd()/action[][] table, but don't count it in NUM_PLACES */
 #define TABLEU -2 /* for undo .t when .f==STACK */
 #define FOUNDATION -3 /* for undo .t when stack complete */
 #elif defined KLONDIKE
