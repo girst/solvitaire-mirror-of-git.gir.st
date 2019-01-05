@@ -209,12 +209,12 @@ int is_consecutive (card_t* pile, int pos) {
 
 #ifdef KLONDIKE
 	/* ranks consecutive? */
-	if (rank_next(pile[pos+1], pile[pos])) return 0;
+	if (!rank_next(pile[pos+1], pile[pos])) return 0;
 	/* color opposite? */
 	if (get_color(pile[pos+1]) == get_color(pile[pos])) return 0;
 #elif defined SPIDER
 	/* ranks consecutive? */
-	if (rank_next(pile[pos+1], pile[pos])) return 0;
+	if (!rank_next(pile[pos+1], pile[pos])) return 0;
 	/* same suit? */
 	if (get_suit(pile[pos+1]) != get_suit(pile[pos])) return 0;
 #endif
