@@ -143,6 +143,7 @@ int find_top(card_t* pile);
 int first_movable(card_t* pile);
 void turn_over(card_t* pile);
 int check_won(void);
+int rank_next (card_t a, card_t b);
 int is_consecutive (card_t* pile, int pos);
 void win_anim(void);
 #ifdef KLONDIKE

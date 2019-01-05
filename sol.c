@@ -192,18 +192,21 @@ int check_won(void) {
 
 	return 1;
 }
+int rank_next (card_t a, card_t b) {
+	return get_rank(a) == get_rank(b)-1;
+}
 int is_consecutive (card_t* pile, int pos) {
 	if (pos+1 >= PILE_SIZE) return 1; /* card is last */
 	if (pile[pos+1] == NO_CARD) return 1; /* card is first */
 
 #ifdef KLONDIKE
 	/* ranks consecutive? */
-	if (get_rank(pile[pos+1]) != get_rank(pile[pos])-1) return 0;
+	if (rank_next(pile[pos+1], pile[pos])) return 0;
 	/* color opposite? */
 	if (get_color(pile[pos+1]) == get_color(pile[pos])) return 0;
 #elif defined SPIDER
 	/* ranks consecutive? */
-	if (get_rank(pile[pos+1]) != get_rank(pile[pos])-1) return 0;
+	if (rank_next(pile[pos+1], pile[pos])) return 0;
 	/* same suit? */
 	if (get_suit(pile[pos+1]) != get_suit(pile[pos])) return 0;
 #endif
@@ -234,7 +237,6 @@ fin:
 	return;
 }
 // takeable actions {{{
-//cleanup: deduplicate code (e.g. rank_consecutive() macro)
 #ifdef KLONDIKE
 card_t stack_take(void) { /*NOTE: assert(f.w >= 0) */
 	card_t card = f.s[f.w];
@@ -251,7 +253,7 @@ int t2f(int from, int to, int opt) { /* tableu to foundation */
 	to = get_suit(f.t[from][top_from]);
 	int top_to   = find_top(f.f[to]);
 	if ((top_to < 0 && get_rank(f.t[from][top_from]) == RANK_A)
-	|| (top_to >= 0 && get_rank(f.f[to][top_to]) == get_rank(f.t[from][top_from])-1)) {
+	|| (top_to >= 0 && rank_next(f.f[to][top_to],f.t[from][top_from]))) {
 		f.f[to][top_to+1] = f.t[from][top_from];
 		f.t[from][top_from] = NO_CARD;
 		turn_over(f.t[from]);
@@ -265,7 +267,7 @@ int w2f(int from, int to, int opt) { /* waste to foundation */
 	to = get_suit(f.s[f.w]);
 	int top_to = find_top(f.f[to]);
 	if ((top_to < 0 && get_rank(f.s[f.w]) == RANK_A)
-	|| (top_to >= 0 && get_rank(f.f[to][top_to]) == get_rank(f.s[f.w])-1)) {
+	|| (top_to >= 0 && rank_next(f.f[to][top_to], f.s[f.w]))) {
 		f.f[to][top_to+1] = stack_take();
 		if (check_won()) return WON;
 		return OK;
@@ -293,7 +295,7 @@ int f2t(int from, int to, int opt) { /* foundation to tableu */
 	int top_from = find_top(f.f[from]);
 	
 	if ((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from]))
-	&& (get_rank(f.t[to][top_to]) == get_rank(f.f[from][top_from])+1)) {
+	&& (rank_next(f.f[from][top_from], f.t[to][top_to]))) {
 		f.t[to][top_to+1] = f.f[from][top_from];
 		f.f[from][top_from] = NO_CARD;
 		return OK;
@@ -303,7 +305,7 @@ int w2t(int from, int to, int opt) { /* waste to tableu */
 	(void) from; (void) opt; /* don't need */
 	int top_to = find_top(f.t[to]);
 	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w]))
-	   && (get_rank(f.t[to][top_to]) == get_rank(f.s[f.w])+1))
+	   && (rank_next(f.s[f.w], f.t[to][top_to])))
 	|| (top_to < 0 && get_rank(f.s[f.w]) == RANK_K)) {
 		f.t[to][top_to+1] = stack_take();
 		return OK;
@@ -315,7 +317,7 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 	int top_from = find_top(f.t[from]);
 	for (int i = top_from; i >=0; i--) {
 		if (((get_color(f.t[to][top_to]) != get_color(f.t[from][i]))
-		   && (get_rank(f.t[to][top_to]) == get_rank(f.t[from][i])+1)
+		   && (rank_next(f.t[from][i], f.t[to][top_to]))
 		   && f.t[from][i] > NO_CARD) /* card face up? */
 		|| (top_to < 0 && get_rank(f.t[from][i]) == RANK_K)) {
 			/* move cards [i..top_from] to their destination */
@@ -359,7 +361,7 @@ int t2t(int from, int to, int opt) { //in dire need of cleanup
 		if (!is_consecutive(f.t[from], i)) break;
 
 		/* is consecutive OR to empty pile and rank ok? */
-		if ((get_rank(f.t[from][i]) == get_rank(f.t[to][top_to])-1)
+		if (rank_next(f.t[from][i], f.t[to][top_to])
 		|| (empty_to >= RANK_A && get_rank(f.t[from][i]) == empty_to)) {
 			for (;i <= top_from; i++) {
 				top_to++;
@@ -587,10 +589,10 @@ to_l:	print_table(&active, &inactive);
 		int top_c1 = find_top(f.f[choice_1]);
 		int top_c2 = find_top(f.f[choice_2]);
 
-		switch ((top_c1 >= 0 && get_rank(f.t[*to][top])-1
-			             == get_rank(f.f[choice_1][top_c1])) << 0 |
-			(top_c2 >= 0 && get_rank(f.t[*to][top])-1
-			             == get_rank(f.f[choice_2][top_c2])) << 1) {
+		switch ((rank_next(f.f[choice_1][top_c1], f.t[*to][top])
+		         && top_c1 >= 0 ) << 0
+		       |(rank_next(f.f[choice_2][top_c2], f.t[*to][top])
+		         && top_c2 >= 0 ) << 1) {
 		case (       1<<0): *opt = choice_1; break; /* choice_1 only */
 		case (1<<1       ): *opt = choice_2; break; /* choice_2 only */
 		case (1<<1 | 1<<0): /* both, ask user which to pick from */
@@ -606,7 +608,8 @@ to_l:	print_table(&active, &inactive);
 	/* moving to empty tableu? */
 	if (is_tableu(*to) && f.t[*to][0] == NO_CARD) {
 		if (inactive.opt >= 0) { /*if from was cursor addressed: */
-			*opt = get_rank(f.t[*from][first_movable(f.t[*from])+inactive.opt]);
+			int bottom = first_movable(f.t[*from]) + inactive.opt;
+			*opt = get_rank(f.t[*from][bottom]);
 			return CMD_MOVE;
 		}
 		int top = find_top(f.t[*from]);
