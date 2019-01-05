@@ -104,6 +104,7 @@ enum field_places {
 	TAB_10,
 	STOCK,
 #define WASTE 0; /* need it for get_cmd(), but don't count it in NUM_PLACES */
+#define TABLEU NUM_PLACES; /* for undo .t when .f==STACK */
 #elif defined KLONDIKE
 	STOCK,
 	WASTE,
@@ -141,7 +142,7 @@ int sol(void);
 void quit(void);
 int find_top(card_t* pile);
 int first_movable(card_t* pile);
-void turn_over(card_t* pile);
+int turn_over(card_t* pile);
 int check_won(void);
 int rank_next (card_t a, card_t b);
 int is_consecutive (card_t* pile, int pos);
@@ -161,12 +162,16 @@ int t2t(int from, int to, int opt);
 int s2t(int from, int to, int opt);
 #endif
 int nop(int from, int to, int opt);
+void cursor_left (struct cursor* cursor);
+void cursor_down (struct cursor* cursor);
+void cursor_up (struct cursor* cursor);
+void cursor_right (struct cursor* cursor);
 int get_cmd (int* from, int* to, int* opt);
 void deal(void);
 void print_hi(int invert, int grey_bg, int bold, char* str);
 void print_table(const struct cursor* active, const struct cursor* inactive);
-void win_anim(void);
 void visbell (void);
+void win_anim(void);
 void append_undo (int n, int f, int t);
 void screen_setup (int enable);
 void raw_mode(int enable);
