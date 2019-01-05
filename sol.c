@@ -12,6 +12,7 @@
 #include "sol.h"
 #include "schemes.h"
 
+// constants and data structures {{{
 #ifdef KLONDIKE
 #define NUM_PILES 7
 #define MAX_HIDDEN 6 /*how many cards are turned over at most in a tableu pile*/
@@ -25,15 +26,6 @@
 #define NUM_DECKS 2
 #define PILE_SIZE DECK_SIZE*NUM_DECKS /* no maximum stack size in spider :/ */
 #endif
-
-#define get_suit(card) \
-	((card-1) % NUM_SUITS)
-#define get_rank(card) \
-	((card-1) / NUM_SUITS)
-#define get_color(card) \
-	((get_suit(card) ^ get_suit(card)>>1) & 1)
-
-#define is_tableu(where) (where <= TAB_MAX)
 
 struct playfield {
 	card_t s[MAX_STOCK]; /* stock */
@@ -57,6 +49,7 @@ struct opts {
 	int v; /* conserve vertical space */
 	const struct scheme* s;
 } op;
+//}}}
 
 // action table {{{
 /* stores a function pointer for every takeable action; called by game loop */
@@ -90,6 +83,7 @@ int (*action[NUM_PLACES][10])(int,int,int) = {
 };
 // }}}
 
+// argv parsing, game loops, cleanup {{{
 int main(int argc, char** argv) {
 	/* opinionated defaults: */
 	op.s = &unicode_large_color;
@@ -171,6 +165,17 @@ void quit(void) {
 	screen_setup(0);
 	//TODO: free undo data structures
 }
+//}}}
+
+// card games helper functions {{{
+#define get_suit(card) \
+	((card-1) % NUM_SUITS)
+#define get_rank(card) \
+	((card-1) / NUM_SUITS)
+#define get_color(card) \
+	((get_suit(card) ^ get_suit(card)>>1) & 1)
+
+#define is_tableu(where) (where <= TAB_MAX)
 
 int find_top(card_t* pile) {
 	int i;
@@ -213,29 +218,22 @@ int is_consecutive (card_t* pile, int pos) {
 
 	return 1;
 }
-void win_anim(void) {
-	printf ("\033[?25l"); /* hide cursor */
-	for (;;) {
-		/* set cursor to random location */
-		int row = 1+random()%(24-op.s->width);
-		int col = 1+random()%(80-op.s->height);
 
-		/* draw random card */
-		int face = 1 + random() % 52;
-		for (int l = 0; l < op.s->height; l++) {
-			printf ("\033[%d;%dH", row+l, col);
-			printf ("%s", op.s->card[face][l]);
-		}
-		fflush (stdout);
-
-		/* exit on keypress */
-		struct pollfd p = {STDIN_FILENO, POLLIN, 0};
-		if (poll (&p, 1, 80)) goto fin;
+int is_movable(card_t* pile, int n) {
+#ifdef KLONDIKE
+	return(pile[n] > NO_CARD); /*non-movable cards don't exist in klondike*/
+#elif defined SPIDER
+	int top = find_top(pile);
+	for (int i = top; i >= 0; i--) {
+		if (pile[i] <= NO_CARD) return 0; /*no card or card face down?*/
+		if (!is_consecutive(pile, i)) return 0;
+		if (i == n) return 1; /* card reached, must be movable */
 	}
-fin:
-	printf ("\033[?25h"); /* show cursor */
-	return;
+	return 0;
+#endif
 }
+//}}}
+
 // takeable actions {{{
 #ifdef KLONDIKE
 card_t stack_take(void) { /*NOTE: assert(f.w >= 0) */
@@ -393,8 +391,10 @@ int s2t(int from, int to, int opt) {
 int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
 // }}}
 
+// keyboard input handling {{{
+// cursor functions{{{
 #pragma GCC diagnostic ignored "-Wswitch" //not ideal :|
-#ifdef KLONDIKE // cursor functions{{{
+#ifdef KLONDIKE
 void cursor_left (struct cursor* cursor) {
 	if (is_tableu(cursor->pile)) {
 		if (cursor->pile > 0) cursor->pile--;
@@ -471,8 +471,8 @@ void cursor_to (struct cursor* cursor, int pile) {
 	cursor->pile = pile;
 	cursor->opt = 0;
 }
-//}}}
 #pragma GCC diagnostic pop
+//}}}
 int get_cmd (int* from, int* to, int* opt) {
 	//TODO: escape sequences (mouse, cursor keys)
 	int _f, t;
@@ -635,7 +635,9 @@ to_l:	print_table(&active, &inactive);
 #endif
 	return CMD_MOVE;
 }
+// }}}
 
+// shuffling and dealing {{{
 void deal(void) {
 	f = (const struct playfield){0}; /* clear playfield */
 	card_t deck[DECK_SIZE*NUM_DECKS];
@@ -671,27 +673,16 @@ void deal(void) {
 	for (f.z = 0; avail; f.z++) f.s[f.z] = deck[--avail];
 	f.w = -1; /* @start: nothing on waste (no waste in spider -> const) */
 }
+//}}}
 
-int is_movable(card_t* pile, int n) {
-#ifdef KLONDIKE
-	return(pile[n] > NO_CARD); /*non-movable cards don't exist in klondike*/
-#elif defined SPIDER
-	int top = find_top(pile);
-	for (int i = top; i >= 0; i--) {
-		if (pile[i] <= NO_CARD) return 0; /*no card or card face down?*/
-		if (!is_consecutive(pile, i)) return 0;
-		if (i == n) return 1; /* card reached, must be movable */
-	}
-	return 0;
-#endif
-}
+// screen drawing routines {{{
 void print_hi(int invert, int grey_bg, int bold, char* str) {
 	printf ("%s%s%s%s%s%s%s",
 		bold?"\033[1m":"", invert?"\033[7m":"", grey_bg?"\033[100m":"",
 		str,
 		grey_bg?"\033[49m":"", invert?"\033[27m":"",bold?"\033[22m":"");
 }
-void print_table(const struct cursor* active, const struct cursor* inactive) { //{{{
+void print_table(const struct cursor* active, const struct cursor* inactive) {
 	printf("\033[2J\033[H"); /* clear screen, reset cursor */
 #ifdef KLONDIKE
 	/* print stock, waste and foundation: */
@@ -803,14 +794,39 @@ void print_table(const struct cursor* active, const struct cursor* inactive) { /
 		}
 		printf ("\n");
 	} while (line_had_card || !did_placeholders);
-}//}}}
+}
 
 void visbell (void) {
 	printf ("\033[?5h"); fflush (stdout);
 	usleep (100000);
 	printf ("\033[?5l"); fflush (stdout);
 }
+void win_anim(void) {
+	printf ("\033[?25l"); /* hide cursor */
+	for (;;) {
+		/* set cursor to random location */
+		int row = 1+random()%(24-op.s->width);
+		int col = 1+random()%(80-op.s->height);
 
+		/* draw random card */
+		int face = 1 + random() % 52;
+		for (int l = 0; l < op.s->height; l++) {
+			printf ("\033[%d;%dH", row+l, col);
+			printf ("%s", op.s->card[face][l]);
+		}
+		fflush (stdout);
+
+		/* exit on keypress */
+		struct pollfd p = {STDIN_FILENO, POLLIN, 0};
+		if (poll (&p, 1, 80)) goto fin;
+	}
+fin:
+	printf ("\033[?25h"); /* show cursor */
+	return;
+}
+//}}}
+
+// undo related {{{
 void append_undo (int n, int f, int t) {
 	(void)n;(void)f;(void)t;
 	//check if we have to free redo buffer (.next)
@@ -818,7 +834,9 @@ void append_undo (int n, int f, int t) {
 	//update pointers
 	//TODO: undo; needs operations to be written by x2y()
 }
+//}}}
 
+// initialization stuff {{{
 void screen_setup (int enable) {
 	if (enable) {
 		raw_mode(1);
@@ -875,5 +893,6 @@ void signal_setup(void) {
 		exit (1);
 	}
 }
+//}}}
 
 //vim: foldmethod=marker
