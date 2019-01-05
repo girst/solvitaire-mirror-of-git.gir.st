@@ -810,18 +810,68 @@ fin:
 }
 //}}}
 
-// undo related {{{
+// undo logic {{{
 void undo_push (int f, int t, int n) {
 	(void)n;(void)f;(void)t;
+	//TODO: implement!
 	//check if we have to free redo buffer (.next)
 	//malloc
 	//update pointers
-	//TODO: undo; needs operations to be written by x2y()
 }
 void undo_pop (struct undo* u) {
+	(void)u;
 	//TODO: undoes the operation pointed to by *u and moves the pointer one item back
+#if 0
+/!\ NOTE: WASTE is only used in KLONDIKE. in SPIDER WASTE is 0 and therefore
+	  overlaps with TAB_1 and therefore may not be compared against before
+          TAB_1 has been.
+
+	//NOTE: invert n beforehand if negative (and remember that it was)
+#ifdef KLONDIKE
+	if (u->f == FOUNDATION) {
+		/* foundation -> tableu */
+		// move 1 card from f.f[u->n] to f.t[u->f]
+	} else if (u->f == WASTE && u->t == FOUNDATION) {
+		/* waste -> foundation */
+		// split u->n into wst and fnd:
+		int wst = u->n & 0xffff;
+		int fnd = u->n >> 16;
+		// increment stock size (f.z)
+		// move all stock cards with index >= wst one position up
+		// move one card from f.f[fnd] to f.s[wst]
+	} else if (u->f == WASTE) {
+		/* waste -> tableu */
+		// increment stock size (f.z)
+		// move all stock cards with index >= wst one position up
+		// move 1 card from f.t[u->t] to f.s[u->n]
+	} else if (u->t == FOUNDATION) {
+		/* tableu -> foundation */
+		// if n was negative, close topcard on f.t[u->f]
+		// move 1 card from f.f[u->n] to f.t[u->f]
+	} else {
+		/* tableu -> tableu */
+		// if n was negative, close topcard on f.t[u->f]
+		// move 1 card from f.t[u->t] to f.t[u->f]
+	}
+#elif defined SPIDER
+	if (u->f == STOCK) {
+		/* stock -> tableu */
+		// remove 1 card from each tableu (right to left) and put it back onto the stock
+	else if (u->t == FOUNDATION) {
+		/* tableu -> foundation */
+		// if n was negative, close topcard on f.t[u->f]
+		// append cards from f.f[u->n] to f.t[u->f]
+	} else {
+		/* tableu -> tableu */
+		// if n was negative, close topcard on f.t[u->f]
+		// move n cards from f.t[u->t] to f.t[u->f]
+	}
+#endif
+#endif
+
 }
 void free_undo (struct undo* u) {
+	(void)u;
 	//TODO: frees the list from here to then end (keeping .prev intact)
 	// NOTE: this probably means we need to add a sentinel at the beginning (e.g. when deal()ing)
 }
