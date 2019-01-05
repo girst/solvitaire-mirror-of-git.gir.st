@@ -258,8 +258,8 @@ int t2f(int from, int to, int opt) { /* tableu to foundation */
 		f.f[to][top_to+1] = f.t[from][top_from];
 		f.t[from][top_from] = NO_CARD;
 		turn_over(f.t[from])
-			?append_undo(from, FOUNDATION, -to)
-			:append_undo(from, FOUNDATION,  to);
+			?undo_push(from, FOUNDATION, -to)
+			:undo_push(from, FOUNDATION,  to);
 		if (check_won()) return WON;
 		return OK;
 	} else return ERR;
@@ -271,7 +271,7 @@ int w2f(int from, int to, int opt) { /* waste to foundation */
 	int top_to = find_top(f.f[to]);
 	if ((top_to < 0 && get_rank(f.s[f.w]) == RANK_A)
 	|| (top_to >= 0 && rank_next(f.f[to][top_to], f.s[f.w]))) {
-		append_undo(WASTE, FOUNDATION, f.w | to<<16); //ugly encoding :|
+		undo_push(WASTE, FOUNDATION, f.w | to<<16); //ugly encoding :|
 		f.f[to][top_to+1] = stack_take();
 		if (check_won()) return WON;
 		return OK;
@@ -302,7 +302,7 @@ int f2t(int from, int to, int opt) { /* foundation to tableu */
 	&& (rank_next(f.f[from][top_from], f.t[to][top_to]))) {
 		f.t[to][top_to+1] = f.f[from][top_from];
 		f.f[from][top_from] = NO_CARD;
-		append_undo(FOUNDATION, to, from);
+		undo_push(FOUNDATION, to, from);
 		return OK;
 	} else return ERR;
 }
@@ -312,7 +312,7 @@ int w2t(int from, int to, int opt) { /* waste to tableu */
 	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w]))
 	   && (rank_next(f.s[f.w], f.t[to][top_to])))
 	|| (top_to < 0 && get_rank(f.s[f.w]) == RANK_K)) {
-		append_undo(WASTE, to, f.w);
+		undo_push(WASTE, to, f.w);
 		f.t[to][top_to+1] = stack_take();
 		return OK;
 	} else return ERR;
@@ -335,8 +335,8 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 				count++;
 			}
 			turn_over(f.t[from])
-				?append_undo(from, to, -count)
-				:append_undo(from, to,  count);
+				?undo_push(from, to, -count)
+				:undo_push(from, to,  count);
 			return OK;
 		}
 	}
@@ -358,8 +358,8 @@ void remove_if_complete (int pileno) { //cleanup!
 				pile[i] = NO_CARD;
 			}
 			turn_over(pile)
-				?append_undo(pileno, FOUNDATION, -foundation)
-				:append_undo(pileno, FOUNDATION,  foundation);
+				?undo_push(pileno, FOUNDATION, -foundation)
+				:undo_push(pileno, FOUNDATION,  foundation);
 			foundation++;
 			return;
 		}
@@ -384,8 +384,8 @@ int t2t(int from, int to, int opt) { //in dire need of cleanup
 				count++;
 			}
 			turn_over(f.t[from])
-				?append_undo(from, to, -count)
-				:append_undo(from, to,  count);
+				?undo_push(from, to, -count)
+				:undo_push(from, to,  count);
 			remove_if_complete(to);
 			if (check_won()) return WON;
 			return OK;
@@ -404,7 +404,7 @@ int s2t(int from, int to, int opt) {
 		remove_if_complete(pile);
 		if (check_won()) return WON;
 	}
-	append_undo(STOCK, TABLEU, 1); /*NOTE: puts 1 card on each tableu pile*/
+	undo_push(STOCK, TABLEU, 1); /*NOTE: puts 1 card on each tableu pile*/
 	return OK;
 }
 #endif
@@ -847,16 +847,20 @@ fin:
 //}}}
 
 // undo related {{{
-void append_undo (int f, int t, int n) {
+void undo_push (int f, int t, int n) {
 	(void)n;(void)f;(void)t;
 	//check if we have to free redo buffer (.next)
 	//malloc
 	//update pointers
 	//TODO: undo; needs operations to be written by x2y()
 }
-//TODO: free_undo(struct undo* l); //frees the list from here to then end (keeping .prev intact) // NOTE: this probably means we need to add a sentinel at the beginning (e.g. when deal()ing)
-//TODO: apply_undo(struct undo* u); //undoes the operation pointed to by *u and moves the pointer one item back
-//TODO: rename append->push, apply->pop (technically peek)
+void undo_pop (struct undo* u) {
+	//TODO: undoes the operation pointed to by *u and moves the pointer one item back
+}
+void free_undo (struct undo* u) {
+	//TODO: frees the list from here to then end (keeping .prev intact)
+	// NOTE: this probably means we need to add a sentinel at the beginning (e.g. when deal()ing)
+}
 //}}}
 
 // initialization stuff {{{
