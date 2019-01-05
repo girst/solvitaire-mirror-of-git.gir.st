@@ -9,18 +9,16 @@ play klondike and spider solitaire in your unicode terminal.
  * TODO: undo:
 	 - insert append_undo() in x2y() functions
 	 - to encode stack position we need to overload `f.u.n` as index.
+	   (similar for foundation: overload `f.u.n` as foundation id)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
 ### P3
  * TODO: mouse mode
- * TODO: extreme overlapping: if we are printing a sequence or multiple face down
-	 cards, only print `.overlap` lines of the ends, and `1` line for the
-         middle cards
  * TODO: screen size > stack height => rendering issues!
  * TODO: suggest moves (`h` => hint)
 ### P4
  * TODO: scores, variants: draw 3, max. n overturns
- * TODO: vt220 mode
+ * TODO: vt220 mode (problems: charset, slow baudrate and no differential drawing mode)
  * TODO: ed(1) mode (solEDaire): playable on a line printer; ascii/ibm only?
 
 ### DONE
@@ -44,6 +42,9 @@ play klondike and spider solitaire in your unicode terminal.
  * DONE: more vim mode keys (first/last tableu)
  * DONE: online (key-)help `?`, `-h`, `-v` (NOTE: implemented -h, rest deemed
          not usedul)
+ * DONE: extreme overlapping: if we are printing a sequence or multiple face down
+	 cards, only print `.overlap` lines of the ends, and `1` line for the
+         middle cards
 
 ## Notes
 
