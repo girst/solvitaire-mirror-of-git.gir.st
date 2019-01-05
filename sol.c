@@ -827,13 +827,16 @@ fin:
 //}}}
 
 // undo related {{{
-void append_undo (int n, int f, int t) {
+void append_undo (int f, int t, int n) {
 	(void)n;(void)f;(void)t;
 	//check if we have to free redo buffer (.next)
 	//malloc
 	//update pointers
 	//TODO: undo; needs operations to be written by x2y()
 }
+//TODO: free_undo(struct undo* l); //frees the list from here to then end (keeping .prev intact) // NOTE: this probably means we need to add a sentinel at the beginning (e.g. when deal()ing)
+//TODO: apply_undo(struct undo* u); //undoes the operation pointed to by *u and moves the pointer one item back
+//TODO: rename append->push, apply->pop (technically peek)
 //}}}
 
 // initialization stuff {{{
