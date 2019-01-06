@@ -5,6 +5,7 @@ play klondike and spider solitaire in your unicode terminal.
 ## TODO
 
 ### P1
+ * TODO: in direct addressing 'up to' dialog: make return/space select the lowest/highest option
 ### P2
  * TODO: undo:
 	 - insert append_undo() in x2y() functions

@@ -104,7 +104,6 @@ int sol(void) {
 	deal();
 
 	int from, to, opt;
-	print_table(NO_HI, NO_HI);
 	for(;;) {
 		switch (get_cmd(&from, &to, &opt)) {
 		case CMD_MOVE:
@@ -121,7 +120,6 @@ int sol(void) {
 		case CMD_AGAIN: //TODO: restart with same seed
 		case CMD_QUIT:  return GAME_QUIT;
 		}
-		print_table(NO_HI, NO_HI);
 	}
 }
 
