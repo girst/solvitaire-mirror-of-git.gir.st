@@ -5,7 +5,6 @@ play klondike and spider solitaire in your unicode terminal.
 ## TODO
 
 ### P1
- * TODO: in direct addressing 'up to' dialog: make return/space select the lowest/highest option
 ### P2
  * TODO: undo:
 	 - insert append_undo() in x2y() functions
@@ -69,6 +68,7 @@ play klondike and spider solitaire in your unicode terminal.
  * DONE: extreme overlapping: if we are printing a sequence or multiple face down
 	 cards, only print `.overlap` lines of the ends, and `1` line for the
          middle cards
+ * DONE: in direct addressing 'up to' dialog: make return/space select the lowest/highest option
 
 ## Notes
 

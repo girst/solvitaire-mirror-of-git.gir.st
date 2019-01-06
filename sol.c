@@ -589,9 +589,9 @@ to_l:	print_table(&active, &inactive);
 #elif defined SPIDER
 	/* moving to empty tableu? */
 	if (is_tableu(*to) && f.t[*to][0] == NO_CARD) {
+		int bottom = first_movable(f.t[*from]);
 		if (inactive.opt >= 0) { /*if from was cursor addressed: */
-			int bottom = first_movable(f.t[*from]) + inactive.opt;
-			*opt = get_rank(f.t[*from][bottom]);
+			*opt = get_rank(f.t[*from][bottom + inactive.opt]);
 			return CMD_MOVE;
 		}
 		int top = find_top(f.t[*from]);
@@ -599,9 +599,11 @@ to_l:	print_table(&active, &inactive);
 		if (top >= 0 && !is_movable(f.t[*from], top-1)) {
 			*opt = get_rank(f.t[*from][top]);
 		} else { /* only ask the user if it's unclear: */
-			printf ("\rup to (a23456789xjqk): ");
+			printf ("\rup to ([a23456789xjqk] or space/return): ");
 			*opt = getchar();
 			switch (*opt) {
+			case ' ': *opt = get_rank(f.t[*from][top]); break;
+			case'\n': *opt = get_rank(f.t[*from][bottom]); break;
 			case 'a': case 'A': *opt = RANK_A; break;
 			case '0': /* fallthrough */
 			case 'x': case 'X': *opt = RANK_X; break;
