@@ -101,6 +101,9 @@ newgame:
 }
 
 int sol(void) {
+	/* clean undo (from previous game): */
+	free_undo(f.u);
+
 	deal();
 
 	int from, to, opt;
@@ -126,7 +129,8 @@ int sol(void) {
 
 void quit(void) {
 	screen_setup(0);
-	//TODO: free undo data structures
+	/* free undo data structures: */
+	free_undo(f.u);
 }
 //}}}
 
@@ -827,9 +831,6 @@ void undo_push (int _f, int t, int n) {
 }
 void undo_pop (struct undo* u) {
 	if (u == &undo_sentinel) return;
-	//TODO: undoes the operation pointed to by *u and moves the pointer one item back
-	//NOTE: invert n beforehand if negative (and remember that it was)
-
 
 #ifdef KLONDIKE
 	if (u->f == FOUNDATION) {
@@ -903,14 +904,16 @@ void undo_pop (struct undo* u) {
 	}
 #endif
 
-	void* old = f.u;//TODO: use free_undo()
+	void* old = f.u;
 	f.u = f.u->prev;
 	free(old);
 }
 void free_undo (struct undo* u) {
-	(void)u;
-	//TODO: frees the list from here to then end (keeping .prev intact)
-	// NOTE: this probably means we need to add a sentinel at the beginning (e.g. when deal()ing)
+	while (f.u && f.u != &undo_sentinel) {
+		void* old = f.u;
+		f.u = f.u->prev;
+		free (old);
+	}
 }
 //}}}
 

@@ -6,33 +6,6 @@ play klondike and spider solitaire in your unicode terminal.
 
 ### P1
 ### P2
- * TODO: undo:
-	 - insert append_undo() in x2y() functions
-	 - to encode stack position we need to overload `f.u.n` as index.
-	   (similar for foundation: overload `f.u.n` as foundation id)
-	 - w2f(): have to encode both stock index and foundation id <-XXX
-	          don't want to add a struct field for this one case; 
-	          for the time being (i.e. forever) I'm ORing waste index and
-	          (foundation id<<16). ugly but works :/
-	 - turning over cards: this needs to be encoded, because the card might 
-	   be consecutive and there's no way to tell what its previous state was. 
-	   at least 3 methods possible:
-	    * indicate that a card was turned (can be at most 1) by negating u.n
-	      pros: no wasted space (it's just a boolean value), negation pattern 
-	            already used for closed cards
-	      cons: dirty C hack, less obvious than in other places, no need to
-	            conserve memory this tightly
-	    - another flag in f.u (.c for was-closed?)
-	      pros: a little bit more obvious
-	      cons: seems like a clutch to me, won't do anything in most cases
-	    - two undo structures (where .f == .t for example; auto-apply both)
-	      pros: no need to modify structures
-	      cons: more burden on changing x2y(), need to check if we need to
-	            execute two undos (or redos) at once everytime
-	   will use the starred method (negating), because a) the code is
-	   hackish aleady b) further cements the idea that .n is not just a
-	   'number of cards' but an argument that changes form depending on the
-	   context.  also, c) i don't like the other two options, because reasons.
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
 ### P3
@@ -69,6 +42,21 @@ play klondike and spider solitaire in your unicode terminal.
 	 cards, only print `.overlap` lines of the ends, and `1` line for the
          middle cards
  * DONE: in direct addressing 'up to' dialog: make return/space select the lowest/highest option
+ * DONE: undo:
+	 - insert append_undo() in x2y() functions
+	 - to encode stack position we need to overload `f.u.n` as index.
+	   (similar for foundation: overload `f.u.n` as foundation id)
+	 - w2f(): have to encode both stock index and foundation id <-XXX
+	          don't want to add a struct field for this one case; 
+	          for the time being (i.e. forever) I'm ORing waste index and
+	          (foundation id<<16). ugly but works :/
+	 - turning over cards: this needs to be encoded, because the card might 
+	   be consecutive and there's no way to tell what its previous state was. 
+	    * indicate that a card was turned (can be at most 1) by negating u.n
+	      pros: no wasted space (it's just a boolean value), negation pattern 
+	            already used for closed cards
+	      cons: dirty C hack, less obvious than in other places, no need to
+	            conserve memory this tightly
 
 ## Notes
 
