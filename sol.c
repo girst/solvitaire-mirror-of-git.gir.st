@@ -224,9 +224,8 @@ int t2f(int from, int to, int opt) { /* tableu to foundation */
 	|| (top_to >= 0 && rank_next(f.f[to][top_to],f.t[from][top_from]))) {
 		f.f[to][top_to+1] = f.t[from][top_from];
 		f.t[from][top_from] = NO_CARD;
-		turn_over(f.t[from])
-			?undo_push(from, FOUNDATION, -to)
-			:undo_push(from, FOUNDATION,  to);
+		undo_push(from, FOUNDATION, to,
+		turn_over(f.t[from]));
 		if (check_won()) return WON;
 		return OK;
 	} else return ERR;
@@ -238,7 +237,7 @@ int w2f(int from, int to, int opt) { /* waste to foundation */
 	int top_to = find_top(f.f[to]);
 	if ((top_to < 0 && get_rank(f.s[f.w]) == RANK_A)
 	|| (top_to >= 0 && rank_next(f.f[to][top_to], f.s[f.w]))) {
-		undo_push(WASTE, FOUNDATION, f.w | to<<16); //ugly encoding :|
+		undo_push(WASTE, FOUNDATION, f.w | to<<16, 0);//ugly encoding :|
 		f.f[to][top_to+1] = stack_take();
 		if (check_won()) return WON;
 		return OK;
@@ -269,7 +268,7 @@ int f2t(int from, int to, int opt) { /* foundation to tableu */
 	&& (rank_next(f.f[from][top_from], f.t[to][top_to]))) {
 		f.t[to][top_to+1] = f.f[from][top_from];
 		f.f[from][top_from] = NO_CARD;
-		undo_push(FOUNDATION, to, from);
+		undo_push(FOUNDATION, to, from, 0);
 		return OK;
 	} else return ERR;
 }
@@ -279,7 +278,7 @@ int w2t(int from, int to, int opt) { /* waste to tableu */
 	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w]))
 	   && (rank_next(f.s[f.w], f.t[to][top_to])))
 	|| (top_to < 0 && get_rank(f.s[f.w]) == RANK_K)) {
-		undo_push(WASTE, to, f.w);
+		undo_push(WASTE, to, f.w, 0);
 		f.t[to][top_to+1] = stack_take();
 		return OK;
 	} else return ERR;
@@ -301,9 +300,8 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 				f.t[from][i] = NO_CARD;
 				count++;
 			}
-			turn_over(f.t[from])
-				?undo_push(from, to, -count)
-				:undo_push(from, to,  count);
+			undo_push(from, to, count,
+			turn_over(f.t[from]));
 			return OK;
 		}
 	}
@@ -326,9 +324,8 @@ void remove_if_complete (int pileno) { //cleanup!
 				f.f[foundation][j] = pile[i];
 				pile[i] = NO_CARD;
 			}
-			turn_over(pile)
-				?undo_push(pileno, FOUNDATION, -foundation)
-				:undo_push(pileno, FOUNDATION,  foundation);
+			undo_push(pileno, FOUNDATION, foundation,
+			turn_over(pile));
 			foundation++;
 			return;
 		}
@@ -352,9 +349,8 @@ int t2t(int from, int to, int opt) { //in dire need of cleanup
 				f.t[from][i] = NO_CARD;
 				count++;
 			}
-			turn_over(f.t[from])
-				?undo_push(from, to, -count)
-				:undo_push(from, to,  count);
+			undo_push(from, to, count,
+			turn_over(f.t[from]));
 			remove_if_complete(to);
 			if (check_won()) return WON;
 			return OK;
@@ -373,7 +369,7 @@ int s2t(int from, int to, int opt) {
 		remove_if_complete(pile);
 		if (check_won()) return WON;
 	}
-	undo_push(STOCK, TABLEU, 1); /*NOTE: puts 1 card on each tableu pile*/
+	undo_push(STOCK, TABLEU, 1, 0); /*NOTE: puts 1 card on each tableu pile*/
 	return OK;
 }
 int t2f(int from, int to, int opt) {
@@ -827,13 +823,12 @@ fin:
 //}}}
 
 // undo logic {{{
-void undo_push (int _f, int t, int n) {
-	//XXX TODO: if `n' is zero, cannot encode turn over state!
-	//happens whenever to==FOUNDATION, so just increase by 1?
+void undo_push (int _f, int t, int n, int o) {
 	struct undo* new = malloc(sizeof(struct undo));
 	new->f = _f;
 	new->t = t;
 	new->n = n;
+	new->o = o;
 	new->prev = f.u;
 	new->next = NULL;
 	f.u->next = new;
@@ -877,10 +872,7 @@ void undo_pop (struct undo* u) {
 		int top_f = find_top(f.t[u->f]);
 		int top_t = find_top(f.f[u->n]);
 		/* close topcard if previous action caused turn_over(): */
-		if (u->n < 0) {
-			f.t[u->f][top_f] *= -1;
-			u->n *= -1;
-		}
+		if (u->o) f.t[u->f][top_f] *= -1;
 		/* move one card from foundation to tableu: */
 		f.t[u->f][top_f+1] = f.f[u->n][top_t];
 		f.f[u->n][top_t] = NO_CARD;
@@ -889,10 +881,7 @@ void undo_pop (struct undo* u) {
 		int top_f = find_top(f.t[u->f]);
 		int top_t = find_top(f.t[u->t]);
 		/* close topcard if previous action caused turn_over(): */
-		if (u->n < 0) {
-			f.t[u->f][top_f] *= -1;
-			u->n *= -1;
-		}
+		if (u->o) f.t[u->f][top_f] *= -1;
 		/* move n cards from tableu[f] to tableu[t]: */
 		for (int i = 0; i < u->n; i++) {
 			f.t[u->f][top_f+u->n-i] = f.t[u->t][top_t-i];
@@ -912,10 +901,7 @@ void undo_pop (struct undo* u) {
 		/* tableu -> foundation */
 		int top = find_top(f.t[u->f]);
 		/* close topcard if previous action caused turn_over(): */
-		if (u->n < 0) {
-			f.t[u->f][top] *= -1;
-			u->n *= -1;
-		}
+		if (u->o) f.t[u->f][top] *= -1;
 		/* append cards from foundation to tableu */
 		for (int i = RANK_K; i >= RANK_A; i--) {
 			f.t[u->f][++top] = f.f[u->n][i];
@@ -928,10 +914,7 @@ void undo_pop (struct undo* u) {
 		int top_f = find_top(f.t[u->f]);
 		int top_t = find_top(f.t[u->t]);
 		/* close topcard if previous action caused turn_over(): */
-		if (u->n < 0) {
-			f.t[u->f][top_f] *= -1;
-			u->n *= -1;
-		}
+		if (u->o) f.t[u->f][top_f] *= -1;
 		/* move n cards from tableu[f] to tableu[t]: */
 		for (int i = 0; i < u->n; i++) {
 			f.t[u->f][top_f+u->n-i] = f.t[u->t][top_t-i];
@@ -945,9 +928,9 @@ void undo_pop (struct undo* u) {
 	free(old);
 }
 void free_undo (struct undo* u) {
-	while (f.u && f.u != &undo_sentinel) {
-		void* old = f.u;
-		f.u = f.u->prev;
+	while (u && u != &undo_sentinel) {
+		void* old = u;
+		u = u->prev;
 		free (old);
 	}
 }

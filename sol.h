@@ -131,6 +131,7 @@ struct playfield {
 		int t; /* pile cards were moved to */
 		int n; /* if tableu: number of cards moved */
 		       /* else: index into stock/foundation */
+		int o; /* turn_over() fired? */
 		struct undo* prev;
 		struct undo* next;
 	}* u;
@@ -217,7 +218,7 @@ void print_hi(int invert, int grey_bg, int bold, char* str);
 void print_table(const struct cursor* active, const struct cursor* inactive);
 void visbell (void);
 void win_anim(void);
-void undo_push (int f, int t, int n);
+void undo_push (int f, int t, int n, int o);
 void undo_pop (struct undo* u);
 void free_undo (struct undo* u);
 void screen_setup (int enable);
