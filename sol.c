@@ -32,16 +32,16 @@ int (*action[NUM_PLACES][10])(int,int,int) = {
 /*fnd*/	{ f2t, f2t, f2t, f2t, f2t, f2t, f2t, nop, nop, nop },
 #elif defined SPIDER
 	/* 1    2    3    4    5    6    7    8    9    10*/
-/* 1 */	{ nop, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
-/* 2 */	{ t2t, nop, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
-/* 3 */	{ t2t, t2t, nop, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
-/* 4 */	{ t2t, t2t, t2t, nop, t2t, t2t, t2t, t2t, t2t, t2t },
-/* 5 */	{ t2t, t2t, t2t, t2t, nop, t2t, t2t, t2t, t2t, t2t },
-/* 6 */	{ t2t, t2t, t2t, t2t, t2t, nop, t2t, t2t, t2t, t2t },
-/* 7 */	{ t2t, t2t, t2t, t2t, t2t, t2t, nop, t2t, t2t, t2t },
-/* 8 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, nop, t2t, t2t },
-/* 9 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, nop, t2t },
-/*10 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, nop },
+/* 1 */	{ t2f, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
+/* 2 */	{ t2t, t2f, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
+/* 3 */	{ t2t, t2t, t2f, t2t, t2t, t2t, t2t, t2t, t2t, t2t },
+/* 4 */	{ t2t, t2t, t2t, t2f, t2t, t2t, t2t, t2t, t2t, t2t },
+/* 5 */	{ t2t, t2t, t2t, t2t, t2f, t2t, t2t, t2t, t2t, t2t },
+/* 6 */	{ t2t, t2t, t2t, t2t, t2t, t2f, t2t, t2t, t2t, t2t },
+/* 7 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2f, t2t, t2t, t2t },
+/* 8 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2f, t2t, t2t },
+/* 9 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2f, t2t },
+/*10 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2f },
 /*stk*/	{ s2t, s2t, s2t, s2t, s2t, s2t, s2t, s2t, s2t, s2t },
 #endif
 };
@@ -311,7 +311,9 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 }
 #elif defined SPIDER
 void remove_if_complete (int pileno) { //cleanup!
-	static int foundation = 0; /* where to put pile onto (1 set per stack)*/
+	static int foundation = 0;
+	if (pileno == -1) { foundation--; return; } /* for undo_pop() */
+
 	card_t* pile = f.t[pileno];
 	/* test if K...A complete; move to foundation if so */
 	int top_from = find_top(pile);
@@ -372,6 +374,12 @@ int s2t(int from, int to, int opt) {
 		if (check_won()) return WON;
 	}
 	undo_push(STOCK, TABLEU, 1); /*NOTE: puts 1 card on each tableu pile*/
+	return OK;
+}
+int t2f(int from, int to, int opt) {
+	(void) to; (void) opt; /* don't need */
+	/* manually retrigger remove_if_complete() (e.g. after undo_pop) */
+	remove_if_complete(from);
 	return OK;
 }
 #endif
@@ -820,6 +828,8 @@ fin:
 
 // undo logic {{{
 void undo_push (int _f, int t, int n) {
+	//XXX TODO: if `n' is zero, cannot encode turn over state!
+	//happens whenever to==FOUNDATION, so just increase by 1?
 	struct undo* new = malloc(sizeof(struct undo));
 	new->f = _f;
 	new->t = t;
@@ -883,7 +893,7 @@ void undo_pop (struct undo* u) {
 			f.t[u->f][top_f] *= -1;
 			u->n *= -1;
 		}
-		/* move u->n card from tableu[f] to tableu[t]: */
+		/* move n cards from tableu[f] to tableu[t]: */
 		for (int i = 0; i < u->n; i++) {
 			f.t[u->f][top_f+u->n-i] = f.t[u->t][top_t-i];
 			f.t[u->t][top_t-i] = NO_CARD;
@@ -892,15 +902,41 @@ void undo_pop (struct undo* u) {
 #elif defined SPIDER
 	if (u->f == STOCK) {
 		/* stock -> tableu */
-		// remove 1 card from each tableu (right to left) and put it back onto the stock
+		/*remove a card from each pile and put it back onto the stock:*/
+		for (int pile = NUM_PILES-1; pile >= 0; pile--) {
+			int top = find_top(f.t[pile]);
+			f.s[f.z++] = f.t[pile][top];
+			f.t[pile][top] = NO_CARD;
+		}
 	} else if (u->t == FOUNDATION) {
 		/* tableu -> foundation */
-		// if n was negative, close topcard on f.t[u->f]
-		// append cards from f.f[u->n] to f.t[u->f]
+		int top = find_top(f.t[u->f]);
+		/* close topcard if previous action caused turn_over(): */
+		if (u->n < 0) {
+			f.t[u->f][top] *= -1;
+			u->n *= -1;
+		}
+		/* append cards from foundation to tableu */
+		for (int i = RANK_K; i >= RANK_A; i--) {
+			f.t[u->f][++top] = f.f[u->n][i];
+			f.f[u->n][i] = NO_CARD;
+		}
+		/* decrement complete-foundation-counter: */
+		remove_if_complete(-1);
 	} else {
 		/* tableu -> tableu */
-		// if n was negative, close topcard on f.t[u->f]
-		// move n cards from f.t[u->t] to f.t[u->f]
+		int top_f = find_top(f.t[u->f]);
+		int top_t = find_top(f.t[u->t]);
+		/* close topcard if previous action caused turn_over(): */
+		if (u->n < 0) {
+			f.t[u->f][top_f] *= -1;
+			u->n *= -1;
+		}
+		/* move n cards from tableu[f] to tableu[t]: */
+		for (int i = 0; i < u->n; i++) {
+			f.t[u->f][top_f+u->n-i] = f.t[u->t][top_t-i];
+			f.t[u->t][top_t-i] = NO_CARD;
+		}
 	}
 #endif
 

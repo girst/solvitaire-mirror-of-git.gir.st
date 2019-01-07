@@ -204,6 +204,7 @@ int t2t(int from, int to, int opt);
 void remove_if_complete (int pileno);
 int t2t(int from, int to, int opt);
 int s2t(int from, int to, int opt);
+int t2f(int from, int to, int opt);
 #endif
 int nop(int from, int to, int opt);
 void cursor_left (struct cursor* cursor);

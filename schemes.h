@@ -134,7 +134,7 @@ const struct scheme unicode_large_color = {
 		"│\033[94m▚\033[39m",
 		"╰─"
 	},
-	.halfcard = (int[]){6, 16, 4, 6},
+	.halfcard = (int[]){6, 16, 4, 6}, //TODO: these values must be changed to fit the BULCARD macro!
 	.halfwidth = {2, 3, 999},
 };
 const struct scheme unicode_small_mono = {
