@@ -108,6 +108,7 @@ enum special_cmds {
 	CMD_AGAIN,
 	CMD_HINT,
 	CMD_JOIN,
+	CMD_UNDO,
 };
 
 enum difficulty {
@@ -147,6 +148,8 @@ struct cursor {
 };
 const struct cursor no_hi = {-1, -1};
 #define NO_HI &no_hi
+
+struct undo undo_sentinel;
 
 // help texts {{{
 #define SHORTHELP "%s [OPTIONS]\n"

@@ -115,6 +115,7 @@ int sol(void) {
 			break;
 		case CMD_HINT: //TODO: show a possible (and sensible) move
 		case CMD_JOIN: //TODO: join any pile to here (longest if possible)
+		case CMD_UNDO: undo_pop(f.u); break;
 		case CMD_INVAL: visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
 		case CMD_AGAIN: //TODO: restart with same seed
@@ -523,6 +524,7 @@ from_l:	print_table(&active, &inactive);
 	case 'J': return CMD_JOIN;
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
+	case 'u': return CMD_UNDO;
 	case EOF: return CMD_NONE; /* sent by SIGCONT */
 	default: return CMD_INVAL;
 	}
@@ -546,7 +548,7 @@ to_l:	print_table(&active, &inactive);
 		break; /* continues with the foundation/empty tableu check */
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
-	case 'G'&0x1f: return CMD_NONE; /* cancel move with ^G */
+	case 'u': return CMD_NONE; /* cancel selection */
 	case EOF: return CMD_NONE; /* sent by SIGCONT */
 	default:
 		if (t < '0' || t > '9') return CMD_INVAL;
@@ -656,6 +658,8 @@ void deal(void) {
 	/* rest of the cards to the stock; NOTE: assert(avail==50) for spider */
 	for (f.z = 0; avail; f.z++) f.s[f.z] = deck[--avail];
 	f.w = -1; /* @start: nothing on waste (no waste in spider -> const) */
+
+	f.u = &undo_sentinel;
 }
 //}}}
 
@@ -811,53 +815,84 @@ fin:
 //}}}
 
 // undo logic {{{
-void undo_push (int f, int t, int n) {
-	(void)n;(void)f;(void)t;
-	//TODO: implement!
-	//check if we have to free redo buffer (.next)
-	//malloc
-	//update pointers
+void undo_push (int _f, int t, int n) {
+	struct undo* new = malloc(sizeof(struct undo));
+	new->f = _f;
+	new->t = t;
+	new->n = n;
+	new->prev = f.u;
+	new->next = NULL;
+	f.u->next = new;
+	f.u = f.u->next;
 }
 void undo_pop (struct undo* u) {
-	(void)u;
+	if (u == &undo_sentinel) return;
 	//TODO: undoes the operation pointed to by *u and moves the pointer one item back
-#if 0
-/!\ NOTE: WASTE is only used in KLONDIKE. in SPIDER WASTE is 0 and therefore
-	  overlaps with TAB_1 and therefore may not be compared against before
-          TAB_1 has been.
-
 	//NOTE: invert n beforehand if negative (and remember that it was)
+
+
 #ifdef KLONDIKE
 	if (u->f == FOUNDATION) {
 		/* foundation -> tableu */
-		// move 1 card from f.f[u->n] to f.t[u->f]
+		int top_f = find_top(f.f[u->n]);
+		int top_t = find_top(f.t[u->t]);
+		f.f[u->n][top_f+1] = f.t[u->t][top_t];
+		f.t[u->t][top_t] = NO_CARD;
 	} else if (u->f == WASTE && u->t == FOUNDATION) {
 		/* waste -> foundation */
-		// split u->n into wst and fnd:
+		/* split u->n into wst and fnd: */
 		int wst = u->n & 0xffff;
 		int fnd = u->n >> 16;
-		// increment stock size (f.z)
-		// move all stock cards with index >= wst one position up
-		// move one card from f.f[fnd] to f.s[wst]
+		/* move stock cards one position up to make room: */
+		for (int i = f.z; i >= wst; i--) f.s[i+1] = f.s[i];
+		/* move one card from foundation to waste: */
+		int top = find_top(f.f[fnd]);
+		f.s[wst] = f.f[fnd][top];
+		f.f[fnd][top] = NO_CARD;
+		f.z++;
+		f.w++;
 	} else if (u->f == WASTE) {
 		/* waste -> tableu */
-		// increment stock size (f.z)
-		// move all stock cards with index >= wst one position up
-		// move 1 card from f.t[u->t] to f.s[u->n]
+		/* move stock cards one position up to make room: */
+		for (int i = f.z; i >= u->n; i--) f.s[i+1] = f.s[i];
+		/* move one card from tableu to waste: */
+		int top = find_top(f.t[u->t]);
+		f.s[u->n] = f.t[u->t][top];
+		f.t[u->t][top] = NO_CARD;
+		f.z++;
+		f.w++;
 	} else if (u->t == FOUNDATION) {
 		/* tableu -> foundation */
-		// if n was negative, close topcard on f.t[u->f]
-		// move 1 card from f.f[u->n] to f.t[u->f]
+		int top_f = find_top(f.t[u->f]);
+		int top_t = find_top(f.f[u->n]);
+		/* close topcard if previous action caused turn_over(): */
+		if (u->n < 0) {
+			f.t[u->f][top_f] *= -1;
+			u->n *= -1;
+		}
+		/* move one card from foundation to tableu: */
+		f.t[u->f][top_f+1] = f.f[u->n][top_t];
+		f.f[u->n][top_t] = NO_CARD;
 	} else {
 		/* tableu -> tableu */
-		// if n was negative, close topcard on f.t[u->f]
-		// move 1 card from f.t[u->t] to f.t[u->f]
+		int top_f = find_top(f.t[u->f]);
+		int top_t = find_top(f.t[u->t]);
+		/* close topcard if previous action caused turn_over(): */
+		if (u->n < 0) {
+			f.t[u->f][top_f] *= -1;
+			u->n *= -1;
+		}
+		/* move u->n card from tableu[f] to tableu[t]: */
+		for (int i = 0; i < u->n; i++) {
+			f.t[u->f][top_f+u->n-i] = f.t[u->t][top_t-i];
+			f.t[u->t][top_t-i] = NO_CARD;
+		}
 	}
 #elif defined SPIDER
 	if (u->f == STOCK) {
 		/* stock -> tableu */
 		// remove 1 card from each tableu (right to left) and put it back onto the stock
-	else if (u->t == FOUNDATION) {
+	} else if (u->t == FOUNDATION) {
 		/* tableu -> foundation */
 		// if n was negative, close topcard on f.t[u->f]
 		// append cards from f.f[u->n] to f.t[u->f]
@@ -867,8 +902,10 @@ void undo_pop (struct undo* u) {
 		// move n cards from f.t[u->t] to f.t[u->f]
 	}
 #endif
-#endif
 
+	void* old = f.u;//TODO: use free_undo()
+	f.u = f.u->prev;
+	free(old);
 }
 void free_undo (struct undo* u) {
 	(void)u;
