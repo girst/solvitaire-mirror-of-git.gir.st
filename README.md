@@ -46,7 +46,7 @@ play klondike and spider solitaire in your unicode terminal.
 	 - insert append_undo() in x2y() functions
 	 - to encode stack position we need to overload `f.u.n` as index.
 	   (similar for foundation: overload `f.u.n` as foundation id)
-	 - w2f(): have to encode both stock index and foundation id <-XXX
+	 - w2f(): have to encode both stock index and foundation id
 	          don't want to add a struct field for this one case; 
 	          for the time being (i.e. forever) I'm ORing waste index and
 	          (foundation id<<16). ugly but works :/

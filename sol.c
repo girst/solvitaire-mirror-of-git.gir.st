@@ -116,8 +116,8 @@ int sol(void) {
 			case WON: return GAME_WON;
 			}
 			break;
-		case CMD_HINT: //TODO: show a possible (and sensible) move
-		case CMD_JOIN: //TODO: join any pile to here (longest if possible)
+		case CMD_HINT: break;//TODO: show a possible (and sensible) move
+		case CMD_JOIN: break;//TODO: join any pile to here (longest if possible)
 		case CMD_UNDO: undo_pop(f.u); break;
 		case CMD_INVAL: visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
@@ -673,6 +673,15 @@ void deal(void) {
 
 // screen drawing routines {{{
 void print_hi(int invert, int grey_bg, int bold, char* str) {
+	if (op.s == &unicode_large_color){//ARGH! awful hack for bold with faint
+		int offset = str[3]==033?16:str[4]==033?17:0;
+		if ((unsigned char)str[10] == 0x9a) offset = 0; //facedown card
+		printf ("%s%s%s""%.*s%s%s""%s%s%s",
+			bold?"\033[1m":"", invert?"\033[7m":"", grey_bg?"\033[100m":"",
+			offset, str, bold?"\033[1m":"", str+offset,
+			grey_bg?"\033[49m":"", invert?"\033[27m":"",bold?"\033[22m":"");
+		return;
+	}
 	printf ("%s%s%s%s%s%s%s",
 		bold?"\033[1m":"", invert?"\033[7m":"", grey_bg?"\033[100m":"",
 		str,
