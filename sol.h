@@ -202,7 +202,7 @@ int f2t(int from, int to, int opt);
 int w2t(int from, int to, int opt);
 int t2t(int from, int to, int opt);
 #elif defined SPIDER
-void remove_if_complete (int pileno);
+int remove_if_complete (int pileno);
 int t2t(int from, int to, int opt);
 int s2t(int from, int to, int opt);
 int t2f(int from, int to, int opt);

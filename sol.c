@@ -308,16 +308,16 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 	return ERR; /* no such move possible */
 }
 #elif defined SPIDER
-void remove_if_complete (int pileno) { //cleanup!
+int remove_if_complete (int pileno) { //cleanup!
 	static int foundation = 0;
-	if (pileno == -1) { foundation--; return; } /* for undo_pop() */
+	if (pileno == -1) return foundation--; /* for undo_pop() */
 
 	card_t* pile = f.t[pileno];
 	/* test if K...A complete; move to foundation if so */
 	int top_from = find_top(pile);
-	if (get_rank(pile[top_from]) != RANK_A) return;
+	if (get_rank(pile[top_from]) != RANK_A) return 0;
 	for (int i = top_from; i>=0; i--) {
-		if (!is_consecutive (pile, i)) return;
+		if (!is_consecutive (pile, i)) return 0;
 		if (i+RANK_K == top_from /* if ace to king: remove it */
 		    && get_rank(pile[top_from-RANK_K]) == RANK_K) {
 			for(int i=top_from, j=0; i>top_from-NUM_RANKS; i--,j++){
@@ -327,9 +327,11 @@ void remove_if_complete (int pileno) { //cleanup!
 			undo_push(pileno, FOUNDATION, foundation,
 			turn_over(pile));
 			foundation++;
-			return;
+			return 1;
 		}
 	}
+
+	return 0;
 }
 int t2t(int from, int to, int opt) { //in dire need of cleanup
 	int top_from = find_top(f.t[from]);
@@ -375,8 +377,7 @@ int s2t(int from, int to, int opt) {
 int t2f(int from, int to, int opt) {
 	(void) to; (void) opt; /* don't need */
 	/* manually retrigger remove_if_complete() (e.g. after undo_pop) */
-	remove_if_complete(from);
-	return OK;
+	return remove_if_complete(from)?OK:ERR;
 }
 #endif
 int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
