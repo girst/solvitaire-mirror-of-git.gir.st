@@ -6,14 +6,18 @@ play klondike and spider solitaire in your unicode terminal.
 
 ### P1
 ### P2
+ * TODO: suggest moves (`h` => hint)
+ * TODO: 'join to here' command (should take longest chain available)
+ * TODO: escape sequences (for real cursor keys)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
 ### P3
- * TODO: mouse mode
  * TODO: screen size > stack height => rendering issues!
- * TODO: suggest moves (`h` => hint)
+ * TODO: differential drawing mode (at least for highlighting cards)
 ### P4
+ * TODO: mouse mode (problems: finding position with `extreme_overlap`)
  * TODO: scores, variants: draw 3, max. n overturns
+ * TODO: expose deal() seed for restarting the game
  * TODO: vt220 mode (problems: charset, slow baudrate and no differential drawing mode)
  * TODO: ed(1) mode (solEDaire): playable on a line printer; ascii/ibm only?
 
