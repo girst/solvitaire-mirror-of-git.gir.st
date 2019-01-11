@@ -674,7 +674,7 @@ void deal(void) {
 
 // screen drawing routines {{{
 void print_hi(int invert, int grey_bg, int bold, char* str) {
-	if (op.s == &unicode_large_color){//ARGH! awful hack for bold with faint
+	if (bold && op.s == &unicode_large_color){//ARGH! awful hack for bold with faint
 		int offset = str[3]==033?16:str[4]==033?17:0;
 		if ((unsigned char)str[10] == 0x9a) offset = 0; //facedown card
 		printf ("%s%s%s""%.*s%s%s""%s%s%s",
@@ -732,7 +732,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 		/* spacer: */
 		for (int i = spacer_from; i < spacer_to; i++) printf (" ");
 		/* foundation (overlapping): */
-		for (int i = 0; i < NUM_DECKS*NUM_SUITS; i++) {
+		for (int i = 0; i < NUM_DECKS*NUM_SUITS; i++) { //TODO: print in revrse order (otherwise new piles get put 'below' older ones)
 			int overlap = i? op.s->halfcard[line]: 0;
 			if (f.f[i][RANK_K]) printf ("%.*s", op.s->halfwidth[2],
 				op.s->card[f.f[i][RANK_K]][line]+overlap);
@@ -742,12 +742,15 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 	printf("\n");
 #endif
 #ifdef KLONDIKE
-#define DO_HI(cursor) cursor->pile == pile && (movable || empty)
+#define DO_HI(cursor) (cursor->pile == pile && (movable || empty))
+#define TOP_HI(c) 1 /* can't select partial stacks in KLONDIKE */
 #define INC_OFFSET
 #elif defined SPIDER
 	int offset[NUM_PILES]={1,1,1,1,1,1,1,1,1,1}; // :|
-#define DO_HI(cursor) cursor->pile == pile && (movable || empty) \
-	&& offset[pile] > cursor->opt
+#define DO_HI(cursor) (cursor->pile == pile && (movable || empty) \
+	&& offset[pile] > cursor->opt)
+#define TOP_HI(cursor) (cursor->pile == pile && movable \
+	&& offset[pile]-1 == cursor->opt)
 #define INC_OFFSET if (movable) offset[pile]++
 #endif
 	/* print tableu piles: */
@@ -780,6 +783,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 			    f.t[pile][row[pile]+1] <0)
 			/* extreme overlap on sequences: */
 			|| (extreme_overlap &&
+			    !TOP_HI(active) && /*always show top selected card*/
 			    line[pile] >= 1 && row[pile] > 0 &&
 			    f.t[pile][row[pile]-1] > NO_CARD &&
 			    is_consecutive (f.t[pile], row[pile]) &&
