@@ -309,9 +309,6 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 }
 #elif defined SPIDER
 int remove_if_complete (int pileno) { //cleanup!
-	static int foundation = 0;
-	if (pileno == -1) return foundation--; /* for undo_pop() */
-
 	card_t* pile = f.t[pileno];
 	/* test if K...A complete; move to foundation if so */
 	int top_from = find_top(pile);
@@ -321,12 +318,12 @@ int remove_if_complete (int pileno) { //cleanup!
 		if (i+RANK_K == top_from /* if ace to king: remove it */
 		    && get_rank(pile[top_from-RANK_K]) == RANK_K) {
 			for(int i=top_from, j=0; i>top_from-NUM_RANKS; i--,j++){
-				f.f[foundation][j] = pile[i];
+				f.f[f.w][j] = pile[i];
 				pile[i] = NO_CARD;
 			}
-			undo_push(pileno, FOUNDATION, foundation,
+			undo_push(pileno, FOUNDATION, f.w,
 			turn_over(pile));
-			foundation++;
+			f.w++;
 			return 1;
 		}
 	}
@@ -666,7 +663,11 @@ void deal(void) {
 	}
 	/* rest of the cards to the stock; NOTE: assert(avail==50) for spider */
 	for (f.z = 0; avail; f.z++) f.s[f.z] = deck[--avail];
-	f.w = -1; /* @start: nothing on waste (no waste in spider -> const) */
+#ifdef KLONDIKE
+	f.w = -1; /* @start: nothing on waste */
+#elif defined SPIDER
+	f.w = 0; /* number of used foundations */
+#endif
 
 	f.u = &undo_sentinel;
 }
@@ -921,8 +922,8 @@ void undo_pop (struct undo* u) {
 			f.t[u->f][++top] = f.f[u->n][i];
 			f.f[u->n][i] = NO_CARD;
 		}
-		/* decrement complete-foundation-counter: */
-		remove_if_complete(-1);
+		f.w--; /* decrement complete-foundation-counter */
+
 	} else {
 		/* tableu -> tableu */
 		int top_f = find_top(f.t[u->f]);

@@ -123,7 +123,7 @@ typedef signed char card_t;
 struct playfield {
 	card_t s[MAX_STOCK]; /* stock */
 	int z; /* stock size */
-	int w; /* waste; index into stock (const -1 in spider) */
+	int w; /* waste; index into stock (used foundations in spider) */
 	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation */
 	card_t t[NUM_PILES][PILE_SIZE]; /* tableu piles */
 	struct undo {
