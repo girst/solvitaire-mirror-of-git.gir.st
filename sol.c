@@ -114,7 +114,13 @@ int sol(void) {
 			}
 			break;
 		case CMD_HINT: break;//TODO: show a possible (and sensible) move
-		case CMD_JOIN: break;//TODO: join any pile to here (longest if possible)
+		case CMD_JOIN:
+			switch (join(to)) {
+			case OK:  break;
+			case ERR: visbell(); break;
+			case WON: return GAME_WON;
+			}
+			break;
 		case CMD_UNDO: undo_pop(f.u); break;
 		case CMD_INVAL: visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
@@ -374,6 +380,58 @@ int t2f(int from, int to, int opt) {
 	return remove_if_complete(from)?OK:ERR;
 }
 #endif
+int join(int to) {
+	//TODO: allow joining to foundation in klondike
+	//TODO: in spider, prefer same-suit cards if there is a tie
+	//TODO: in spider, prefer piles with less cards above our card. right
+	//      now, this will often take from piles we've just constructed.
+	//      also prefer to take from a pile if it results in an empty pile
+	//      or a turn_over
+	//TODO: which pile to take from should form the basis of CMD_HINT
+
+	int top_to = find_top(f.t[to]); //TODO: handle empty
+	int from = -1;
+	int count = -1;
+
+	/* 1. find pile with largest number of useful movable cards: */
+	for (int pile = 0; pile < NUM_PILES; pile++) {
+		int tmp_count = 0;
+		int tmp_top = find_top(f.t[pile]);
+		/* backtrack until we find a compatible-to-'to'-pile card: */
+		while (tmp_top >= 0 && is_movable(f.t[pile], tmp_top)) {
+			int rankdiff = get_rank(f.t[pile][tmp_top]) - get_rank(f.t[to][top_to]);
+			tmp_count++;
+			if (rankdiff >= 0) break; /* past our card */
+			if (rankdiff == -1 //NOTE: could use rank_next()
+#ifdef KLONDIKE
+			&& get_color(f.t[pile][tmp_top]) != get_color(f.t[to][top_to])
+#endif
+			&& tmp_count > count) {
+				count = tmp_count;
+				from = pile;
+			}
+			tmp_top--;
+		}
+	}
+
+	if (from < 0) { /* nothing found */
+#ifdef KLONDIKE /* check if we can take from waste before giving up */
+		return w2t(WASTE, to, 0);
+#elif defined SPIDER
+		return ERR;
+#endif
+	}
+
+	if (from == -1) return ERR; /* nothing found */
+
+	/* 2. move cards over and return: */
+#ifdef KLONDIKE
+	return t2t(from, to, 0);
+#elif defined SPIDER
+	int bottom = first_movable(f.t[from]);
+	return t2t(from, to, get_rank(f.t[from][bottom]));
+#endif
+}
 int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
 // }}}
 
@@ -525,7 +583,10 @@ from_l:	print_table(&active, &inactive);
 		case 'r': return CMD_AGAIN;
 		default:  return CMD_INVAL;
 		}}
-	case 'J': return CMD_JOIN;
+	case 'J':
+		*to = active.pile;
+		if (*to > TAB_MAX) return CMD_INVAL;
+		return CMD_JOIN;
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
 	case 'u': return CMD_UNDO;
@@ -547,7 +608,7 @@ to_l:	print_table(&active, &inactive);
 	case 'H': cursor_to(&active,TAB_1);     goto to_l;
 	case 'L': cursor_to(&active,TAB_MAX);   goto to_l;
 	case 'M': cursor_to(&active,TAB_MAX/2); goto to_l;
-	case 'J': /* fallthrough; key makes no sense on destination */
+	case 'J': /* fallthrough; just join selected pile */
 	case ' ':
 		*to = active.pile;
 		break; /* continues with the foundation/empty tableu check */

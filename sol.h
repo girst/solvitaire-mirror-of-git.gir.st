@@ -177,7 +177,8 @@ struct undo undo_sentinel;
 	"Keybindings:\n" \
 	"    hjkl  : move cursor\n" \
 	"    H,M,L : move cursor to first/centre/last tableu pile\n" \
-	/*"    J, K  : join to here, show hint\n" */\
+	"    J     : join to here\n" \
+	/*"    K     : show hint\n" */\
 	"    space : select at cursor\n" \
 	"    return: draw from stock\n" \
 	"    :n    : new game\n" \
@@ -209,6 +210,7 @@ int t2t(int from, int to, int opt);
 int s2t(int from, int to, int opt);
 int t2f(int from, int to, int opt);
 #endif
+int join(int to);
 int nop(int from, int to, int opt);
 void cursor_left (struct cursor* cursor);
 void cursor_down (struct cursor* cursor);
