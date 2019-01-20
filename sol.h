@@ -123,7 +123,7 @@ typedef signed char card_t;
 struct playfield {
 	card_t s[MAX_STOCK]; /* stock */
 	int z; /* stock size */
-	int w; /* waste; index into stock (used foundations in spider) */
+	int w; /* waste; index into stock (occupied foundations in spider) */
 	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation */
 	card_t t[NUM_PILES][PILE_SIZE]; /* tableu piles */
 	struct undo {
@@ -140,7 +140,7 @@ struct opts {
 #ifdef SPIDER
 	int m; /* difficulty mode */
 #endif
-	int v; /* conserve vertical space */
+	unsigned short w[2]; /* terminal window rows/columns */
 	const struct scheme* s;
 };
 struct cursor {
@@ -168,7 +168,6 @@ struct undo undo_sentinel;
 #define LONGHELP \
 	"OPTIONS:\n" \
 	LONGHELP_SPECIFIC \
-	"    -v(vertical space conserve)\n" \
 	"    -b(land colorscheme)\n" \
 	"    -c(olorful colorscheme)\n" \
 	"    -m(iniature colorscheme)\n" \

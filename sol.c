@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 #include <time.h>
 #include <termios.h>
 #include <unistd.h>
@@ -53,7 +54,6 @@ int main(int argc, char** argv) {
 #ifdef SPIDER
 	op.m = MEDIUM;
 #endif
-	op.v = 0;
 
 	int optget;
 	opterr = 0; /* don't print message on unrecognized option */
@@ -68,7 +68,6 @@ int main(int argc, char** argv) {
 			default: goto error;
 			} break;
 #endif
-		case 'v': op.v = 1; break; /* conserve vertical space */
 		case 'b': op.s = &unicode_large_mono; break;
 		case 'c': op.s = &unicode_large_color; break;
 		case 'm': op.s = &unicode_small_mono; break; /* "mini" */
@@ -81,6 +80,8 @@ int main(int argc, char** argv) {
 
 	signal_setup();
 	atexit (*quit);
+
+	signal_handler(SIGWINCH); /* initialize window size */
 
 newgame:
 	screen_setup(1);
@@ -771,7 +772,9 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 				:op.s->card[card]
 				)[line[pile]]);
 
-			int extreme_overlap = op.v && find_top(f.t[pile])>10;
+			int extreme_overlap = ( 3  /* spacer, labels, status */
+				+ 2 * op.s->height /* stock, top tableu card */
+				+ find_top(f.t[pile]) * op.s->overlap) >op.w[0];
 			/* normal overlap: */
 			if (++line[pile] >= (next?op.s->overlap:op.s->height)
 			/* extreme overlap on closed cards: */
@@ -980,14 +983,20 @@ void raw_mode(int enable) {
 }
 
 void signal_handler (int signum) {
+	struct winsize w;
 	switch (signum) {
 	case SIGCONT:
 		screen_setup(0);
 		screen_setup(1);
 		print_table(NO_HI, NO_HI);
 		break;
-	case SIGINT:
+	case SIGINT: //TODO: don't exit; just warn like vim does
 		exit(128+SIGINT);
+	case SIGWINCH:
+		ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+		op.w[0] = w.ws_row;
+		op.w[1] = w.ws_col;
+		break;
 	}
 }
 void signal_setup(void) {
@@ -1002,6 +1011,10 @@ void signal_setup(void) {
 	}
 	if (sigaction(SIGINT, &saction, NULL) < 0) {
 		perror ("SIGINT");
+		exit (1);
+	}
+	if (sigaction(SIGWINCH, &saction, NULL) < 0) {
+		perror ("SIGWINCH");
 		exit (1);
 	}
 }
