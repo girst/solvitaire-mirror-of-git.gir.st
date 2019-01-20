@@ -121,9 +121,9 @@ enum difficulty {
 typedef signed char card_t;
 
 struct playfield {
-	card_t s[MAX_STOCK]; /* stock */
 	int z; /* stock size */
 	int w; /* waste; index into stock (occupied foundations in spider) */
+	card_t s[MAX_STOCK]; /* stock */
 	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation */
 	card_t t[NUM_PILES][PILE_SIZE]; /* tableu piles */
 	struct undo {
@@ -217,7 +217,7 @@ void cursor_down (struct cursor* cursor);
 void cursor_up (struct cursor* cursor);
 void cursor_right (struct cursor* cursor);
 int get_cmd (int* from, int* to, int* opt);
-void deal(void);
+void deal(long seed);
 void print_hi(int invert, int grey_bg, int bold, char* str);
 void print_table(const struct cursor* active, const struct cursor* inactive);
 void visbell (void);

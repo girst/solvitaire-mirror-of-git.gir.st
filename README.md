@@ -5,20 +5,19 @@ play klondike and spider solitaire in your unicode terminal.
 ## TODO
 
 ### P1
+ * TODO: make portable (clang on FreeBSD)
+         makefile's `$<` refuses to work if prequisite name != target name
 ### P2
  * TODO: suggest moves (`h` => hint)
- * TODO: 'join to here' command (should take longest chain available)
  * TODO: escape sequences (for real cursor keys)
  * TODO: inverted moves (if A->B doesn't work, try B->A)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
 ### P3
- * TODO: screen size > stack height => rendering issues!
  * TODO: differential drawing mode (at least for highlighting cards)
 ### P4
  * TODO: mouse mode (problems: finding position with `extreme_overlap`)
  * TODO: scores, variants: draw 3, max. n overturns
- * TODO: expose deal() seed for restarting the game
  * TODO: vt220 mode (problems: charset, slow baudrate and no differential drawing mode)
  * TODO: ed(1) mode (solEDaire): playable on a line printer; ascii/ibm only?
 
@@ -30,9 +29,9 @@ play klondike and spider solitaire in your unicode terminal.
  * DONE: patience: allow taking from 0(foundation)
  * DONE: highlight `from` pile, so users can see at what input stage they are
  * DONE: make piles 0-indexed in klondike as well
- * HOLD: duplicate card ♠A found in tableu: added check at start to monitor this
+ * DONE: duplicate card ♠A found in tableu: added check at start to monitor this
          Cannot reproduce, removed check
- * HOLD: bugs in spider's t2t()
+ * DONE: bugs in spider's t2t()
          * once segfaulted on large column
          * sometimes doesn't work (ERR when it should be OK)
          Cannot reproduce
@@ -62,6 +61,10 @@ play klondike and spider solitaire in your unicode terminal.
 	            already used for closed cards
 	      cons: dirty C hack, less obvious than in other places, no need to
 	            conserve memory this tightly
+ * DONE: screen size > stack height => rendering issues!
+         as good as it's going to get, since we can't just not draw cards at all
+ * DONE: 'join to here' command (should take longest chain available)
+ * DONE: expose deal() seed for restarting the game
 
 ## Notes
 

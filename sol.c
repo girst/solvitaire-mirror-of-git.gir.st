@@ -1,5 +1,4 @@
-#define _DEFAULT_SOURCE
-#define _POSIX_C_SOURCE /* for sigaction */
+#define _DEFAULT_SOURCE /* for getopt, sigaction, usleep */
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
@@ -98,10 +97,10 @@ newgame:
 }
 
 int sol(void) {
-	/* clean undo (from previous game): */
+	long seed = time(NULL);
+restart:
 	free_undo(f.u);
-
-	deal();
+	deal(seed);
 
 	int from, to, opt;
 	for(;;) {
@@ -109,11 +108,10 @@ int sol(void) {
 		case CMD_MOVE:
 			switch (action[from][to](from,to,opt)) {
 			case OK:  break;
-			case ERR: visbell(); break;
+			case ERR: visbell(); break; //TODO: try again with from/to swapped
 			case WON: return GAME_WON;
 			}
 			break;
-		case CMD_HINT: break;//TODO: show a possible (and sensible) move. if possible, involve active cursor
 		case CMD_JOIN:
 			switch (join(to)) {
 			case OK:  break;
@@ -121,10 +119,11 @@ int sol(void) {
 			case WON: return GAME_WON;
 			}
 			break;
-		case CMD_UNDO: undo_pop(f.u); break;
+		case CMD_HINT:  break;//TODO: show a possible (and sensible) move. if possible, involve active cursor
+		case CMD_UNDO:  undo_pop(f.u); break;
 		case CMD_INVAL: visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
-		case CMD_AGAIN: //TODO: restart with same seed
+		case CMD_AGAIN: goto restart;
 		case CMD_QUIT:  return GAME_QUIT;
 		}
 	}
@@ -462,7 +461,6 @@ int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
 
 // keyboard input handling {{{
 // cursor functions{{{
-#pragma GCC diagnostic ignored "-Wswitch" //not ideal :|
 #ifdef KLONDIKE
 void cursor_left (struct cursor* cursor) {
 	if (is_tableu(cursor->pile)) {
@@ -540,7 +538,6 @@ void cursor_to (struct cursor* cursor, int pile) {
 	cursor->pile = pile;
 	cursor->opt = 0;
 }
-#pragma GCC diagnostic pop
 //}}}
 int get_cmd (int* from, int* to, int* opt) {
 	//TODO: escape sequences (mouse, cursor keys)
@@ -715,7 +712,7 @@ to_l:	print_table(&active, &inactive);
 // }}}
 
 // shuffling and dealing {{{
-void deal(void) {
+void deal(long seed) {
 	f = (const struct playfield){0}; /* clear playfield */
 	card_t deck[DECK_SIZE*NUM_DECKS];
 	int avail = DECK_SIZE*NUM_DECKS;
@@ -727,11 +724,9 @@ void deal(void) {
 		/* the 1+ -1 dance gets rid of the offset created by NO_CARD */
 	}
 #endif
-	srandom (time(NULL));
-	long seed = time(NULL);
-	srandom (seed);
+	srand (seed);
 	for (int i = DECK_SIZE*NUM_DECKS-1; i > 0; i--) { /* fisher-yates */
-		int j = random() % (i+1);
+		int j = rand() % (i+1);
 		if (j-i) deck[i]^=deck[j],deck[j]^=deck[i],deck[i]^=deck[j];
 	}
 
@@ -902,11 +897,11 @@ void win_anim(void) {
 	printf ("\033[?25l"); /* hide cursor */
 	for (;;) {
 		/* set cursor to random location */
-		int row = 1+random()%(24-op.s->width);
-		int col = 1+random()%(80-op.s->height);
+		int row = 1+rand()%(24-op.s->width);
+		int col = 1+rand()%(80-op.s->height);
 
 		/* draw random card */
-		int face = 1 + random() % 52;
+		int face = 1 + rand() % 52;
 		for (int l = 0; l < op.s->height; l++) {
 			printf ("\033[%d;%dH", row+l, col);
 			printf ("%s", op.s->card[face][l]);
