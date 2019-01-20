@@ -113,7 +113,7 @@ int sol(void) {
 			case WON: return GAME_WON;
 			}
 			break;
-		case CMD_HINT: break;//TODO: show a possible (and sensible) move
+		case CMD_HINT: break;//TODO: show a possible (and sensible) move. if possible, involve active cursor
 		case CMD_JOIN:
 			switch (join(to)) {
 			case OK:  break;
@@ -382,39 +382,66 @@ int t2f(int from, int to, int opt) {
 #endif
 int join(int to) {
 	//TODO: allow joining to foundation in klondike
-	//TODO: in spider, prefer same-suit cards if there is a tie
-	//TODO: in spider, prefer piles with less cards above our card. right
-	//      now, this will often take from piles we've just constructed.
-	//      also prefer to take from a pile if it results in an empty pile
-	//      or a turn_over
 	//TODO: which pile to take from should form the basis of CMD_HINT
 
 	int top_to = find_top(f.t[to]); //TODO: handle empty
 	int from = -1;
-	int count = -1;
 
-	/* 1. find pile with largest number of useful movable cards: */
+	struct rating {
+		int ok:1;    /* card to move in pile? */
+		int above;   /* number of movable cards above */
+		int below;   /* number of cards below ours */
+		int pos;     /* where the card to move is in the pile */
+	} r[NUM_PILES] = {{0}};
+
+	/* 1. rate each pile: */
 	for (int pile = 0; pile < NUM_PILES; pile++) {
-		int tmp_count = 0;
-		int tmp_top = find_top(f.t[pile]);
+		r[pile].pos = find_top(f.t[pile]);
 		/* backtrack until we find a compatible-to-'to'-pile card: */
-		while (tmp_top >= 0 && is_movable(f.t[pile], tmp_top)) {
-			int rankdiff = get_rank(f.t[pile][tmp_top]) - get_rank(f.t[to][top_to]);
-			tmp_count++;
+		while (r[pile].pos >= 0 && is_movable(f.t[pile], r[pile].pos)) {
+			int rankdiff = get_rank(f.t[pile][r[pile].pos])
+			               - get_rank(f.t[to][top_to]);
 			if (rankdiff >= 0) break; /* past our card */
-			if (rankdiff == -1 //NOTE: could use rank_next()
+			if (rankdiff == -1 /* rank matches */
 #ifdef KLONDIKE
-			&& get_color(f.t[pile][tmp_top]) != get_color(f.t[to][top_to])
+			&& get_color(f.t[pile][r[pile].pos]) /* color OK */
+			   != get_color(f.t[to][top_to])
+#elif defined SPIDER
+			&& get_suit(f.t[pile][r[pile].pos]) /* color OK */
+			   == get_suit(f.t[to][top_to])
 #endif
-			&& tmp_count > count) {
-				count = tmp_count;
-				from = pile;
+			) {
+				r[pile].ok++;
+				for (int i = r[pile].pos; i >= 0; i--)
+					if (is_movable(f.t[pile], i-1))
+						r[pile].above++;
+					else break;
+				break;
 			}
-			tmp_top--;
+			r[pile].pos--;
+			r[pile].below++;
 		}
 	}
 
-	if (from < 0) { /* nothing found */
+	/* 2. find optimal pile: (optimized for spider) */
+	for (int pile = 0, above = 99, turn = 0, empty = 0, below = 99, e=0,t=0;
+	     pile < NUM_PILES; pile++) {
+		if (!r[pile].ok) continue;
+
+		if ((e=(r[pile].pos == 0))                     /* will become empty */
+		|| ((t=(f.t[pile][r[pile].pos-1] < 0)) && !empty) /* will turn_over */
+		|| (r[pile].above < above && !empty)            /* less cards above */
+		|| (r[pile].above ==above && r[pile].below < below && !empty && !turn)) { /* if tied, use shorter pile */
+			from = pile;
+			above = r[pile].above;
+			below = r[pile].below;
+			empty |= e;
+			turn  |= t;
+		}
+	}
+
+	/* 3a. give up if nothing found: */
+	if (from < 0) {
 #ifdef KLONDIKE /* check if we can take from waste before giving up */
 		return w2t(WASTE, to, 0);
 #elif defined SPIDER
@@ -422,9 +449,7 @@ int join(int to) {
 #endif
 	}
 
-	if (from == -1) return ERR; /* nothing found */
-
-	/* 2. move cards over and return: */
+	/* 3b. move cards over and return: */
 #ifdef KLONDIKE
 	return t2t(from, to, 0);
 #elif defined SPIDER
