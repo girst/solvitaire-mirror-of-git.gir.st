@@ -161,15 +161,17 @@ struct undo undo_sentinel;
 	"    8,9,0 : directly address stock/waste/foundation\n"
 #elif defined SPIDER
 #define LONGHELP_SPECIFIC \
-	"    -d(ifficulty) (eady|medium|hard)\n"
+	"    -s(uits) <1, 2 or 4>\n"
 #define DIRECT_ADDR_KEYHELP \
 	"    1 .. 0: directly address tableu\n"
 #endif
 #define LONGHELP \
 	"OPTIONS:\n" \
 	LONGHELP_SPECIFIC \
-	"    -o(ption) (consv=conserve vertical space)\n" \
-	"    -s(cheme) (color|mono|small)\n" \
+	"    -v(vertical space conserve)\n" \
+	"    -b(land colorscheme)\n" \
+	"    -c(olorful colorscheme)\n" \
+	"    -m(iniature colorscheme)\n" \
 	"    -h(elp)\n" \
 	"\n"
 #define KEYHELP \

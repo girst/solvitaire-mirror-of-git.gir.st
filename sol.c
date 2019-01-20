@@ -4,7 +4,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 #include <termios.h>
 #include <unistd.h>
@@ -58,26 +57,23 @@ int main(int argc, char** argv) {
 
 	int optget;
 	opterr = 0; /* don't print message on unrecognized option */
-	while ((optget = getopt (argc, argv, "+:hd:o:s:")) != -1) {
+	while ((optget = getopt (argc, argv, "+:hs:vbcm")) != -1) {
 		switch (optget) {
 #ifdef SPIDER
-		case 'd': /* difficulty */
-			if(!strcmp(optarg,   "easy")) op.m = EASY;
-			if(!strcmp(optarg, "medium")) op.m = MEDIUM;
-			if(!strcmp(optarg,   "hard")) op.m = NORMAL;
-			break;
+		case 's': /* number of suits */
+			switch (optarg[0]) {
+			case '1': op.m = EASY; break;
+			case '2': op.m = MEDIUM; break;
+			case '4': op.m = NORMAL; break;
+			default: goto error;
+			} break;
 #endif
-		case 'o': /* misc. options */
-			if(!strcmp(optarg, "consv")) op.v = 1;
-			break;
-		case 's': /* scheme */
-			if(!strcmp(optarg,"color")) op.s = &unicode_large_color;
-			if(!strcmp(optarg, "mono")) op.s = &unicode_large_mono;
-			if(!strcmp(optarg,"small")) op.s = &unicode_small_mono;
-			break;
-		case 'h':
-		case ':': //missing optarg
-		default:
+		case 'v': op.v = 1; break; /* conserve vertical space */
+		case 'b': op.s = &unicode_large_mono; break;
+		case 'c': op.s = &unicode_large_color; break;
+		case 'm': op.s = &unicode_small_mono; break; /* "mini" */
+		case 'h': default: goto error;
+		error:
 			fprintf (stderr, SHORTHELP LONGHELP KEYHELP, argv[0]);
 			return optget != 'h';
 		}
