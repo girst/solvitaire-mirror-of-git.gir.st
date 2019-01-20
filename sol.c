@@ -676,8 +676,7 @@ void deal(void) {
 // screen drawing routines {{{
 void print_hi(int invert, int grey_bg, int bold, char* str) {
 	if (bold && op.s == &unicode_large_color){//ARGH! awful hack for bold with faint
-		int offset = str[3]==033?16:str[4]==033?17:0;
-		if ((unsigned char)str[10] == 0x9a) offset = 0; //facedown card
+		int offset = str[3]==017?16:str[4]==017?17:0;
 		printf ("%s%s%s""%.*s%s%s""%s%s%s",
 			bold?"\033[1m":"", invert?"\033[7m":"", grey_bg?"\033[100m":"",
 			offset, str, bold?"\033[1m":"", str+offset,
