@@ -498,6 +498,7 @@ from_l:	print_table(&active, &inactive);
 	case 'l': cursor_right(&active); goto from_l;
 	case 'H': cursor_to(&active,TAB_1);  goto from_l; /* leftmost  tableu */
 	case 'L': cursor_to(&active,TAB_MAX);goto from_l; /* rigthmost tableu */
+	case 'M': cursor_to(&active,TAB_MAX/2); goto from_l; /* center tableu */
 	//TODO: real cursor keys, home/end
 	case ' ': /* continue with second cursor */
 		*from = active.pile;
@@ -542,8 +543,9 @@ to_l:	print_table(&active, &inactive);
 	case 'j': cursor_down (&active); goto to_l;
 	case 'k': cursor_up   (&active); goto to_l;
 	case 'l': cursor_right(&active); goto to_l; 
-	case 'H': cursor_to(&active,TAB_1);  goto to_l;
-	case 'L': cursor_to(&active,TAB_MAX);goto to_l;
+	case 'H': cursor_to(&active,TAB_1);     goto to_l;
+	case 'L': cursor_to(&active,TAB_MAX);   goto to_l;
+	case 'M': cursor_to(&active,TAB_MAX/2); goto to_l;
 	case 'J': /* fallthrough; key makes no sense on destination */
 	case ' ':
 		*to = active.pile;

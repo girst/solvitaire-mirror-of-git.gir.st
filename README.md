@@ -9,6 +9,7 @@ play klondike and spider solitaire in your unicode terminal.
  * TODO: suggest moves (`h` => hint)
  * TODO: 'join to here' command (should take longest chain available)
  * TODO: escape sequences (for real cursor keys)
+ * TODO: inverted moves (if A->B doesn't work, try B->A)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
 ### P3

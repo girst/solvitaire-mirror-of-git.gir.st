@@ -177,11 +177,12 @@ struct undo undo_sentinel;
 #define KEYHELP \
 	"Keybindings:\n" \
 	"    hjkl  : move cursor\n" \
-	"    H, L  : move cursor to first/last tableu pile\n" \
-	"    J, K  : join to here, show hint\n" \
-	"    n, q  : new game, quit\n" \
+	"    H,M,L : move cursor to first/centre/last tableu pile\n" \
+	/*"    J, K  : join to here, show hint\n" */\
 	"    space : select at cursor\n" \
 	"    return: draw from stock\n" \
+	"    :n    : new game\n" \
+	"    :q    : quit\n" \
 	DIRECT_ADDR_KEYHELP
 //}}}
 
