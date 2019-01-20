@@ -511,7 +511,7 @@ void cursor_right (struct cursor* cursor) {
 		case STOCK: cursor->pile = WASTE; break;
 		case WASTE: cursor->pile = FOUNDATION;cursor->opt = 0; break;
 		case FOUNDATION:
-			if (cursor->opt < NUM_DECKS*NUM_SUITS)
+			if (cursor->opt < NUM_SUITS-1)
 				cursor->opt++;
 		}
 	}
