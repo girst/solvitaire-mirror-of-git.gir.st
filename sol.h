@@ -111,6 +111,27 @@ enum special_cmds {
 	CMD_UNDO,
 };
 
+enum event {
+	/* for getctrlseq() */
+	KEY_NULL     =  0,
+	KEY_EOF      = -1,
+	KEY_INVAL    = -2,
+	MOUSE_ANY    = -3,
+	/* for getch() */
+	MOUSE_LEFT   = -4,
+	MOUSE_MIDDLE = -5,
+	MOUSE_RIGHT  = -6,
+	KEY_LEFT     = -7,
+	KEY_DOWN     = -8,
+	KEY_UP       = -9,
+	KEY_RIGHT    = -10,
+	KEY_HOME     = -11,
+	KEY_END      = -12,
+	KEY_INS      = -13,
+	KEY_PGUP     = -14,
+	KEY_PGDN     = -15,
+};
+
 enum difficulty {
 	NORMAL,
 	MEDIUM,
@@ -175,8 +196,8 @@ struct undo undo_sentinel;
 	"\n"
 #define KEYHELP \
 	"Keybindings:\n" \
-	"    hjkl  : move cursor\n" \
-	"    H,M,L : move cursor to first/centre/last tableu pile\n" \
+	"    hjkl  : move cursor (or cursor keys)\n" \
+	"    H,M,L : move cursor to first/centre/last tableu pile (or home/ins/end)\n" \
 	"    J     : join to here\n" \
 	/*"    K     : show hint\n" */\
 	"    space : select at cursor\n" \
@@ -217,6 +238,11 @@ void cursor_down (struct cursor* cursor);
 void cursor_up (struct cursor* cursor);
 void cursor_right (struct cursor* cursor);
 int get_cmd (int* from, int* to, int* opt);
+
+int getctrlseq(unsigned char* buf);
+int wait_mouse_up(int l, int c);
+int getch(unsigned char* buf);
+
 void deal(long seed);
 void print_hi(int invert, int grey_bg, int bold, char* str);
 void print_table(const struct cursor* active, const struct cursor* inactive);

@@ -540,6 +540,7 @@ void cursor_to (struct cursor* cursor, int pile) {
 }
 //}}}
 int get_cmd (int* from, int* to, int* opt) {
+	/*XXX*/unsigned char mouse[3];
 	//TODO: escape sequences (mouse, cursor keys)
 	int _f, t;
 	struct cursor inactive = {-1,-1};
@@ -548,7 +549,7 @@ int get_cmd (int* from, int* to, int* opt) {
 
 	/***/
 from_l:	print_table(&active, &inactive);
-	_f = getchar();
+	_f = getch(mouse);
 
 	switch (_f) {
 	/* direct addressing: */
@@ -573,12 +574,19 @@ from_l:	print_table(&active, &inactive);
 		*to = WASTE;
 		return CMD_MOVE;
 	/* cursor keys addressing: */
+	case KEY_LEFT:
 	case 'h': cursor_left (&active); goto from_l;
+	case KEY_DOWN:
 	case 'j': cursor_down (&active); goto from_l;
+	case KEY_UP:
 	case 'k': cursor_up   (&active); goto from_l;
+	case KEY_RIGHT:
 	case 'l': cursor_right(&active); goto from_l;
+	case KEY_HOME:
 	case 'H': cursor_to(&active,TAB_1);  goto from_l; /* leftmost  tableu */
+	case KEY_END:
 	case 'L': cursor_to(&active,TAB_MAX);goto from_l; /* rigthmost tableu */
+	case KEY_INS:
 	case 'M': cursor_to(&active,TAB_MAX/2); goto from_l; /* center tableu */
 	//TODO: real cursor keys, home/end
 	case ' ': /* continue with second cursor */
@@ -620,15 +628,22 @@ from_l:	print_table(&active, &inactive);
 
 	/***/
 to_l:	print_table(&active, &inactive);
-	t = getchar();
+	t = getch(mouse);
 
 	switch (t) {
+	case KEY_LEFT:
 	case 'h': cursor_left (&active); goto to_l;
+	case KEY_DOWN:
 	case 'j': cursor_down (&active); goto to_l;
+	case KEY_UP:
 	case 'k': cursor_up   (&active); goto to_l;
+	case KEY_RIGHT:
 	case 'l': cursor_right(&active); goto to_l; 
+	case KEY_HOME:
 	case 'H': cursor_to(&active,TAB_1);     goto to_l;
+	case KEY_END:
 	case 'L': cursor_to(&active,TAB_MAX);   goto to_l;
+	case KEY_INS:
 	case 'M': cursor_to(&active,TAB_MAX/2); goto to_l;
 	case 'J': /* fallthrough; just join selected pile */
 	case ' ':
@@ -708,6 +723,106 @@ to_l:	print_table(&active, &inactive);
 	}
 #endif
 	return CMD_MOVE;
+}
+
+int getctrlseq(unsigned char* buf) {
+	int c;
+	enum esc_states {
+		START,
+		ESC_SENT,
+		CSI_SENT,
+		MOUSE_EVENT,
+	} state = START;
+	int offset = 0x20; /* never sends control chars as data */
+	while ((c = getchar()) != EOF) {
+		switch (state) {
+		case START:
+			switch (c) {
+			case '\033': state=ESC_SENT; break;
+			default: return c;
+			}
+			break;
+		case ESC_SENT:
+			switch (c) {
+			case '[': state=CSI_SENT; break;
+			default: return KEY_INVAL;
+			}
+			break;
+		case CSI_SENT:
+			switch (c) {
+			case 'A': return KEY_UP;
+			case 'B': return KEY_DOWN;
+			case 'C': return KEY_RIGHT;
+			case 'D': return KEY_LEFT;
+			/*NOTE: home/end send ^[[x~ . no support for modifiers*/
+			case 'H': return KEY_HOME;
+			case 'F': return KEY_END;
+			case '2': getchar(); return KEY_INS;
+			case '5': getchar(); return KEY_PGUP;
+			case '6': getchar(); return KEY_PGDN;
+			case 'M': state=MOUSE_EVENT; break;
+			default: return KEY_INVAL;
+			}
+			break;
+		case MOUSE_EVENT:
+			buf[0] = c - offset;
+			buf[1] = getchar() - offset;
+			buf[2] = getchar() - offset;
+			return MOUSE_ANY;
+		default:
+			return KEY_INVAL;
+		}
+	}
+	return 2;
+}
+int wait_mouse_up(int l, int c) {
+	unsigned char mouse2[3];
+	int level = 1;
+	int l2, c2;
+
+	/* TODO: show a pushed-in button if cursor is on minefield */
+
+	while (level > 0) {
+		if (getctrlseq (mouse2) == MOUSE_ANY) {
+			/* ignore mouse wheel events: */
+			if (mouse2[0] & 0x40) continue;
+
+			else if((mouse2[0]&3) == 3) level--; /* release event */
+			else level++; /* another button pressed */
+		}
+	}
+
+	/* TODO: show normal button */
+
+	c2 = /*screen2field_c*/(mouse2[1]);
+	l2 = /*screen2field_l*/(mouse2[2]);
+	return ((l2 == l) && (c2 == c));
+}
+
+int getch(unsigned char* buf) {
+/* returns a character, EOF, or constant for an escape/control sequence - NOT
+compatible with the ncurses implementation of same name */
+	int action = getctrlseq(buf);
+	int l, c;
+	switch (action) {
+	case MOUSE_ANY:
+		l = /*screen2field_l*/ (buf[2]);
+		c = /*screen2field_c*/ (buf[1]);
+
+		if (buf[0] > 3) break; /* ignore all but left/middle/right/up */
+		int success = wait_mouse_up(l, c);
+
+		/* mouse moved while pressed: */
+		if (!success) return KEY_INVAL;
+
+		switch (buf[0]) {
+		case 0: return MOUSE_LEFT;
+		case 1: return MOUSE_MIDDLE;
+		case 2: return MOUSE_RIGHT;
+		}
+	}
+
+	return action;
 }
 // }}}
 
