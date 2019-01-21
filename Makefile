@@ -8,7 +8,7 @@ all: sol spider
 sol: sol.c sol.h schemes.h
 	$(CC) $(CFLAGS) -DKLONDIKE $< -o $@
 
-spider: sol.c sol.h schemes.h
+spider: spider.c sol.h schemes.h
 	$(CC) $(CFLAGS) -DSPIDER $< -o $@
 
 clean:

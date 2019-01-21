@@ -5,8 +5,6 @@ play klondike and spider solitaire in your unicode terminal.
 ## TODO
 
 ### P1
- * TODO: make portable (clang on FreeBSD)
-         makefile's `$<` refuses to work if prequisite name != target name
 ### P2
  * TODO: suggest moves (`h` => hint)
  * TODO: escape sequences (for real cursor keys)
@@ -65,6 +63,11 @@ play klondike and spider solitaire in your unicode terminal.
          as good as it's going to get, since we can't just not draw cards at all
  * DONE: 'join to here' command (should take longest chain available)
  * DONE: expose deal() seed for restarting the game
+ * DONE: make portable (clang on FreeBSD)
+         makefile's `$<` refuses to work if prequisite name != target name
+         Fix: 
+             ln -s sol.c. spider.c
+             sed -i 's/^spider: sol.c/spider: spider.c/' Makefile
 
 ## Notes
 
