@@ -393,7 +393,7 @@ int t2f(int from, int to, int opt) {
 #define would_turn(pile) \
 	(f.t[pile][r[pile].pos-1] < 0)
 #define would_empty(pile) \
-	(r[pile].pos == 0) //TODO: check not currently empty
+	(r[pile].pos == 0)
 
 int join(int to) {
 	int top_to = find_top(f.t[to]);
@@ -440,14 +440,14 @@ int join(int to) {
 			if (pile == to) continue;
 			int top = find_top(f.t[pile]);
 			int bottom = first_movable(f.t[pile]);
+			r[pile].pos = bottom; /* need for would_empty */
 
 			if (top < 0) continue; /* no cards to move */
-			if (would_empty(pile)) continue; /* doesn't help */ //TODO: should be in step2
+			if (would_empty(pile)) continue; /* doesn't help */
 
 			r[pile].ok++;
 			r[pile].above = 0; /* always take as many as possible */
 			r[pile].below = top - bottom;
-			r[pile].pos = bottom;
 			r[pile].top = top;
 			complete |= would_complete(pile); /* never happens */
 			turn     |= would_turn(pile);
@@ -487,17 +487,25 @@ int join(int to) {
 	}
 
 	/* 2. find optimal pile: (optimized for spider) */
+	//todo: in spider, prefer longest piles if above==0 (faster completions)
 	int from = -1;
 	for (int pile = 0, above = 99, below = 99; pile < NUM_PILES; pile++) {
 		if (!r[pile].ok) continue;
-		/* don't bother if another pile would be better: */
-		if (complete && !would_complete(pile)) continue; //prefer would-complete
-		if (empty && !would_empty(pile) && !complete) continue; //prefer would-become-empty
-		if (turn && !would_turn(pile) && !complete && !empty) continue; //prefer would-turn_over
-		if (r[pile].above > above) continue; //prefer to rip off least amount of cards above
-		if (r[pile].above == above //if tied, prefer ...
-		&& (top_to < 0? r[pile].below < below //... larger pile if to==empty
-			      : r[pile].below > below)) //... shorter pile otherwise
+		/* don't bother if another pile would be better: prefer ... */
+		/* ... to complete a stack: */
+		if (!would_complete(pile) && complete) continue;
+		/* ... emptying piles: */
+		if (!would_empty(pile) && empty && !complete) continue;
+		/* ... to turn_over: */
+		if (!would_turn(pile) && turn && !complete && !empty) continue;
+		/* ... not to rip apart too many cards: */
+		if (r[pile].above > above) continue;
+		/* if tied, prefer ... */
+		if (r[pile].above == above
+		   /* ... larger pile if destination is empty */
+		   && (top_to < 0? r[pile].below < below
+		   /* ... shorter pile otherwise */
+			         : r[pile].below > below))
 			continue;
 
 		from = pile;
