@@ -382,7 +382,10 @@ int t2f(int from, int to, int opt) {
 	return remove_if_complete(from)?OK:ERR;
 }
 #endif
+//TODO: which pile to take from should form the basis of CMD_HINT
 int join(int to) {
+	int top_to = find_top(f.t[to]);
+
 #ifdef KLONDIKE
 	if (to == FOUNDATION) {
 		int status = ERR;
@@ -394,11 +397,18 @@ int join(int to) {
 			}
 		return status;
 	}
-#endif
-	//TODO: which pile to take from should form the basis of CMD_HINT
 
-	int top_to = find_top(f.t[to]); //TODO: handle empty: join would-empty, would-turn, longest stack (currently just ERRors)
-	int from = -1;
+	if (top_to < 0) { /* move a king to empty pile: */
+		for (int i = 0; i < TAB_MAX; i++) {
+			if (f.t[i][0] < 0) /* i.e. would turn? */
+				if (t2t(i, to, 0) == OK) return OK;
+		}
+		return w2t(WASTE, to, 0);
+	}
+#elif defined SPIDER
+	if (top_to < 0) { //TODO: would-turn or longest stack to empty pile
+	}
+#endif
 
 	struct rating {
 		int ok:1;    /* card to move in pile? */
@@ -438,7 +448,9 @@ int join(int to) {
 
 	/* 2. find optimal pile: (optimized for spider) */
 	//TODO: maybe add 'would finish' (spider)?
-	for (int pile = 0, above = 99, turn = 0, empty = 0, below = 99, e=0,t=0;
+	int from = -1;
+	int turn =  0;
+	for (int pile = 0, above = 99, empty = 0, below = 99, e = 0, t = 0;
 	     pile < NUM_PILES; pile++) {
 		if (!r[pile].ok) continue;
 
@@ -454,19 +466,17 @@ int join(int to) {
 		}
 	}
 
-	/* 3a. give up if nothing found: */
-	if (from < 0) {
-#ifdef KLONDIKE /* check if we can take from waste before giving up */
-		return w2t(WASTE, to, 0);
-#elif defined SPIDER
-		return ERR;
-#endif
-	}
-
-	/* 3b. move cards over and return: */
+	/* 3. move cards over and return: */
 #ifdef KLONDIKE
+	/* prefer waste if it wouldn't turn_over: */
+	if (!turn && w2t(WASTE, to, 0) == OK)
+		return OK;
+	if (from < 0) /* nothing found */
+		return ERR;
 	return t2t(from, to, 0);
 #elif defined SPIDER
+	if (from < 0) /* nothing found */
+		return ERR;
 	int bottom = first_movable(f.t[from]);
 	return t2t(from, to, get_rank(f.t[from][bottom]));
 #endif
