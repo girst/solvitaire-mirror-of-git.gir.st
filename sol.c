@@ -90,7 +90,7 @@ newgame:
 	case GAME_WON:
 		print_table(NO_HI, NO_HI);
 		win_anim();
-		if (getchar()=='q') return 0;
+		if (getch(NULL)=='q') return 0;
 		goto newgame;
 	case GAME_QUIT: return 0;
 	}
@@ -684,7 +684,7 @@ to_l:	print_table(&active, &inactive);
 		case (1<<1       ): *opt = choice_2; break; /* choice_2 only */
 		case (1<<1 | 1<<0): /* both, ask user which to pick from */
 			printf ("take from (1-4): "); fflush (stdout);
-			*opt = getchar() - '1';
+			*opt = getch(NULL) - '1';
 			if (*opt < 0 || *opt > 3) return CMD_INVAL;
 			break;
 		default: return CMD_INVAL; /* none matched */
@@ -705,7 +705,7 @@ to_l:	print_table(&active, &inactive);
 			*opt = get_rank(f.t[*from][top]);
 		} else { /* only ask the user if it's unclear: */
 			printf ("\rup to ([a23456789xjqk] or space/return): ");
-			*opt = getchar();
+			*opt = getch(NULL);
 			switch (*opt) {
 			case ' ': *opt = get_rank(f.t[*from][top]); break;
 			case'\n': *opt = get_rank(f.t[*from][bottom]); break;
@@ -765,6 +765,7 @@ int getctrlseq(unsigned char* buf) {
 			}
 			break;
 		case MOUSE_EVENT:
+			if (buf == NULL) return KEY_INVAL;
 			buf[0] = c - offset;
 			buf[1] = getchar() - offset;
 			buf[2] = getchar() - offset;
