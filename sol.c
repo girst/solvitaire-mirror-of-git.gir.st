@@ -383,6 +383,9 @@ int t2f(int from, int to, int opt) {
 }
 #endif
 //TODO: which pile to take from should form the basis of CMD_HINT
+#define would_complete(pile) \
+	(get_rank(f.t[pile][r[pile].top]) == RANK_A)
+
 int join(int to) {
 	int top_to = find_top(f.t[to]);
 
@@ -415,11 +418,13 @@ int join(int to) {
 		int above;   /* number of movable cards above */
 		int below;   /* number of cards below ours */
 		int pos;     /* where the card to move is in the pile */
+		int top;     /* find_top() */
 	} r[NUM_PILES] = {{0}};
+	int complete = 0;/* SPIDER: true if any pile would complete a stack */
 
 	/* 1. rate each pile: */
 	for (int pile = 0; pile < NUM_PILES; pile++) {
-		r[pile].pos = find_top(f.t[pile]);
+		r[pile].top = r[pile].pos = find_top(f.t[pile]);
 		/* backtrack until we find a compatible-to-'to'-pile card: */
 		while (r[pile].pos >= 0 && is_movable(f.t[pile], r[pile].pos)) {
 			int rankdiff = get_rank(f.t[pile][r[pile].pos])
@@ -435,6 +440,7 @@ int join(int to) {
 #endif
 			) {
 				r[pile].ok++;
+				complete |= would_complete(pile);
 				for (int i = r[pile].pos; i >= 0; i--)
 					if (is_movable(f.t[pile], i-1))
 						r[pile].above++;
@@ -447,17 +453,21 @@ int join(int to) {
 	}
 
 	/* 2. find optimal pile: (optimized for spider) */
-	//TODO: maybe add 'would finish' (spider)?
 	int from = -1;
 	int turn =  0;
 	for (int pile = 0, above = 99, empty = 0, below = 99, e = 0, t = 0;
 	     pile < NUM_PILES; pile++) {
 		if (!r[pile].ok) continue;
+#ifdef SPIDER
+		/* don't bother if another pile could complete */
+		if (complete && !would_complete(pile)) continue;
+#endif
 
-		if ((e=(r[pile].pos == 0))                     /* will become empty */
-		|| ((t=(f.t[pile][r[pile].pos-1] < 0)) && !empty) /* will turn_over */
-		|| (r[pile].above < above && !empty)            /* less cards above */
-		|| (r[pile].above ==above && r[pile].below < below && !empty && !turn)) { /* if tied, use shorter pile */
+		if ((e=(r[pile].pos == 0))               /* will become empty */
+		|| ((t=(f.t[pile][r[pile].pos-1] < 0)) && !empty) /*turn_over?*/
+		|| (r[pile].above < above && !empty)      /* less cards above */
+		|| (r[pile].above == above && !empty && !turn /* if tied, ... */
+		    && r[pile].below < below)) {      /* ... use shorter pile */
 			from = pile;
 			above = r[pile].above;
 			below = r[pile].below;
@@ -481,6 +491,7 @@ int join(int to) {
 	return t2t(from, to, get_rank(f.t[from][bottom]));
 #endif
 }
+#undef would_complete
 int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
 // }}}
 
