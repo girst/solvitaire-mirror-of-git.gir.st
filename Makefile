@@ -20,6 +20,6 @@ getfuns: sol.c
 	| perl -0777 -pe 's{#if[^\n]*\n(#elif[^\n]*\n)?#endif[^\n]*\n}{}igs'
 
 test:
-	grep -n --color=always 'TODO\|XXX\|\/xxx-slashes-xxx\/[^:]' *
+	@grep -n --color=always 'TODO\|XXX' README.md sol.*
 longtest: test
 	sed 's/\t/        /g' sol.c|grep -n --color=always '^.\{81\}'|awk '{print "\033[35msol.c\033[36m:" $$0}'
