@@ -383,11 +383,23 @@ int t2f(int from, int to, int opt) {
 }
 #endif
 //TODO: which pile to take from should form the basis of CMD_HINT
+#ifdef KLONDIKE
+#define would_complete(pile) 0
+#elif defined SPIDER
 #define would_complete(pile) \
-	(get_rank(f.t[pile][r[pile].top]) == RANK_A)
+	(get_rank(f.t[pile][r[pile].top]) == RANK_A \
+	&& get_rank(f.t[to][bottom_to]) == RANK_K)
+#endif
+#define would_turn(pile) \
+	(f.t[pile][r[pile].pos-1] < 0)
+#define would_empty(pile) \
+	(r[pile].pos == 0) //TODO: check not currently empty
 
 int join(int to) {
 	int top_to = find_top(f.t[to]);
+#ifdef SPIDER
+	int bottom_to = first_movable(f.t[to]);
+#endif
 
 #ifdef KLONDIKE
 	if (to == FOUNDATION) {
@@ -408,9 +420,6 @@ int join(int to) {
 		}
 		return w2t(WASTE, to, 0);
 	}
-#elif defined SPIDER
-	if (top_to < 0) { //TODO: would-turn or longest stack to empty pile
-	}
 #endif
 
 	struct rating {
@@ -421,8 +430,31 @@ int join(int to) {
 		int top;     /* find_top() */
 	} r[NUM_PILES] = {{0}};
 	int complete = 0;/* SPIDER: true if any pile would complete a stack */
+	int turn =  0; /* SPIDER: true if any pile would turn_over */
+	int empty = 0; /* true if any pile would become empty */
 
 	/* 1. rate each pile: */
+#ifdef SPIDER
+	if (top_to < 0) {
+		for (int pile = 0; pile < NUM_PILES; pile++) {
+			if (pile == to) continue;
+			int top = find_top(f.t[pile]);
+			int bottom = first_movable(f.t[pile]);
+
+			if (top < 0) continue; /* no cards to move */
+			if (would_empty(pile)) continue; /* doesn't help */ //TODO: should be in step2
+
+			r[pile].ok++;
+			r[pile].above = 0; /* always take as many as possible */
+			r[pile].below = top - bottom;
+			r[pile].pos = bottom;
+			r[pile].top = top;
+			complete |= would_complete(pile); /* never happens */
+			turn     |= would_turn(pile);
+			empty    |= would_empty(pile);
+		}
+	} else
+#endif
 	for (int pile = 0; pile < NUM_PILES; pile++) {
 		r[pile].top = r[pile].pos = find_top(f.t[pile]);
 		/* backtrack until we find a compatible-to-'to'-pile card: */
@@ -441,6 +473,8 @@ int join(int to) {
 			) {
 				r[pile].ok++;
 				complete |= would_complete(pile);
+				turn     |= would_turn(pile);
+				empty    |= would_empty(pile);
 				for (int i = r[pile].pos; i >= 0; i--)
 					if (is_movable(f.t[pile], i-1))
 						r[pile].above++;
@@ -454,26 +488,21 @@ int join(int to) {
 
 	/* 2. find optimal pile: (optimized for spider) */
 	int from = -1;
-	int turn =  0;
-	for (int pile = 0, above = 99, empty = 0, below = 99, e = 0, t = 0;
-	     pile < NUM_PILES; pile++) {
+	for (int pile = 0, above = 99, below = 99; pile < NUM_PILES; pile++) {
 		if (!r[pile].ok) continue;
-#ifdef SPIDER
-		/* don't bother if another pile could complete */
-		if (complete && !would_complete(pile)) continue;
-#endif
+		/* don't bother if another pile would be better: */
+		if (complete && !would_complete(pile)) continue; //prefer would-complete
+		if (empty && !would_empty(pile) && !complete) continue; //prefer would-become-empty
+		if (turn && !would_turn(pile) && !complete && !empty) continue; //prefer would-turn_over
+		if (r[pile].above > above) continue; //prefer to rip off least amount of cards above
+		if (r[pile].above == above //if tied, prefer ...
+		&& (top_to < 0? r[pile].below < below //... larger pile if to==empty
+			      : r[pile].below > below)) //... shorter pile otherwise
+			continue;
 
-		if ((e=(r[pile].pos == 0))               /* will become empty */
-		|| ((t=(f.t[pile][r[pile].pos-1] < 0)) && !empty) /*turn_over?*/
-		|| (r[pile].above < above && !empty)      /* less cards above */
-		|| (r[pile].above == above && !empty && !turn /* if tied, ... */
-		    && r[pile].below < below)) {      /* ... use shorter pile */
-			from = pile;
-			above = r[pile].above;
-			below = r[pile].below;
-			empty |= e;
-			turn  |= t;
-		}
+		from = pile;
+		above = r[pile].above;
+		below = r[pile].below;
 	}
 
 	/* 3. move cards over and return: */
@@ -491,6 +520,8 @@ int join(int to) {
 	return t2t(from, to, get_rank(f.t[from][bottom]));
 #endif
 }
+#undef would_empty
+#undef would_turn
 #undef would_complete
 int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
 // }}}
