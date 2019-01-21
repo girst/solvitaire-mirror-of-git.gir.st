@@ -7,7 +7,6 @@ play klondike and spider solitaire in your unicode terminal.
 ### P1
 ### P2
  * TODO: suggest moves (`h` => hint)
- * TODO: inverted moves (if A->B doesn't work, try B->A)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
 ### P3
@@ -68,6 +67,7 @@ play klondike and spider solitaire in your unicode terminal.
              ln -s sol.c. spider.c
              sed -i 's/^spider: sol.c/spider: spider.c/' Makefile
  * DONE: escape sequences (for real cursor keys)
+ * DONE: inverted moves (if A->B doesn't work, try B->A)
 
 ## Notes
 

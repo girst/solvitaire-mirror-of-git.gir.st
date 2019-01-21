@@ -97,6 +97,7 @@ newgame:
 }
 
 int sol(void) {
+	int ret;
 	long seed = time(NULL);
 restart:
 	free_undo(f.u);
@@ -106,9 +107,12 @@ restart:
 	for(;;) {
 		switch (get_cmd(&from, &to, &opt)) {
 		case CMD_MOVE:
-			switch (action[from][to](from,to,opt)) {
+			ret = action[from][to](from,to,opt);
+			if (ret == ERR) /* try again with from/to swapped: */
+				ret = action[to][from](to,from,opt);
+			switch (ret) {
 			case OK:  break;
-			case ERR: visbell(); break; //TODO: try again with from/to swapped
+			case ERR: visbell(); break;
 			case WON: return GAME_WON;
 			}
 			break;
@@ -131,7 +135,6 @@ restart:
 
 void quit(void) {
 	screen_setup(0);
-	/* free undo data structures: */
 	free_undo(f.u);
 }
 //}}}
