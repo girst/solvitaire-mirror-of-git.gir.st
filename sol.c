@@ -383,10 +383,21 @@ int t2f(int from, int to, int opt) {
 }
 #endif
 int join(int to) {
-	//TODO: allow joining to foundation in klondike
+#ifdef KLONDIKE
+	if (to == FOUNDATION) {
+		int status = ERR;
+		for (int i = 0; i <= TAB_MAX; i++)
+			switch ((i?t2f:w2f)(i-1, FOUNDATION, 0)) {
+			case WON: return WON;
+			case OK:  status = OK;
+			case ERR: /* nop */;
+			}
+		return status;
+	}
+#endif
 	//TODO: which pile to take from should form the basis of CMD_HINT
 
-	int top_to = find_top(f.t[to]); //TODO: handle empty
+	int top_to = find_top(f.t[to]); //TODO: handle empty: join would-empty, would-turn, longest stack (currently just ERRors)
 	int from = -1;
 
 	struct rating {
@@ -426,6 +437,7 @@ int join(int to) {
 	}
 
 	/* 2. find optimal pile: (optimized for spider) */
+	//TODO: maybe add 'would finish' (spider)?
 	for (int pile = 0, above = 99, turn = 0, empty = 0, below = 99, e=0,t=0;
 	     pile < NUM_PILES; pile++) {
 		if (!r[pile].ok) continue;
@@ -618,6 +630,9 @@ from_l:	print_table(&active, &inactive);
 		}}
 	case 'J':
 		*to = active.pile;
+#ifdef KLONDIKE
+		if (*to == FOUNDATION) return CMD_JOIN;
+#endif
 		if (*to > TAB_MAX) return CMD_INVAL;
 		return CMD_JOIN;
 	case 'K': /* fallthrough */

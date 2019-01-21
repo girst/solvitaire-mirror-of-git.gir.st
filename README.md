@@ -11,6 +11,7 @@ play klondike and spider solitaire in your unicode terminal.
          when calculating legal moves, top cards, etc. 
 ### P3
  * TODO: differential drawing mode (at least for highlighting cards)
+ * TODO: `.` command (repeat last action)
 ### P4
  * TODO: mouse mode (problems: finding position with `extreme_overlap`)
  * TODO: scores, variants: draw 3, max. n overturns
