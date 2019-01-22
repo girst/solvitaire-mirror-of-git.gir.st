@@ -373,7 +373,7 @@ int s2t(int from, int to, int opt) {
 		remove_if_complete(pile);
 		if (check_won()) return WON;
 	}
-	undo_push(STOCK, TABLEU, 1, 0); /*NOTE: puts 1 card on each tableu pile*/
+	undo_push(STOCK, TABLEU, 1, 0);/*NOTE: puts 1 card on each tableu pile*/
 	return OK;
 }
 int t2f(int from, int to, int opt) {
@@ -382,7 +382,7 @@ int t2f(int from, int to, int opt) {
 	return remove_if_complete(from)?OK:ERR;
 }
 #endif
-//TODO: which pile to take from should form the basis of CMD_HINT
+//TODO: generalize prediction engine for CMD_HINT
 #ifdef KLONDIKE
 #define would_complete(pile) 0
 #elif defined SPIDER
@@ -615,9 +615,8 @@ void cursor_to (struct cursor* cursor, int pile) {
 }
 //}}}
 int get_cmd (int* from, int* to, int* opt) {
-	/*XXX*/unsigned char mouse[3];
-	//TODO: escape sequences (mouse, cursor keys)
 	int _f, t;
+	/*XXX*/unsigned char mouse[3];
 	struct cursor inactive = {-1,-1};
 	static struct cursor active = {0,0};
 	active.opt = 0; /* always reset offset, but keep pile */
@@ -663,7 +662,6 @@ from_l:	print_table(&active, &inactive);
 	case 'L': cursor_to(&active,TAB_MAX);goto from_l; /* rigthmost tableu */
 	case KEY_INS:
 	case 'M': cursor_to(&active,TAB_MAX/2); goto from_l; /* center tableu */
-	//TODO: real cursor keys, home/end
 	case ' ': /* continue with second cursor */
 		*from = active.pile;
 		if (*from == STOCK) {
@@ -949,12 +947,12 @@ void deal(long seed) {
 
 // screen drawing routines {{{
 void print_hi(int invert, int grey_bg, int bold, char* str) {
-	if (bold && op.s == &unicode_large_color){//ARGH! awful hack for bold with faint
+	if (bold && op.s == &unicode_large_color){ //awful hack for bold + faint
 		int offset = str[3]==017?16:str[4]==017?17:0;
 		printf ("%s%s%s""%.*s%s%s""%s%s%s",
-			bold?"\033[1m":"", invert?"\033[7m":"", grey_bg?"\033[100m":"",
+			"\033[1m", invert?"\033[7m":"", grey_bg?"\033[100m":"",
 			offset, str, bold?"\033[1m":"", str+offset,
-			grey_bg?"\033[49m":"", invert?"\033[27m":"",bold?"\033[22m":"");
+			grey_bg?"\033[49m":"", invert?"\033[27m":"","\033[22m");
 		return;
 	}
 	printf ("%s%s%s%s%s%s%s",
