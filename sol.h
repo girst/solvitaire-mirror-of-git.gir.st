@@ -237,12 +237,12 @@ void cursor_left (struct cursor* cursor);
 void cursor_down (struct cursor* cursor);
 void cursor_up (struct cursor* cursor);
 void cursor_right (struct cursor* cursor);
+void cursor_to (struct cursor* cursor, int pile);
 int get_cmd (int* from, int* to, int* opt);
-
 int getctrlseq(unsigned char* buf);
-int wait_mouse_up(int l, int c);
+int term2pile(unsigned char *mouse);
+int wait_mouse_up(unsigned char* mouse);
 int getch(unsigned char* buf);
-
 void deal(long seed);
 void print_hi(int invert, int grey_bg, int bold, char* str);
 void print_table(const struct cursor* active, const struct cursor* inactive);

@@ -616,7 +616,7 @@ void cursor_to (struct cursor* cursor, int pile) {
 //}}}
 int get_cmd (int* from, int* to, int* opt) {
 	int _f, t;
-	/*XXX*/unsigned char mouse[3];
+	unsigned char mouse[3];
 	struct cursor inactive = {-1,-1};
 	static struct cursor active = {0,0};
 	active.opt = 0; /* always reset offset, but keep pile */
@@ -673,6 +673,21 @@ from_l:	print_table(&active, &inactive);
 #endif
 		inactive = active;
 		break;
+	/* mouse addressing: */
+	case MOUSE_MIDDLE:
+	case MOUSE_RIGHT: return CMD_NONE;
+	case MOUSE_LEFT:
+		{
+		int pile = term2pile(mouse);
+		if (pile < 0) return CMD_INVAL;
+		*from = pile;
+#ifdef KLONDIKE
+		if (pile >= FOUNDATION)
+			*from = FOUNDATION,
+			*opt  = pile - FOUNDATION;
+#endif
+		break;
+		}
 	/* misc keys: */
 	case ':':
 		{char buf[256];
@@ -725,6 +740,20 @@ to_l:	print_table(&active, &inactive);
 	case ' ':
 		*to = active.pile;
 		break; /* continues with the foundation/empty tableu check */
+	case MOUSE_MIDDLE:
+	case MOUSE_RIGHT: return CMD_NONE;
+	case MOUSE_LEFT:
+		{
+		int pile = term2pile(mouse);
+		if (pile < 0) return CMD_INVAL;
+		*to = pile;
+#ifdef KLONDIKE
+		if (pile >= FOUNDATION)
+			*to = FOUNDATION,
+			*opt  = pile - FOUNDATION;
+#endif
+		break;
+		}
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
 	case 'u': return CMD_NONE; /* cancel selection */
@@ -852,12 +881,45 @@ int getctrlseq(unsigned char* buf) {
 	}
 	return 2;
 }
-int wait_mouse_up(int l, int c) {
-	unsigned char mouse2[3];
-	int level = 1;
-	int l2, c2;
+int term2pile(unsigned char *mouse) {
+	int line   = (mouse[2]-1);
+	int column = (mouse[1]-1) / op.s->width;
 
-	/* TODO: show a pushed-in button if cursor is on minefield */
+	if (line < op.s->height) { /* first line */
+#ifdef KLONDIKE
+		switch (column) {
+		case 0: return STOCK;
+		case 1: return WASTE;
+		case 2: return -1; /* spacer */
+		case 3: return FOUNDATION+0;
+		case 4: return FOUNDATION+1;
+		case 5: return FOUNDATION+2;
+		case 6: return FOUNDATION+3;
+		}
+#elif defined SPIDER
+		if (column < 2) return STOCK;
+		return -1;
+#endif
+	} else if (line > op.s->height) { /* tableu */
+		if (column <= TAB_MAX) return column;
+	}
+	return -1;
+}
+int wait_mouse_up(unsigned char* mouse) {
+	unsigned char mouse2[3];
+	struct cursor cur = {-1,-1};
+	int level = 1;
+
+	/* display a cursor while mouse button is pushed: */
+	int pile = term2pile(mouse);
+	cur.pile = pile;
+#ifdef KLONDIKE
+	if (pile >= FOUNDATION) {
+		cur.pile = FOUNDATION;
+		cur.opt = pile-FOUNDATION;
+	}
+#endif
+	print_table(&cur, NO_HI); //TODO: should not overwrite inactive cursor!
 
 	while (level > 0) {
 		if (getctrlseq (mouse2) == MOUSE_ANY) {
@@ -869,28 +931,24 @@ int wait_mouse_up(int l, int c) {
 		}
 	}
 
-	/* TODO: show normal button */
+	//print_table(NO_HI, NO_HI);//TODO:probably redundant, as screen gets redrawn afterwards anyways
 
-	c2 = /*screen2field_c*/(mouse2[1]);
-	l2 = /*screen2field_l*/(mouse2[2]);
-	return ((l2 == l) && (c2 == c));
+	return mouse[1] == mouse2[1] && mouse[2] == mouse2[2];
 }
 
 int getch(unsigned char* buf) {
 /* returns a character, EOF, or constant for an escape/control sequence - NOT
 compatible with the ncurses implementation of same name */
 	int action = getctrlseq(buf);
-	int l, c;
+
 	switch (action) {
 	case MOUSE_ANY:
-		l = /*screen2field_l*/ (buf[2]);
-		c = /*screen2field_c*/ (buf[1]);
-
-		if (buf[0] > 3) break; /* ignore all but left/middle/right/up */
-		int success = wait_mouse_up(l, c);
+		if (buf[0] > 3) break; /* ignore wheel events */
+		int success = wait_mouse_up(buf);
 
 		/* mouse moved while pressed: */
 		if (!success) return KEY_INVAL;
+		//TODO:if moved while pressed: interpret second location as 'to'
 
 		switch (buf[0]) {
 		case 0: return MOUSE_LEFT;
@@ -1232,8 +1290,10 @@ void screen_setup (int enable) {
 		printf ("\033[s\033[?47h"); /* save cursor, alternate screen */
 		printf ("\033[H\033[J"); /* reset cursor, clear screen */
 		//TODO//printf ("\033[?1000h\033[?25l"); /* enable mouse, hide cursor */
+		printf ("\033[?1000h"); /* enable mouse */
 	} else {
 		//TODO//printf ("\033[?9l\033[?25h"); /* disable mouse, show cursor */
+		printf ("\033[?9l"); /* disable mouse */
 		printf ("\033[?47l\033[u"); /* primary screen, restore cursor */
 		raw_mode(0);
 	}
