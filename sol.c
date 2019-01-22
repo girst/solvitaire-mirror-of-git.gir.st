@@ -1006,10 +1006,11 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 		/* spacer: */
 		for (int i = spacer_from; i < spacer_to; i++) printf (" ");
 		/* foundation (overlapping): */
-		for (int i = 0; i < NUM_DECKS*NUM_SUITS; i++) { //TODO: print in revrse order (otherwise new piles get put 'below' older ones)
-			int overlap = i? op.s->halfcard[line]: 0;
+		for (int i = NUM_DECKS*NUM_SUITS-1, half = 0; i >= 0; i--) {
+			int overlap = half? op.s->halfcard[line]: 0;
 			if (f.f[i][RANK_K]) printf ("%.*s", op.s->halfwidth[2],
-				op.s->card[f.f[i][RANK_K]][line]+overlap);
+				op.s->card[f.f[i][RANK_K]][line]+overlap),
+				half++;
 		}
 		printf("\n");
 	}
