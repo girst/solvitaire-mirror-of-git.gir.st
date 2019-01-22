@@ -613,6 +613,19 @@ void cursor_to (struct cursor* cursor, int pile) {
 	cursor->pile = pile;
 	cursor->opt = 0;
 }
+int set_mouse(int pile, int* main, int* opt) {
+	if (pile < 0) return 1;
+	*main = pile;
+#ifdef KLONDIKE
+	if (pile >= FOUNDATION)
+		*main = FOUNDATION,
+		*opt  = pile - FOUNDATION;
+#elif defined SPIDER
+	(void)opt;
+	//TODO: set opt if to field is empty (maybe not good to do there)
+#endif
+	return 0;
+}
 //}}}
 int get_cmd (int* from, int* to, int* opt) {
 	int _f, t;
@@ -643,10 +656,7 @@ from_l:	print_table(&active, &inactive);
 	case '0': *from = FOUNDATION; break;
 	case '8': /* fallthrough */
 #endif
-	case '\n': /* shortcut for dealing from stock */
-		*from = STOCK;
-		*to = WASTE;
-		return CMD_MOVE;
+	case '\n': *from = STOCK; break;
 	/* cursor keys addressing: */
 	case KEY_LEFT:
 	case 'h': cursor_left (&active); goto from_l;
@@ -664,10 +674,6 @@ from_l:	print_table(&active, &inactive);
 	case 'M': cursor_to(&active,TAB_MAX/2); goto from_l; /* center tableu */
 	case ' ': /* continue with second cursor */
 		*from = active.pile;
-		if (*from == STOCK) {
-			*to = WASTE;
-			return CMD_MOVE;
-		}
 #ifdef KLONDIKE
 		*opt = active.opt; /* when FOUNDATION */
 #endif
@@ -677,17 +683,9 @@ from_l:	print_table(&active, &inactive);
 	case MOUSE_MIDDLE:
 	case MOUSE_RIGHT: return CMD_NONE;
 	case MOUSE_LEFT:
-		{
-		int pile = term2pile(mouse);
-		if (pile < 0) return CMD_INVAL;
-		*from = pile;
-#ifdef KLONDIKE
-		if (pile >= FOUNDATION)
-			*from = FOUNDATION,
-			*opt  = pile - FOUNDATION;
-#endif
+		if (set_mouse(term2pile(mouse), from, opt))
+			return CMD_INVAL;
 		break;
-		}
 	/* misc keys: */
 	case ':':
 		{char buf[256];
@@ -717,6 +715,11 @@ from_l:	print_table(&active, &inactive);
 	inactive.pile = *from; /* for direct addressing highlighting */
 	if (is_tableu(*from) && f.t[*from][0] == NO_CARD) return CMD_INVAL;
 
+	if (*from == STOCK) {
+		*to = WASTE;
+		return CMD_MOVE;
+	}
+
 	/***/
 to_l:	print_table(&active, &inactive);
 	t = getch(mouse);
@@ -743,17 +746,9 @@ to_l:	print_table(&active, &inactive);
 	case MOUSE_MIDDLE:
 	case MOUSE_RIGHT: return CMD_NONE;
 	case MOUSE_LEFT:
-		{
-		int pile = term2pile(mouse);
-		if (pile < 0) return CMD_INVAL;
-		*to = pile;
-#ifdef KLONDIKE
-		if (pile >= FOUNDATION)
-			*to = FOUNDATION,
-			*opt  = pile - FOUNDATION;
-#endif
+		if (set_mouse(term2pile(mouse), to, opt))
+			return CMD_INVAL;
 		break;
-		}
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
 	case 'u': return CMD_NONE; /* cancel selection */
@@ -897,7 +892,7 @@ int term2pile(unsigned char *mouse) {
 		case 6: return FOUNDATION+3;
 		}
 #elif defined SPIDER
-		if (column < 2) return STOCK;
+		if (column < 3) return STOCK;
 		return -1;
 #endif
 	} else if (line > op.s->height) { /* tableu */
@@ -930,8 +925,6 @@ int wait_mouse_up(unsigned char* mouse) {
 			else level++; /* another button pressed */
 		}
 	}
-
-	//print_table(NO_HI, NO_HI);//TODO:probably redundant, as screen gets redrawn afterwards anyways
 
 	return mouse[1] == mouse2[1] && mouse[2] == mouse2[2];
 }
@@ -1289,10 +1282,8 @@ void screen_setup (int enable) {
 		raw_mode(1);
 		printf ("\033[s\033[?47h"); /* save cursor, alternate screen */
 		printf ("\033[H\033[J"); /* reset cursor, clear screen */
-		//TODO//printf ("\033[?1000h\033[?25l"); /* enable mouse, hide cursor */
 		printf ("\033[?1000h"); /* enable mouse */
 	} else {
-		//TODO//printf ("\033[?9l\033[?25h"); /* disable mouse, show cursor */
 		printf ("\033[?9l"); /* disable mouse */
 		printf ("\033[?47l\033[u"); /* primary screen, restore cursor */
 		raw_mode(0);

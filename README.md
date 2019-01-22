@@ -13,7 +13,10 @@ play klondike and spider solitaire in your unicode terminal.
  * TODO: differential drawing mode (at least for highlighting cards)
  * TODO: `.` command (repeat last action)
 ### P4
- * TODO: mouse mode (problems: finding position with `extreme_overlap`)
+ * TODO: mouse mode improvements:
+          - allow dragging
+          - spider: detect how many cards to move to empty pile
+            (must find exact position despite `extreme_overlap`)
  * TODO: scores, variants: draw 3, max. n overturns
  * TODO: vt220 mode (problems: charset, slow baudrate and no differential drawing mode)
  * TODO: ed(1) mode (solEDaire): playable on a line printer; ascii/ibm only?
