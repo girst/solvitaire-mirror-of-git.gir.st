@@ -1284,7 +1284,7 @@ void screen_setup (int enable) {
 		printf ("\033[H\033[J"); /* reset cursor, clear screen */
 		printf ("\033[?1000h"); /* enable mouse */
 	} else {
-		printf ("\033[?9l"); /* disable mouse */
+		printf ("\033[?1000l"); /* disable mouse */
 		printf ("\033[?47l\033[u"); /* primary screen, restore cursor */
 		raw_mode(0);
 	}
@@ -1310,8 +1310,12 @@ void raw_mode(int enable) {
 void signal_handler (int signum) {
 	struct winsize w;
 	switch (signum) {
-	case SIGCONT:
+	case SIGTSTP:
 		screen_setup(0);
+		signal(SIGTSTP, SIG_DFL); /* NOTE: assumes SysV semantics! */
+		raise(SIGTSTP);
+		break;
+	case SIGCONT:
 		screen_setup(1);
 		print_table(NO_HI, NO_HI);
 		break;
@@ -1330,6 +1334,10 @@ void signal_setup(void) {
 	saction.sa_handler = signal_handler;
 	sigemptyset(&saction.sa_mask);
 	saction.sa_flags = 0;
+	if (sigaction(SIGTSTP, &saction, NULL) < 0) {
+		perror ("SIGTSTP");
+		exit (1);
+	}
 	if (sigaction(SIGCONT, &saction, NULL) < 0) {
 		perror ("SIGCONT");
 		exit (1);
