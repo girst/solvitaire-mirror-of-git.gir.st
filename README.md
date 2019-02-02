@@ -3,10 +3,22 @@
 Play klondike and spider solitaire in your unicode terminal.
 
 Supports `vi` style keybindings (hjkl), cursor keys and the mouse. Press `J` to
-'join' a well-suited pile to the cursor. `Return` pulls cards from the stack in
-spider solitaire. Piles can also be *directly addressed* by the number below
-them (or 8, 9, 0 for stack, waste and foundation in klondike).    
+'join' a well-suited pile to the cursor. `Space` locks in a selection, and
+`Return` pulls cards from the stack in spider solitaire. Piles can also be
+*directly addressed* by the number below them (or 8, 9, 0 for stack, waste and
+foundation in klondike).    
 See `$PROGNAME -h` for details.
+
+## Details
+
+For details and screenshots see the project homepage at
+**https://gir.st/sol.htm**
+
+## License
+
+You can use, study, share and improve this software under the terms of the GNU
+General Public License, version 3. Copyright 2019 Tobias Girstmair. For
+licensing details, see `LICENSE`.
 
 ## TODO
 
