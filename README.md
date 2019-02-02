@@ -1,10 +1,17 @@
-# solVIItaire
+# solVItaire
 
-play klondike and spider solitaire in your unicode terminal.
+Play klondike and spider solitaire in your unicode terminal.
+
+Supports `vi` style keybindings (hjkl), cursor keys and the mouse. Press `J` to
+'join' a well-suited pile to the cursor. `Return` pulls cards from the stack in
+spider solitaire. Piles can also be *directly addressed* by the number below
+them (or 8, 9, 0 for stack, waste and foundation in klondike).    
+See `$PROGNAME -h` for details.
 
 ## TODO
 
 ### P1
+ * none! \o/
 ### P2
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
@@ -14,7 +21,6 @@ play klondike and spider solitaire in your unicode terminal.
  * TODO: `.` command (repeat last action)
 ### P4
  * TODO: mouse mode improvements:
-          - allow dragging
           - spider: detect how many cards to move to empty pile
             (must find exact position despite `extreme_overlap`)
  * TODO: scores, variants: draw 3, max. n overturns
@@ -72,6 +78,7 @@ play klondike and spider solitaire in your unicode terminal.
              sed -i 's/^spider: sol.c/spider: spider.c/' Makefile
  * DONE: escape sequences (for real cursor keys)
  * DONE: inverted moves (if A->B doesn't work, try B->A)
+ * DONE:  - allow dragging the mouse
 
 ## Notes
 
