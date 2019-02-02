@@ -629,7 +629,7 @@ int set_mouse(int pile, int* main, int* opt) {
 //}}}
 int get_cmd (int* from, int* to, int* opt) {
 	int _f, t;
-	unsigned char mouse[3];
+	unsigned char mouse[6] = {0}; /* must clear [3]! */
 	struct cursor inactive = {-1,-1};
 	static struct cursor active = {0,0};
 	active.opt = 0; /* always reset offset, but keep pile */
@@ -901,9 +901,9 @@ int term2pile(unsigned char *mouse) {
 	return -1;
 }
 int wait_mouse_up(unsigned char* mouse) {
-	unsigned char mouse2[3];
 	struct cursor cur = {-1,-1};
 	int level = 1;
+	/* note: if dragged [3]==1 and second position is in mouse[0,4,5] */
 
 	/* display a cursor while mouse button is pushed: */
 	int pile = term2pile(mouse);
@@ -917,32 +917,43 @@ int wait_mouse_up(unsigned char* mouse) {
 	print_table(&cur, NO_HI); //TODO: should not overwrite inactive cursor!
 
 	while (level > 0) {
-		if (getctrlseq (mouse2) == MOUSE_ANY) {
+		if (getctrlseq (mouse+3) == MOUSE_ANY) {
 			/* ignore mouse wheel events: */
-			if (mouse2[0] & 0x40) continue;
+			if (mouse[3] & 0x40) continue;
 
-			else if((mouse2[0]&3) == 3) level--; /* release event */
+			else if((mouse[3]&3) == 3) level--; /* release event */
 			else level++; /* another button pressed */
 		}
 	}
 
-	return mouse[1] == mouse2[1] && mouse[2] == mouse2[2];
+	int success = mouse[1] == mouse[4] && mouse[2] == mouse[5];
+	if (success) {
+		mouse[3] = 0;
+	}
+	return success;
 }
 
 int getch(unsigned char* buf) {
 /* returns a character, EOF, or constant for an escape/control sequence - NOT
 compatible with the ncurses implementation of same name */
-	int action = getctrlseq(buf);
+	int action;
+	if (buf[3]) {
+		/* mouse was dragged; return 'ungetted' previous destination */
+		action = MOUSE_DRAG;
+		/* keep original [0], as [3] only contains release event */
+		buf[1] = buf[4];
+		buf[2] = buf[5];
+		buf[3] = 0;
+	} else {
+		action = getctrlseq(buf);
+	}
 
 	switch (action) {
 	case MOUSE_ANY:
 		if (buf[0] > 3) break; /* ignore wheel events */
-		int success = wait_mouse_up(buf);
-
-		/* mouse moved while pressed: */
-		if (!success) return KEY_INVAL;
-		//TODO:if moved while pressed: interpret second location as 'to'
-
+		wait_mouse_up(buf);
+		/* fallthrough */
+	case MOUSE_DRAG:
 		switch (buf[0]) {
 		case 0: return MOUSE_LEFT;
 		case 1: return MOUSE_MIDDLE;
