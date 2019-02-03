@@ -937,7 +937,7 @@ int getch(unsigned char* buf) {
 /* returns a character, EOF, or constant for an escape/control sequence - NOT
 compatible with the ncurses implementation of same name */
 	int action;
-	if (buf[3]) {
+	if (buf && buf[3]) {
 		/* mouse was dragged; return 'ungetted' previous destination */
 		action = MOUSE_DRAG;
 		/* keep original [0], as [3] only contains release event */
