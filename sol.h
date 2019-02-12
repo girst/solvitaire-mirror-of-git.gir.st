@@ -165,6 +165,7 @@ struct opts {
 #endif
 	unsigned short w[2]; /* terminal window rows/columns */
 	const struct scheme* s;
+	int h; /* show active highlight? (disabled when mouse used) */
 };
 struct cursor {
 	int pile;

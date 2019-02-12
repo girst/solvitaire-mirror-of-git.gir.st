@@ -537,11 +537,10 @@ int nop(int from, int to, int opt) { (void)from;(void)to;(void)opt;return ERR; }
 // }}}
 
 // keyboard input handling {{{
-int show_cursor_hi = 0; //TODO: don't do this as a global
 // cursor functions{{{
 #ifdef KLONDIKE
 void cursor_left (struct cursor* cursor) {
-	show_cursor_hi = 1;
+	op.h = 1;
 	if (is_tableu(cursor->pile)) {
 		if (cursor->pile > 0) cursor->pile--;
 		cursor->opt = 0;
@@ -557,7 +556,7 @@ void cursor_left (struct cursor* cursor) {
 	}
 }
 void cursor_down (struct cursor* cursor) {
-	show_cursor_hi = 1;
+	op.h = 1;
 	if (!is_tableu(cursor->pile)) {
 		switch (cursor->pile) {
 		case STOCK: cursor->pile = TAB_1; break;
@@ -569,7 +568,7 @@ void cursor_down (struct cursor* cursor) {
 	}
 }
 void cursor_up (struct cursor* cursor) {
-	show_cursor_hi = 1;
+	op.h = 1;
 	if (is_tableu(cursor->pile)) {
 		switch (cursor->pile) { //ugly :|
 		case TAB_1: cursor->pile = STOCK; break;
@@ -583,7 +582,7 @@ void cursor_up (struct cursor* cursor) {
 	}
 }
 void cursor_right (struct cursor* cursor) {
-	show_cursor_hi = 1;
+	op.h = 1;
 	if (is_tableu(cursor->pile)) {
 		if (cursor->pile < TAB_MAX) cursor->pile++;
 	} else {
@@ -599,34 +598,34 @@ void cursor_right (struct cursor* cursor) {
 #elif defined SPIDER
 /*NOTE: one can't highlight the stock due to me being too lazy to implement it*/
 void cursor_left (struct cursor* cursor) {
-	show_cursor_hi = 1;
+	op.h = 1;
 	if (cursor->pile > 0) cursor->pile--;
 	cursor->opt = 0;
 }
 void cursor_down (struct cursor* cursor) {
-	show_cursor_hi = 1;
+	op.h = 1;
 	int first = first_movable(f.t[cursor->pile]);
 	int top = find_top(f.t[cursor->pile]);
 	if (first + cursor->opt < top)
 		cursor->opt++;
 }
 void cursor_up (struct cursor* cursor) {
-	show_cursor_hi = 1;
+	op.h = 1;
 	if (cursor->opt > 0) cursor->opt--;
 }
 void cursor_right (struct cursor* cursor) {
-	show_cursor_hi = 1;
+	op.h = 1;
 	if (cursor->pile < TAB_MAX) cursor->pile++;
 	cursor->opt = 0;
 }
 #endif
 void cursor_to (struct cursor* cursor, int pile) {
-	show_cursor_hi = 1;
+	op.h = 1;
 	cursor->pile = pile;
 	cursor->opt = 0;
 }
 int set_mouse(int pile, int* main, int* opt) {
-	show_cursor_hi = 0;
+	op.h = 0;
 	if (pile < 0) return 1;
 	*main = pile;
 #ifdef KLONDIKE
@@ -942,10 +941,11 @@ int wait_mouse_up(unsigned char* mouse) {
 		cur.opt = pile-FOUNDATION;
 	}
 #endif
-	int old_show_cursor_hi = show_cursor_hi; //TODO: ARGH! that's awful!
-	show_cursor_hi = 1;
+	/* need to temporarily show the cursor, then revert to last state: */
+	int old_show_cursor_hi = op.h; //TODO: ARGH! that's awful!
+	op.h = 1;
 	print_table(&cur, NO_HI); //TODO: should not overwrite inactive cursor!
-	show_cursor_hi = old_show_cursor_hi;
+	op.h = old_show_cursor_hi;
 
 	while (level > 0) {
 		if (getctrlseq (mouse+3) == MOUSE_ANY) {
@@ -1040,6 +1040,7 @@ void deal(long seed) {
 
 // screen drawing routines {{{
 void print_hi(int invert, int grey_bg, int bold, char* str) {
+	if (!op.h) invert = 0; /* don't show invert if we used the mouse last */
 	if (bold && op.s == &unicode_large_color){ //awful hack for bold + faint
 		int offset = str[3]==017?16:str[4]==017?17:0;
 		printf ("%s%s%s""%.*s%s%s""%s%s%s",
@@ -1059,11 +1060,11 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 	/* print stock, waste and foundation: */
 	for (int line = 0; line < op.s->height; line++) {
 		/* stock: */
-		print_hi (show_cursor_hi && active->pile == STOCK, inactive->pile == STOCK, 1, (
+		print_hi (active->pile == STOCK, inactive->pile == STOCK, 1, (
 			(f.w < f.z-1)?op.s->facedown
 			:op.s->placeholder)[line]);
 		/* waste: */
-		print_hi (show_cursor_hi && active->pile == WASTE, inactive->pile == WASTE, 1, (
+		print_hi (active->pile == WASTE, inactive->pile == WASTE, 1, (
 			/* NOTE: cast, because f.w sometimes is (short)-1 !? */
 			((short)f.w >= 0)?op.s->card[f.s[f.w]]
 			:op.s->placeholder)[line]);
@@ -1071,7 +1072,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 		/* foundation: */
 		for (int pile = 0; pile < NUM_SUITS; pile++) {
 			int card = find_top(f.f[pile]);
-			print_hi (show_cursor_hi && active->pile==FOUNDATION && active->opt==pile,
+			print_hi (active->pile==FOUNDATION && active->opt==pile,
 				inactive->pile==FOUNDATION && (
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
@@ -1133,7 +1134,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 			int movable = is_movable(f.t[pile], row[pile]);
 			int empty   = !card && row[pile] == 0;
 
-			print_hi (show_cursor_hi && DO_HI(active), DO_HI(inactive), movable, (
+			print_hi (DO_HI(active), DO_HI(inactive), movable, (
 				(!card && row[pile] == 0)?op.s->placeholder
 				:(card<0)?op.s->facedown
 				:op.s->card[card]
