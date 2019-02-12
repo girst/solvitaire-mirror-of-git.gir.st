@@ -33,7 +33,6 @@ licensing details, see `LICENSE`.
 ### P1
  * none! \o/
 ### P2
- * TODO: don't show cursor-highlight when inputting directly or with the mouse (/u/TooEarlyForMe)
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
@@ -102,6 +101,7 @@ licensing details, see `LICENSE`.
  * DONE:  - allow dragging the mouse
  * DONE: use `10` instead of `X` on card face (/u/Valley6660)
  * DONE: `:help` to show keyhelp (/u/Valley6660)
+ * DONE: don't show cursor-highlight when inputting directly or with the mouse (/u/TooEarlyForMe)
 -->
 
 ## Notes

@@ -129,7 +129,10 @@ restart:
 		case CMD_NEW:   return GAME_NEW;
 		case CMD_AGAIN: goto restart;
 		case CMD_QUIT:  return GAME_QUIT;
-		case CMD_HELP: printf (KEYHELP "\nPress any key to continue."); getch(NULL);break;
+		case CMD_HELP:
+			printf (KEYHELP "\nPress any key to continue.");
+			getch(NULL);
+			break;
 		}
 	}
 }
