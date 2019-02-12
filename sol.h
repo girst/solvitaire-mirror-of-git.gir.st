@@ -199,9 +199,9 @@ struct undo undo_sentinel;
 	"Keybindings:\n" \
 	"    hjkl  : move cursor (or cursor keys)\n" \
 	"    H,M,L : move cursor to first/centre/last tableu pile (or home/ins/end)\n" \
-	"    J     : join to here\n" \
+	"    J     : join to here (or right mouse click)\n" \
 	/*"    K     : show hint\n" */\
-	"    space : select at cursor\n" \
+	"    space : select at cursor (or left mouse click)\n" \
 	"    return: draw from stock\n" \
 	"    :n    : new game\n" \
 	"    :q    : quit\n" \

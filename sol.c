@@ -415,7 +415,8 @@ int join(int to) {
 
 	if (top_to < 0) { /* move a king to empty pile: */
 		for (int i = 0; i < TAB_MAX; i++) {
-			if (f.t[i][0] < 0) /* i.e. would turn? */
+			if (f.t[i][0] < 0) /* i.e. would turn? */ //TODO: this calculation is wrong!
+				//DOES NOT FIRE when king is in the middle
 				if (t2t(i, to, 0) == OK) return OK;
 		}
 		return w2t(WASTE, to, 0);
@@ -622,7 +623,6 @@ int set_mouse(int pile, int* main, int* opt) {
 		*opt  = pile - FOUNDATION;
 #elif defined SPIDER
 	(void)opt;
-	//TODO: set opt if to field is empty (maybe not good to do there)
 #endif
 	return 0;
 }
@@ -680,8 +680,11 @@ from_l:	print_table(&active, &inactive);
 		inactive = active;
 		break;
 	/* mouse addressing: */
-	case MOUSE_MIDDLE:
-	case MOUSE_RIGHT: return CMD_NONE;
+	case MOUSE_MIDDLE: return CMD_NONE;
+	case MOUSE_RIGHT:
+		if (set_mouse(term2pile(mouse), to, opt))
+			return CMD_INVAL;
+		return CMD_JOIN;
 	case MOUSE_LEFT:
 		if (set_mouse(term2pile(mouse), from, opt))
 			return CMD_INVAL;
@@ -748,6 +751,18 @@ to_l:	print_table(&active, &inactive);
 	case MOUSE_LEFT:
 		if (set_mouse(term2pile(mouse), to, opt))
 			return CMD_INVAL;
+/*#ifdef SPIDER
+		//TODO: set opt if to field is empty; suppress "up do" dialog from below
+		if (is_tableu(*to) && f.t[*to][0] == NO_CARD) {
+			int top = find_top(f.t[*from]);
+			if (top < 0) return CMD_INVAL;
+			if (top >= 0 && !is_movable(f.t[*from], top-1)) {
+				*opt = get_rank(f.t[*from][top]);
+			} else {
+			// ask user
+			}
+		}
+#endif*/
 		break;
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
