@@ -166,6 +166,7 @@ struct opts {
 	unsigned short w[2]; /* terminal window rows/columns */
 	const struct scheme* s;
 	int h; /* show active highlight? (disabled when mouse used) */
+	int f; /* flash on error? */
 };
 struct cursor {
 	int pile;
@@ -195,6 +196,7 @@ struct undo undo_sentinel;
 	"    -b(land colorscheme)\n" \
 	"    -c(olorful colorscheme)\n" \
 	"    -m(iniature colorscheme)\n" \
+	"    -f: disable flash on invalid play\n" \
 	"    -h(elp)\n" \
 	"\n"
 #define KEYHELP \

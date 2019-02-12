@@ -50,13 +50,14 @@ int (*action[NUM_PLACES][10])(int,int,int) = {
 int main(int argc, char** argv) {
 	/* opinionated defaults: */
 	op.s = &unicode_large_color;
+	op.f = 1;
 #ifdef SPIDER
 	op.m = MEDIUM;
 #endif
 
 	int optget;
 	opterr = 0; /* don't print message on unrecognized option */
-	while ((optget = getopt (argc, argv, "+:hs:vbcm")) != -1) {
+	while ((optget = getopt (argc, argv, "+:hs:vbcmf")) != -1) {
 		switch (optget) {
 #ifdef SPIDER
 		case 's': /* number of suits */
@@ -70,6 +71,7 @@ int main(int argc, char** argv) {
 		case 'b': op.s = &unicode_large_mono; break;
 		case 'c': op.s = &unicode_large_color; break;
 		case 'm': op.s = &unicode_small_mono; break; /* "mini" */
+		case 'f': op.f = 0; break; /* disable visbell usage */
 		case 'h': default: goto error;
 		error:
 			fprintf (stderr, SHORTHELP LONGHELP KEYHELP, argv[0]);
@@ -112,20 +114,20 @@ restart:
 				ret = action[to][from](to,from,opt);
 			switch (ret) {
 			case OK:  break;
-			case ERR: visbell(); break;
+			case ERR: if(op.f) visbell(); break;
 			case WON: return GAME_WON;
 			}
 			break;
 		case CMD_JOIN:
 			switch (join(to)) {
 			case OK:  break;
-			case ERR: visbell(); break;
+			case ERR: if(op.f) visbell(); break;
 			case WON: return GAME_WON;
 			}
 			break;
 		case CMD_HINT:  break;//TODO: show a possible (and sensible) move. if possible, involve active cursor
 		case CMD_UNDO:  undo_pop(f.u); break;
-		case CMD_INVAL: visbell(); break;
+		case CMD_INVAL: if(op.f) visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
 		case CMD_AGAIN: goto restart;
 		case CMD_QUIT:  return GAME_QUIT;
