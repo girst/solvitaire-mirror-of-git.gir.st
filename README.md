@@ -110,6 +110,9 @@ licensing details, see `LICENSE`.
                              []   {}
                                   []
 ```
+
+<!-- NOTE: these were written during the early stages of development and are no
+longer 100% accurate. 
  - data structures:
     - enum for each card (e.g. `SPADES_ACE`, `HEARTS_10`)
     - each pile is an array holding (13 open cards + up to 6 closed)    
@@ -147,3 +150,4 @@ licensing details, see `LICENSE`.
 ```
 "open": face up card
 "closed": face down card
+-->
