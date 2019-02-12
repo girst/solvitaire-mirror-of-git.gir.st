@@ -32,6 +32,7 @@ licensing details, see `LICENSE`.
 
 ### P1
  * none! \o/
+ * TODO: visbell annoys /u/TooEarlyForMe
 ### P2
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
@@ -102,6 +103,7 @@ licensing details, see `LICENSE`.
  * DONE: use `10` instead of `X` on card face (/u/Valley6660)
  * DONE: `:help` to show keyhelp (/u/Valley6660)
  * DONE: don't show cursor-highlight when inputting directly or with the mouse (/u/TooEarlyForMe)
+ * DONE: remove sysmlink trickery and just call sol.c explicitly
 -->
 
 ## Notes

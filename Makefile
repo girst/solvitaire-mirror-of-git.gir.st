@@ -12,8 +12,8 @@ all: sol spider
 sol: sol.c sol.h schemes.h
 	$(CC) $(CFLAGS) -DKLONDIKE $< -o $@
 
-spider: spider.c sol.h schemes.h
-	$(CC) $(CFLAGS) -DSPIDER $< -o $@
+spider: sol.c sol.h schemes.h
+	$(CC) $(CFLAGS) -DSPIDER sol.c -o $@
 
 clean:
 	rm -f sol spider
