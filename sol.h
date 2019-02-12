@@ -109,6 +109,7 @@ enum special_cmds {
 	CMD_HINT,
 	CMD_JOIN,
 	CMD_UNDO,
+	CMD_HELP,
 };
 
 enum event {
@@ -204,6 +205,8 @@ struct undo undo_sentinel;
 	"    space : select at cursor (or left mouse click)\n" \
 	"    return: draw from stock\n" \
 	"    :n    : new game\n" \
+	"    :r    : restart game\n" \
+        "    :h    : show keyboard help\n" \
 	"    :q    : quit\n" \
 	DIRECT_ADDR_KEYHELP
 //}}}

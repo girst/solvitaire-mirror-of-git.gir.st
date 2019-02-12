@@ -129,6 +129,7 @@ restart:
 		case CMD_NEW:   return GAME_NEW;
 		case CMD_AGAIN: goto restart;
 		case CMD_QUIT:  return GAME_QUIT;
+		case CMD_HELP: printf (KEYHELP "\nPress any key to continue."); getch(NULL);break;
 		}
 	}
 }
@@ -700,6 +701,7 @@ from_l:	print_table(&active, &inactive);
 		case 'q': return CMD_QUIT;
 		case 'n': return CMD_NEW;
 		case 'r': return CMD_AGAIN;
+		case 'h': return CMD_HELP;
 		default:  return CMD_INVAL;
 		}}
 	case 'J':
