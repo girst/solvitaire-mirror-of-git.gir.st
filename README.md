@@ -9,6 +9,8 @@ Supports `vi` style keybindings (hjkl), cursor keys and the mouse. Press `J` to
 foundation in klondike).    
 See `$PROGNAME -h` for details.
 
+Keybindings are documented at the project homepage and in `./$PROGNAME -h`.
+
 ## Details
 
 For details and screenshots see the project homepage at
@@ -20,6 +22,7 @@ You can use, study, share and improve this software under the terms of the GNU
 General Public License, version 3. Copyright 2019 Tobias Girstmair. For
 licensing details, see `LICENSE`.
 
+<!--
 ## TODO
 
 ### P1
@@ -53,7 +56,7 @@ licensing details, see `LICENSE`.
          * once segfaulted on large column
          * sometimes doesn't work (ERR when it should be OK)
          Cannot reproduce
- * DONE: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
+ * DONE: some input functions are in `x2y()` - - move them to `get_cmd()` (req.
          for mouse, hjkl modes)
  * DONE: sigint, sigcont handler! atexit() to avoid inconsistent term state
  * DONE: hjkl keyboard mode
@@ -91,6 +94,7 @@ licensing details, see `LICENSE`.
  * DONE: escape sequences (for real cursor keys)
  * DONE: inverted moves (if A->B doesn't work, try B->A)
  * DONE:  - allow dragging the mouse
+-->
 
 ## Notes
 
