@@ -51,8 +51,13 @@ const struct scheme unicode_large_mono = {
 		[HEA_8] = ULCARD("♥","8"), [SPA_8] = ULCARD("♠","8"),
 		[CLU_9] = ULCARD("♣","9"), [DIA_9] = ULCARD("♦","9"),
 		[HEA_9] = ULCARD("♥","9"), [SPA_9] = ULCARD("♠","9"),
+#ifdef DECIMAL_TEN
+		[CLU_X] = ULCARD("♣","\b10"), [DIA_X] = ULCARD("♦","\b10"),
+		[HEA_X] = ULCARD("♥","\b10"), [SPA_X] = ULCARD("♠","\b10"),
+#else
 		[CLU_X] = ULCARD("♣","X"), [DIA_X] = ULCARD("♦","X"),
 		[HEA_X] = ULCARD("♥","X"), [SPA_X] = ULCARD("♠","X"),
+#endif
 		[CLU_J] = ULCARD("♣","J"), [DIA_J] = ULCARD("♦","J"),
 		[HEA_J] = ULCARD("♥","J"), [SPA_J] = ULCARD("♠","J"),
 		[CLU_Q] = ULCARD("♣","Q"), [DIA_Q] = ULCARD("♦","Q"),
@@ -105,8 +110,13 @@ const struct scheme unicode_large_color = {
 		[HEA_8] = RULCARD("♥","8"), [SPA_8] = BULCARD("♠","8"),
 		[CLU_9] = BULCARD("♣","9"), [DIA_9] = RULCARD("♦","9"),
 		[HEA_9] = RULCARD("♥","9"), [SPA_9] = BULCARD("♠","9"),
+#ifdef DECIMAL_TEN
+		[CLU_X] = BULCARD("♣","\b10"), [DIA_X] = RULCARD("♦","\b10"),
+		[HEA_X] = RULCARD("♥","\b10"), [SPA_X] = BULCARD("♠","\b10"),
+#else
 		[CLU_X] = BULCARD("♣","X"), [DIA_X] = RULCARD("♦","X"),
 		[HEA_X] = RULCARD("♥","X"), [SPA_X] = BULCARD("♠","X"),
+#endif
 		[CLU_J] = BULCARD("♣","J"), [DIA_J] = RULCARD("♦","J"),
 		[HEA_J] = RULCARD("♥","J"), [SPA_J] = BULCARD("♠","J"),
 		[CLU_Q] = BULCARD("♣","Q"), [DIA_Q] = RULCARD("♦","Q"),

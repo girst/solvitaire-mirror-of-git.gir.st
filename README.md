@@ -16,6 +16,11 @@ Keybindings are documented at the project homepage and in `./$PROGNAME -h`.
 For details and screenshots see the project homepage at
 **https://gir.st/sol.htm**
 
+## Makefile Options
+
+By default the character set uses an `X` to for the 10 card. Compile with `make
+DECIMAL_TEN=1` to display the letters `10` instead.
+
 ## License
 
 You can use, study, share and improve this software under the terms of the GNU
@@ -28,6 +33,8 @@ licensing details, see `LICENSE`.
 ### P1
  * none! \o/
 ### P2
+ * TODO: `:help` to show keyhelp (/u/Valley6660)
+ * TODO: don't show cursor-highlight when inputting directly or with the mouse (/u/TooEarlyForMe)
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
@@ -94,6 +101,7 @@ licensing details, see `LICENSE`.
  * DONE: escape sequences (for real cursor keys)
  * DONE: inverted moves (if A->B doesn't work, try B->A)
  * DONE:  - allow dragging the mouse
+ * DONE: use `10` instead of `X` on card face (/u/Valley6660)
 -->
 
 ## Notes

@@ -2,6 +2,10 @@
 
 CFLAGS := -Wall -Wextra -pedantic -std=c99 -g3 #-Wno-unused-parameter
 
+ifdef DECIMAL_TEN
+CFLAGS += -DDECIMAL_TEN
+endif
+
 all: sol spider
 
 #canfield:
