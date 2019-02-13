@@ -9,8 +9,6 @@ Supports `vi` style keybindings (hjkl), cursor keys and the mouse. Press `J` to
 foundation in klondike).    
 See `$PROGNAME -h` for details.
 
-Keybindings are documented at the project homepage and in `./$PROGNAME -h`.
-
 ## Details
 
 For details and screenshots see the project homepage at
@@ -40,6 +38,7 @@ licensing details, see `LICENSE`.
  * TODO: visbell changes: instead of screen, flash active {cursor,card} {red,twice}?
  * TODO: differential drawing mode (at least for highlighting cards)
  * TODO: `.` command (repeat last action)
+ * TODO: FreeCell (/u/CFWhitman) - req' algorithm for moving multiple cards around
 ### P4
  * TODO: mouse mode improvements:
           - spider: detect how many cards to move to empty pile
