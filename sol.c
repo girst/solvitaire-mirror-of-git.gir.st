@@ -50,13 +50,14 @@ int (*action[NUM_PLACES][10])(int,int,int) = {
 int main(int argc, char** argv) {
 	/* opinionated defaults: */
 	op.s = &unicode_large_color;
+	op.v = 1; /* enable fake visbell by default */
 #ifdef SPIDER
 	op.m = MEDIUM;
 #endif
 
 	int optget;
 	opterr = 0; /* don't print message on unrecognized option */
-	while ((optget = getopt (argc, argv, "+:hs:vbcm")) != -1) {
+	while ((optget = getopt (argc, argv, "+:hs:vbcmV")) != -1) {
 		switch (optget) {
 #ifdef SPIDER
 		case 's': /* number of suits */
@@ -70,6 +71,7 @@ int main(int argc, char** argv) {
 		case 'b': op.s = &unicode_large_mono; break;
 		case 'c': op.s = &unicode_large_color; break;
 		case 'm': op.s = &unicode_small_mono; break; /* "mini" */
+		case 'V': op.v = 0; /* WARN: experimental; might change */
 		case 'h': default: goto error;
 		error:
 			fprintf (stderr, SHORTHELP LONGHELP KEYHELP, argv[0]);
@@ -1179,6 +1181,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 }
 
 void visbell (void) {
+	if (!op.v) return;
 	printf ("\033[?5h"); fflush (stdout);
 	usleep (100000);
 	printf ("\033[?5l"); fflush (stdout);

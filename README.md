@@ -32,12 +32,12 @@ licensing details, see `LICENSE`.
 
 ### P1
  * none! \o/
- * TODO: visbell annoys /u/TooEarlyForMe
 ### P2
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
 ### P3
+ * TODO: visbell changes: instead of screen, flash active {cursor,card} {red,twice}?
  * TODO: differential drawing mode (at least for highlighting cards)
  * TODO: `.` command (repeat last action)
 ### P4
