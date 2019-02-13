@@ -10,10 +10,10 @@ all: sol spider
 
 #canfield:
 sol: sol.c sol.h schemes.h
-	$(CC) $(CFLAGS) -DKLONDIKE $< -o $@
+	$(CC) $(CFLAGS) -DKLONDIKE sol.c -o $@
 
-spider: spider.c sol.h schemes.h
-	$(CC) $(CFLAGS) -DSPIDER $< -o $@
+spider: sol.c sol.h schemes.h
+	$(CC) $(CFLAGS) -DSPIDER sol.c -o $@
 
 clean:
 	rm -f sol spider
