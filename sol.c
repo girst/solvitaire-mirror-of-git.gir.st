@@ -1116,14 +1116,12 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 #ifdef KLONDIKE
 #define DO_HI(cursor) (cursor->pile == pile && (movable || empty))
 #define TOP_HI(c) 1 /* can't select partial stacks in KLONDIKE */
-#define INC_OFFSET
 #elif defined SPIDER
-	int offset[NUM_PILES]={1,1,1,1,1,1,1,1,1,1}; // :|
+	int offset[NUM_PILES]={0};
 #define DO_HI(cursor) (cursor->pile == pile && (movable || empty) \
-	&& offset[pile] > cursor->opt)
+	&& offset[pile] >= cursor->opt)
 #define TOP_HI(cursor) (cursor->pile == pile && movable \
-	&& offset[pile]-1 == cursor->opt)
-#define INC_OFFSET if (movable) offset[pile]++
+	&& offset[pile] == cursor->opt)
 #endif
 	/* print tableu piles: */
 	int row[NUM_PILES] = {0};
@@ -1166,7 +1164,9 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 			) {
 				line[pile]=0;
 				row[pile]++;
-				INC_OFFSET;
+#if defined SPIDER
+				if (movable) offset[pile]++;
+#endif
 			}
 			/* tableu labels: */
 			if(!card && !label[pile] && row[pile]>0&&line[pile]>0) {
