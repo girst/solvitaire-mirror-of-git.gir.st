@@ -70,8 +70,8 @@ int main(int argc, char** argv) {
 #endif
 		case 'b': op.s = &unicode_large_mono; break;
 		case 'c': op.s = &unicode_large_color; break;
-		case 'm': op.s = &unicode_small_mono; break; /* "mini" */
-		case 'n': op.s = &unicode_small_color; break; /* "mini" */
+		case 'm': op.s = &unicode_small_mono; break; /* "mini, bland" */
+		case 'n': op.s = &unicode_small_color; break; /* "mini, colorful" */
 		case 'V': op.v = 0; /* WARN: experimental; might change */
 		case 'h': default: goto error;
 		error:
