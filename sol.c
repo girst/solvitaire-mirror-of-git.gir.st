@@ -98,6 +98,8 @@ newgame:
 	}
 }
 
+#define is_tableu(where) (where <= TAB_MAX) // "card games helper functions"
+
 int sol(void) {
 	int ret;
 	long seed = time(NULL);
@@ -110,7 +112,8 @@ restart:
 		switch (get_cmd(&from, &to, &opt)) {
 		case CMD_MOVE:
 			ret = action[from][to](from,to,opt);
-			if (ret == ERR) /* try again with from/to swapped: */
+			if (ret == ERR && is_tableu(from) && is_tableu(to))
+				/* try again with from/to swapped: */
 				ret = action[to][from](to,from,opt);
 			switch (ret) {
 			case OK:  break;
@@ -152,8 +155,6 @@ void quit(void) {
 	((card-1) / NUM_SUITS)
 #define get_color(card) \
 	((get_suit(card) ^ get_suit(card)>>1) & 1)
-
-#define is_tableu(where) (where <= TAB_MAX)
 
 int find_top(card_t* pile) {
 	int i;
@@ -285,6 +286,7 @@ int f2t(int from, int to, int opt) { /* foundation to tableu */
 }
 int w2t(int from, int to, int opt) { /* waste to tableu */
 	(void) from; (void) opt; /* don't need */
+	if (f.w < 0) return ERR;
 	int top_to = find_top(f.t[to]);
 	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w]))
 	   && (rank_next(f.s[f.w], f.t[to][top_to])))
@@ -408,6 +410,8 @@ int join(int to) {
 #endif
 
 #ifdef KLONDIKE
+	if (to == WASTE || to == STOCK) return ERR; /*why would you do that!?*/
+
 	if (to == FOUNDATION) {
 		int status = ERR;
 		for (int i = 0; i <= TAB_MAX; i++)
@@ -421,8 +425,7 @@ int join(int to) {
 
 	if (top_to < 0) { /* move a king to empty pile: */
 		for (int i = 0; i < TAB_MAX; i++) {
-			if (f.t[i][0] < 0) /* i.e. would turn? */ //TODO: this calculation is wrong!
-				//DOES NOT FIRE when king is in the middle
+			if (f.t[i][0] < 0) /* i.e. would turn? */
 				if (t2t(i, to, 0) == OK) return OK;
 		}
 		return w2t(WASTE, to, 0);
@@ -523,6 +526,7 @@ int join(int to) {
 	/* 3. move cards over and return: */
 #ifdef KLONDIKE
 	/* prefer waste if it wouldn't turn_over: */
+	/* NOTE: does not attempt to take from froundation */
 	if (!turn && w2t(WASTE, to, 0) == OK)
 		return OK;
 	if (from < 0) /* nothing found */
@@ -590,6 +594,7 @@ void cursor_right (struct cursor* cursor) {
 	op.h = 1;
 	if (is_tableu(cursor->pile)) {
 		if (cursor->pile < TAB_MAX) cursor->pile++;
+		cursor->opt = 0;
 	} else {
 		switch (cursor->pile) {
 		case STOCK: cursor->pile = WASTE; break;
@@ -648,7 +653,8 @@ int get_cmd (int* from, int* to, int* opt) {
 	unsigned char mouse[6] = {0}; /* must clear [3]! */
 	struct cursor inactive = {-1,-1};
 	static struct cursor active = {0,0};
-	active.opt = 0; /* always reset offset, but keep pile */
+	if (is_tableu(active.pile))
+		active.opt = 0;
 
 	/***/
 from_l:	print_table(&active, &inactive);
@@ -700,7 +706,7 @@ from_l:	print_table(&active, &inactive);
 	case MOUSE_RIGHT:
 		if (set_mouse(term2pile(mouse), to, opt))
 			return CMD_INVAL;
-		return CMD_JOIN;
+		goto join_l;
 	case MOUSE_LEFT:
 		if (set_mouse(term2pile(mouse), from, opt))
 			return CMD_INVAL;
@@ -721,6 +727,7 @@ from_l:	print_table(&active, &inactive);
 		}}
 	case 'J':
 		*to = active.pile;
+join_l:
 #ifdef KLONDIKE
 		if (*to == FOUNDATION) return CMD_JOIN;
 #endif
@@ -800,6 +807,10 @@ to_l:	print_table(&active, &inactive);
 	/***/
 #ifdef KLONDIKE
 	if (*from == FOUNDATION) {
+		if (inactive.opt >= 0) {
+			*opt = inactive.opt;
+			return CMD_MOVE;
+		}
 		int top = find_top(f.t[*to]);
 		if (top < 0) return CMD_INVAL;
 		int color = get_color(f.t[*to][top]);
@@ -1190,6 +1201,7 @@ void win_anim(void) {
 	printf ("\033[?25l"); /* hide cursor */
 	for (;;) {
 		/* set cursor to random location */
+		//TODO: use actual terminal size instead!
 		int row = 1+rand()%(24-op.s->width);
 		int col = 1+rand()%(80-op.s->height);
 

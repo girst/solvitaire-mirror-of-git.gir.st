@@ -245,6 +245,7 @@ void cursor_down (struct cursor* cursor);
 void cursor_up (struct cursor* cursor);
 void cursor_right (struct cursor* cursor);
 void cursor_to (struct cursor* cursor, int pile);
+int set_mouse(int pile, int* main, int* opt);
 int get_cmd (int* from, int* to, int* opt);
 int getctrlseq(unsigned char* buf);
 int term2pile(unsigned char *mouse);
