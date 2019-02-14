@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 
 	int optget;
 	opterr = 0; /* don't print message on unrecognized option */
-	while ((optget = getopt (argc, argv, "+:hs:vbcmV")) != -1) {
+	while ((optget = getopt (argc, argv, "+:hs:vbcmnV")) != -1) {
 		switch (optget) {
 #ifdef SPIDER
 		case 's': /* number of suits */
@@ -71,6 +71,7 @@ int main(int argc, char** argv) {
 		case 'b': op.s = &unicode_large_mono; break;
 		case 'c': op.s = &unicode_large_color; break;
 		case 'm': op.s = &unicode_small_mono; break; /* "mini" */
+		case 'n': op.s = &unicode_small_color; break; /* "mini" */
 		case 'V': op.v = 0; /* WARN: experimental; might change */
 		case 'h': default: goto error;
 		error:

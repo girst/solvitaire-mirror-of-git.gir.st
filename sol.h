@@ -195,7 +195,8 @@ struct undo undo_sentinel;
 	LONGHELP_SPECIFIC \
 	"    -b(land colorscheme)\n" \
 	"    -c(olorful colorscheme)\n" \
-	"    -m(iniature colorscheme)\n" \
+	"    -m(iniature colorscheme, bland)\n" \
+	"    -n (miniature colorscheme, colorful)\n" \
 	"    -V(isual bell disable; experimental)\n" \
 	"    -h(elp)\n" \
 	"\n"
