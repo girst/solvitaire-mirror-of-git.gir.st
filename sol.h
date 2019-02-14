@@ -15,6 +15,13 @@
 #define MAX_STOCK 50 /*how many cards can be dealt onto the piles*/
 #define NUM_DECKS 2
 #define PILE_SIZE DECK_SIZE*NUM_DECKS /* no maximum stack size in spider :/ */
+#elif defined FREECELL
+#define NUM_PILES 8
+#define NUM_CELLS 4 /* the free cells that give freecell its name */
+#define MAX_HIDDEN 6
+#define MAX_STOCK 4 /* used for the four open cells next to the foundation */
+#define NUM_DECKS 1
+#define PILE_SIZE MAX_HIDDEN+NUM_RANKS
 #endif
 
 enum cards {
@@ -96,6 +103,11 @@ enum field_places {
 	STOCK,
 	WASTE,
 	FOUNDATION,
+#elif defined FREECELL
+	TAB_8,
+	STOCK,             /* 4 open cells */
+#define WASTE 0            /* for action[][10] (must be valid index) */
+	FOUNDATION,
 #endif
 	NUM_PLACES,
 };
@@ -145,7 +157,8 @@ typedef signed char card_t;
 
 struct playfield {
 	int z; /* stock size */
-	int w; /* waste; index into stock (occupied foundations in spider) */
+	int w; /* waste as index into stock in klondike, number of occupied 
+	          foundations in spider, occupied cells as bitmask in freecell*/
 	card_t s[MAX_STOCK]; /* stock */
 	card_t f[NUM_DECKS*NUM_SUITS][PILE_SIZE]; /* foundation */
 	card_t t[NUM_PILES][PILE_SIZE]; /* tableu piles */
@@ -189,6 +202,12 @@ struct undo undo_sentinel;
 	"    -s(uits) <1, 2 or 4>\n"
 #define DIRECT_ADDR_KEYHELP \
 	"    1 .. 0: directly address tableu\n"
+#elif defined FREECELL
+#define LONGHELP_SPECIFIC ""
+#define DIRECT_ADDR_KEYHELP \
+	"    1 .. 8: directly address tableu\n" \
+	"    9, 0  : directly address cells and foundation\n" \
+	"    backsp: move card under cursor to a free cell\n"
 #endif
 #define LONGHELP \
 	"OPTIONS:\n" \
@@ -237,6 +256,14 @@ int remove_if_complete (int pileno);
 int t2t(int from, int to, int opt);
 int s2t(int from, int to, int opt);
 int t2f(int from, int to, int opt);
+#elif defined FREECELL
+int t2t(int from, int to, int opt);
+int t2f(int from, int to, int opt);
+int f2t(int from, int to, int opt);
+int t2c(int from, int to, int opt);
+int c2t(int from, int to, int opt);
+int c2f(int from, int to, int opt);
+int f2c(int from, int to, int opt);
 #endif
 int join(int to);
 int nop(int from, int to, int opt);

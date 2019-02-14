@@ -39,6 +39,7 @@ licensing details, see `LICENSE`.
  * TODO: differential drawing mode (at least for highlighting cards)
  * TODO: `.` command (repeat last action)
  * TODO: FreeCell (/u/CFWhitman) - req' algorithm for moving multiple cards around
+         for first multicardmove impl.: allow moving (n+1) cards where n is empty spaces
 ### P4
  * TODO: mouse mode improvements:
           - spider: detect how many cards to move to empty pile

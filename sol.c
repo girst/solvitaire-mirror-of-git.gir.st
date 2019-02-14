@@ -42,6 +42,18 @@ int (*action[NUM_PLACES][10])(int,int,int) = {
 /* 9 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2f, t2t },
 /*10 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2f },
 /*stk*/	{ s2t, s2t, s2t, s2t, s2t, s2t, s2t, s2t, s2t, s2t },
+#elif defined FREECELL
+	/* 1    2    3    4    5    6    7    8   cll  fnd*/
+/* 1 */	{ t2f, t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2c, t2f },
+/* 2 */	{ t2t, t2f, t2t, t2t, t2t, t2t, t2t, t2t, t2c, t2f },
+/* 3 */	{ t2t, t2t, t2f, t2t, t2t, t2t, t2t, t2t, t2c, t2f },
+/* 4 */	{ t2t, t2t, t2t, t2f, t2t, t2t, t2t, t2t, t2c, t2f },
+/* 5 */	{ t2t, t2t, t2t, t2t, t2f, t2t, t2t, t2t, t2c, t2f },
+/* 6 */	{ t2t, t2t, t2t, t2t, t2t, t2f, t2t, t2t, t2c, t2f },
+/* 7 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2f, t2t, t2c, t2f },
+/* 8 */	{ t2t, t2t, t2t, t2t, t2t, t2t, t2t, t2f, t2c, t2f },
+/*cll*/	{ c2t, c2t, c2t, c2t, c2t, c2t, c2t, c2t, c2f, c2f },
+/*fnd*/	{ f2t, f2t, f2t, f2t, f2t, f2t, f2t, f2t, f2c, nop },
 #endif
 };
 // }}}
@@ -103,6 +115,7 @@ newgame:
 int sol(void) {
 	int ret;
 	long seed = time(NULL);
+seed = 1550150477;
 restart:
 	free_undo(f.u);
 	deal(seed);
@@ -186,7 +199,7 @@ int is_consecutive (card_t* pile, int pos) {
 	if (pos+1 >= PILE_SIZE) return 1; /* card is last */
 	if (pile[pos+1] == NO_CARD) return 1; /* card is first */
 
-#ifdef KLONDIKE
+#if defined KLONDIKE || defined FREECELL
 	/* ranks consecutive? */
 	if (!rank_next(pile[pos+1], pile[pos])) return 0;
 	/* color opposite? */
@@ -204,7 +217,7 @@ int is_consecutive (card_t* pile, int pos) {
 int is_movable(card_t* pile, int n) {
 #ifdef KLONDIKE
 	return(pile[n] > NO_CARD); /*non-movable cards don't exist in klondike*/
-#elif defined SPIDER
+#elif defined SPIDER || defined FREECELL
 	int top = find_top(pile);
 	for (int i = top; i >= 0; i--) {
 		if (pile[i] <= NO_CARD) return 0; /*no card or card face down?*/
@@ -389,7 +402,107 @@ int t2f(int from, int to, int opt) {
 	/* manually retrigger remove_if_complete() (e.g. after undo_pop) */
 	return remove_if_complete(from)?OK:ERR;
 }
+#elif defined FREECELL
+int t2t(int from, int to, int opt) {
+	(void) from; (void) to; (void) opt;
+	//XXX FREECELL TODO: tableu to tableu
+	//allow moving as many cards as free spaces on the field?
+	//use cascades to increase number of cards moved at once?
+	return ERR;
+}
+int t2f(int from, int to, int opt) { /* 1:1 copy from KLONDIKE */
+	(void) to; (void) opt; /* don't need */
+	int top_from = find_top(f.t[from]);
+	to = get_suit(f.t[from][top_from]);
+	int top_to   = find_top(f.f[to]);
+	if ((top_to < 0 && get_rank(f.t[from][top_from]) == RANK_A)
+	|| (top_to >= 0 && rank_next(f.f[to][top_to],f.t[from][top_from]))) {
+		f.f[to][top_to+1] = f.t[from][top_from];
+		f.t[from][top_from] = NO_CARD;
+		undo_push(from, FOUNDATION, to, 0);
+		if (check_won()) return WON;
+		return OK;
+	} else return ERR;
+}
+int f2t(int from, int to, int opt) { /* 1:1 copy from KLONDIKE */
+	(void) from; /* don't need */
+	int top_to = find_top(f.t[to]);
+	from = opt;
+	int top_from = find_top(f.f[from]);
+
+	if ((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from]))
+	&& (rank_next(f.f[from][top_from], f.t[to][top_to]))) {
+		f.t[to][top_to+1] = f.f[from][top_from];
+		f.f[from][top_from] = NO_CARD;
+		undo_push(FOUNDATION, to, from, 0);
+		return OK;
+	} else return ERR;
+}
+int t2c(int from, int to, int opt) {
+	(void) to; (void) opt; /* don't need */
+	/* is a cell free? */
+	if (f.w == (1<<NUM_CELLS)-1)
+		return ERR;
+	for (to = 0; to < NUM_CELLS; to++)
+		if (!(f.w>>to&1)) break;
+	/* move 1 card */
+	int top_from = find_top(f.t[from]);
+	f.s[to] = f.t[from][top_from];
+	f.t[from][top_from] = NO_CARD;
+	f.w |= 1<<to; /* mark cell as occupied */
+	undo_push(from, STOCK, to, 0);
+
+	return OK;
+}
+int c2t(int from, int to, int opt) {
+	(void) from; /* don't need */
+	int top_to = find_top(f.t[to]);
+	from = opt;
+
+	if ((get_color(f.t[to][top_to]) != get_color(f.s[from]))
+	&& (rank_next(f.s[from], f.t[to][top_to]))) {
+		f.t[to][top_to+1] = f.s[from];
+		f.s[from] = NO_CARD;
+		f.w &= ~(1<<from); /* mark cell as free */
+		undo_push(STOCK, to, from, 0);
+		return OK;
+	} else return ERR;
+	return ERR;
+}
+int c2f(int from, int to, int opt) {
+	(void) from; (void) to; /* don't need */
+	from = opt;
+	to = get_suit(f.s[from]);
+	int top_to = find_top(f.f[to]);
+	if ((top_to < 0 && get_rank(f.s[from]) == RANK_A)
+	|| (top_to >= 0 && rank_next(f.f[to][top_to],f.s[from]))) {
+		f.f[to][top_to+1] = f.s[from];
+		f.s[from] = NO_CARD;
+		f.w &= ~(1<<from); /* mark cell as free */
+		undo_push(STOCK, FOUNDATION, from | to<<16, 0);
+		if (check_won()) return WON;
+		return OK;
+	} else return ERR;
+}
+int f2c(int from, int to, int opt) {
+	(void) from; (void) to; /* don't need */
+	/* is a cell free? */
+	if (f.w == (1<<NUM_CELLS)-1)
+		return ERR;
+	for (to = 0; to < NUM_CELLS; to++)
+		if (!(f.w>>to&1)) break;
+	/* move 1 card */
+	from = opt;
+	int top_from = find_top(f.f[from]);
+	f.s[to] = f.f[from][top_from];
+	f.f[from][top_from] = NO_CARD;
+	f.w |= 1<<to; /* mark cell as occupied */
+	undo_push(FOUNDATION, STOCK, from | to<<16, 0);
+
+	return OK;
+}
 #endif
+
 //TODO: generalize prediction engine for CMD_HINT
 #ifdef KLONDIKE
 #define would_complete(pile) 0
@@ -397,6 +510,8 @@ int t2f(int from, int to, int opt) {
 #define would_complete(pile) \
 	(get_rank(f.t[pile][r[pile].top]) == RANK_A \
 	&& get_rank(f.t[to][bottom_to]) == RANK_K)
+#elif defined FREECELL
+#define would_complete(pile) 0
 #endif
 #define would_turn(pile) \
 	(f.t[pile][r[pile].pos-1] < 0)
@@ -527,7 +642,7 @@ int join(int to) {
 #ifdef KLONDIKE
 	/* prefer waste if it wouldn't turn_over: */
 	/* NOTE: does not attempt to take from froundation */
-	if (!turn && w2t(WASTE, to, 0) == OK)
+	if (!turn && w2t(WASTE, to, 0) == OK) //TODO: gives higher priority to waste than to empty!
 		return OK;
 	if (from < 0) /* nothing found */
 		return ERR;
@@ -537,6 +652,9 @@ int join(int to) {
 		return ERR;
 	int bottom = first_movable(f.t[from]);
 	return t2t(from, to, get_rank(f.t[from][bottom]));
+#elif defined FREECELL
+	(void)from;
+	return ERR; //TODO FREECELL: implement join
 #endif
 }
 #undef would_empty
@@ -628,6 +746,77 @@ void cursor_right (struct cursor* cursor) {
 	if (cursor->pile < TAB_MAX) cursor->pile++;
 	cursor->opt = 0;
 }
+#elif defined FREECELL
+void cursor_left (struct cursor* cursor) {
+	op.h = 1;
+	if (is_tableu(cursor->pile)) {
+		if (cursor->pile > 0) cursor->pile--;
+		cursor->opt = 0;
+	} else { /* cells/foundation*/
+		switch (cursor->pile) {
+		case STOCK:
+			if (cursor->opt > 0)
+				cursor->opt--;
+			break;
+		case FOUNDATION:
+			if (cursor->opt <= 0) {
+				cursor->pile = STOCK;
+				cursor->opt = 3;
+			} else {
+				cursor->opt--;
+			}
+		}
+	}
+}
+void cursor_down (struct cursor* cursor) {
+	op.h = 1;
+	if (is_tableu(cursor->pile)) {
+		int first = first_movable(f.t[cursor->pile]);
+		int top = find_top(f.t[cursor->pile]);
+		if (first + cursor->opt < top)
+			cursor->opt++;
+	} else {
+		cursor->pile = cursor->opt+NUM_CELLS*(cursor->pile==FOUNDATION);
+		cursor->opt = 0;
+	}
+}
+void cursor_up (struct cursor* cursor) {
+	op.h = 1;
+	if (is_tableu(cursor->pile)) {
+		if (cursor->opt > 0) {
+			cursor->opt--;
+		} else {
+			switch (cursor->pile) {
+			case TAB_1: case TAB_2: case TAB_3: case TAB_4:
+				cursor->opt = cursor->pile; /*assumes TAB_1==0*/
+				cursor->pile = STOCK;
+				break;
+			case TAB_5: case TAB_6: case TAB_7: case TAB_8:
+				cursor->opt = cursor->pile - NUM_CELLS;
+				cursor->pile = FOUNDATION;
+			}
+		}
+	}
+}
+void cursor_right (struct cursor* cursor) {
+	op.h = 1;
+	if (is_tableu(cursor->pile)) {
+		if (cursor->pile < TAB_MAX) cursor->pile++;
+	} else {
+		switch (cursor->pile) {
+		case STOCK:
+			if (cursor->opt < NUM_SUITS-1) {
+				cursor->opt++;
+			} else {
+				cursor->pile = FOUNDATION;
+				cursor->opt = 0;
+			} break;
+		case FOUNDATION:
+			if (cursor->opt < NUM_SUITS-1)
+				cursor->opt++;
+		}
+	}
+}
 #endif
 void cursor_to (struct cursor* cursor, int pile) {
 	op.h = 1;
@@ -639,11 +828,13 @@ int set_mouse(int pile, int* main, int* opt) {
 	if (pile < 0) return 1;
 	*main = pile;
 #ifdef KLONDIKE
-	if (pile >= FOUNDATION)
+	if (pile >= FOUNDATION)//TODO: check upper bound!
 		*main = FOUNDATION,
 		*opt  = pile - FOUNDATION;
 #elif defined SPIDER
 	(void)opt;
+#elif defined FREECELL
+	(void)opt; //TODO FREECELL: needs to decode not-yet-decided term2pile STOCK/FOUNDATION encodings
 #endif
 	return 0;
 }
@@ -673,12 +864,18 @@ from_l:	print_table(&active, &inactive);
 	case '8': *from = TAB_8; break;
 	case '9': *from = TAB_9; break;
 	case '0': *from = TAB_10;break;
+#elif defined FREECELL
+	case '8': *from = TAB_8; break;
+	case '9': *from = STOCK; break;
+	case '0': *from = FOUNDATION; break;
 #elif defined KLONDIKE
 	case '9': *from = WASTE; break;
 	case '0': *from = FOUNDATION; break;
 	case '8': /* fallthrough */
 #endif
+#ifndef FREECELL
 	case '\n': *from = STOCK; break;
+#endif
 	/* cursor keys addressing: */
 	case KEY_LEFT:
 	case 'h': cursor_left (&active); goto from_l;
@@ -701,6 +898,15 @@ from_l:	print_table(&active, &inactive);
 #endif
 		inactive = active;
 		break;
+#ifdef FREECELL
+	case 0x7f: case '\b': /* backspace key sends DEL on most terminals */
+		if (active.pile == STOCK) return CMD_INVAL;
+		*from = active.pile;
+		*opt  = active.opt; /* when FOUNDATION */
+		*to   = STOCK;
+		return CMD_MOVE;
+	case '\n': return CMD_INVAL;//TODO: move card to foundation?
+#endif
 	/* mouse addressing: */
 	case MOUSE_MIDDLE: return CMD_NONE;
 	case MOUSE_RIGHT:
@@ -742,10 +948,12 @@ join_l:
 	inactive.pile = *from; /* for direct addressing highlighting */
 	if (is_tableu(*from) && f.t[*from][0] == NO_CARD) return CMD_INVAL;
 
+#ifndef FREECELL
 	if (*from == STOCK) {
 		*to = WASTE;
 		return CMD_MOVE;
 	}
+#endif
 
 	/***/
 to_l:	print_table(&active, &inactive);
@@ -799,12 +1007,21 @@ to_l:	print_table(&active, &inactive);
 			*to = FOUNDATION;
 #elif defined SPIDER
 			*to = TAB_10;
+#elif defined FREECELL
+			*to = FOUNDATION;
+		else if (t == '9')
+			*to = STOCK;
 #endif
 		else
 			*to = t-'1';
 	}
 
 	/***/
+	/* if it was selected with a cursor, it's obvious: */
+	if (inactive.opt >= 0) {
+		*opt = inactive.opt;
+		return CMD_MOVE;
+	}
 #ifdef KLONDIKE
 	if (*from == FOUNDATION) {
 		if (inactive.opt >= 0) {
@@ -863,6 +1080,21 @@ to_l:	print_table(&active, &inactive);
 			if (*opt < RANK_A || *opt > RANK_K) return ERR;
 		}
 		/* `opt` is the rank of the highest card to move */
+	}
+#elif defined FREECELL
+	//TODO: if from is foundation or from is free cell, which one (if two possibilities), like klondike
+	//TODO FREECELL: if (*from==STOCK || *from==FOUNDATION) "select correct one"
+	//NOTE: this is more complicated, because *to can also point to stock or foundation in addition to tableu.
+	if (*from == FOUNDATION && *to == STOCK) {
+		//can take from all non-empty foundations
+	} else if (*from == STOCK && *to == FOUNDATION) {
+		//check which combinations are possible, 4*4 theoretically
+	} else if (*from == FOUNDATION || *from == STOCK) { // -> tableu
+		//foundation: 2 choices
+		//stock: 4 choices
+		visbell();
+		usleep (100000);
+		visbell();
 	}
 #endif
 	return CMD_MOVE;
@@ -937,6 +1169,8 @@ int term2pile(unsigned char *mouse) {
 #elif defined SPIDER
 		if (column < 3) return STOCK;
 		return -1;
+#elif defined FREECELL
+		//TODO FREECELL: term2pile cells/foundation (how to encode open cells?)
 #endif
 	} else if (line > op.s->height) { /* tableu */
 		if (column <= TAB_MAX) return column;
@@ -944,6 +1178,7 @@ int term2pile(unsigned char *mouse) {
 	return -1;
 }
 int wait_mouse_up(unsigned char* mouse) {
+	//TODO: mouse drag: start gets inactive, hovering gets active cursors
 	struct cursor cur = {-1,-1};
 	int level = 1;
 	/* note: if dragged [3]==1 and second position is in mouse[0,4,5] */
@@ -952,6 +1187,7 @@ int wait_mouse_up(unsigned char* mouse) {
 	int pile = term2pile(mouse);
 	cur.pile = pile;
 #ifdef KLONDIKE
+//TODO: need something similar from FREECELL
 	if (pile >= FOUNDATION) {
 		cur.pile = FOUNDATION;
 		cur.opt = pile-FOUNDATION;
@@ -1034,20 +1270,29 @@ void deal(long seed) {
 	/* deal cards: */
 	for (int i = 0; i < NUM_PILES; i++) {
 #ifdef KLONDIKE
-		int closed = i; /* pile n has n closed cards, then 1 open */
+#define SIGN -
+		int count = i; /* pile n has n closed cards, then 1 open */
 #elif defined SPIDER
-		int closed = i<4?5:4; /* pile 1-4 have 5, 5-10 have 4 closed */
+#define SIGN -
+		int count = i<4?5:4; /* pile 1-4 have 5, 5-10 have 4 closed */
+#elif defined FREECELL
+#define SIGN +
+		int count = i<4?6:5;/*like spider, but cards are dealt face-up*/
 #endif
-		/* face down cards are negated: */
-		for (int j = 0; j < closed; j++) f.t[i][j] = -deck[--avail];
-		f.t[i][closed] = deck[--avail]; /* the face-up card */
+		/* "SIGN": face down cards are negated */
+		for (int j = 0; j < count; j++) f.t[i][j] = SIGN deck[--avail];
+		f.t[i][count] = deck[--avail]; /* the face-up card */
+#undef SIGN
 	}
-	/* rest of the cards to the stock; NOTE: assert(avail==50) for spider */
+	/* rest of the cards to the stock: */
+	/* NOTE: assert(avail==50) for spider, assert(avail==0) for freecell */
 	for (f.z = 0; avail; f.z++) f.s[f.z] = deck[--avail];
 #ifdef KLONDIKE
 	f.w = -1; /* @start: nothing on waste */
 #elif defined SPIDER
 	f.w = 0; /* number of used foundations */
+#elif defined FREECELL
+	f.w = 0; /* bitmask of used free cells */
 #endif
 
 	f.u = &undo_sentinel;
@@ -1123,12 +1368,38 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 		printf("\n");
 	}
 	printf("\n");
+#elif defined FREECELL
+	/* print open cells, foundation: */
+	for (int line = 0; line < op.s->height; line++) {
+		//FREECELL TODO: cells and foundation look the same! (different placeholder?)
+		for (int pile = 0; pile < NUM_CELLS; pile++)
+			print_hi (active->pile==STOCK && active->opt==pile,
+				inactive->pile==STOCK && (
+					/* cursor addr.     || direct addr.   */
+					inactive->opt==pile || inactive->opt < 0
+				), 1,
+				((f.s[pile])?op.s->card[f.s[pile]]
+				:op.s->placeholder)[line]);
+		for (int pile = 0; pile < NUM_SUITS; pile++) {
+			int card = find_top(f.f[pile]);
+			print_hi (active->pile==FOUNDATION && active->opt==pile,
+				inactive->pile==FOUNDATION && (
+					/* cursor addr.     || direct addr.   */
+					inactive->opt==pile || inactive->opt < 0
+				), 1,
+				(card < 0)?op.s->placeholder[line]
+				:op.s->card[f.f[pile][card]][line]);
+		}
+		printf("\n");
+	}
+	printf("\n");
 #endif
 #ifdef KLONDIKE
 #define DO_HI(cursor) (cursor->pile == pile && (movable || empty))
 #define TOP_HI(c) 1 /* can't select partial stacks in KLONDIKE */
-#elif defined SPIDER
+#elif defined SPIDER || defined FREECELL
 	int offset[NUM_PILES]={0};
+//TODO FREECELL: multi-card-moving constraint! for DO_HI() and TOP_HI()
 #define DO_HI(cursor) (cursor->pile == pile && (movable || empty) \
 	&& offset[pile] >= cursor->opt)
 #define TOP_HI(cursor) (cursor->pile == pile && movable \
@@ -1175,7 +1446,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 			) {
 				line[pile]=0;
 				row[pile]++;
-#if defined SPIDER
+#if defined SPIDER || defined FREECELL
 				if (movable) offset[pile]++;
 #endif
 			}
@@ -1321,6 +1592,56 @@ void undo_pop (struct undo* u) {
 			f.t[u->f][top_f+u->n-i] = f.t[u->t][top_t-i];
 			f.t[u->t][top_t-i] = NO_CARD;
 		}
+	}
+#elif defined FREECELL
+	/*NOTE: if from and to are both stock/foundation, opt = from | to<<16 */
+	if (u->f == STOCK && u->t == FOUNDATION) {
+		/* free cells -> foundation */
+		/* split u->n into cll and fnd: */
+		int cll = u->n & 0xffff;
+		int fnd = u->n >> 16;
+		/* move one card from foundation to free cell: */
+		int top = find_top(f.f[fnd]);
+		f.s[cll] = f.f[fnd][top];
+		f.f[fnd][top] = NO_CARD;
+		f.w |= 1<<cll; /* mark cell as occupied */
+	} else if (u->f == STOCK) {
+		/* free cells -> cascade */
+		int top_t = find_top(f.t[u->t]);
+		f.s[u->n] = f.t[u->t][top_t];
+		f.t[u->t][top_t] = NO_CARD;
+		f.w |= 1<<u->n; /* mark cell as occupied */
+	} else if (u->f == FOUNDATION && u->t == STOCK) {
+		/* foundation -> free cells */
+		/* split u->n into cll and fnd: */
+		int cll = u->n >> 16;
+		int fnd = u->n & 0xffff;
+		/* move 1 card from free cell to foundation: */
+		int top_f = find_top(f.f[fnd]);
+		f.f[fnd][top_f+1] = f.s[cll];
+		f.s[cll] = NO_CARD;
+		f.w &= ~(1<<cll); /* mark cell as free */
+	} else if (u->f == FOUNDATION) {
+		/* foundation -> cascade */
+		int top_f = find_top(f.f[u->n]);
+		int top_t = find_top(f.t[u->t]);
+		f.f[u->n][top_f+1] = f.t[u->t][top_t];
+		f.t[u->t][top_t] = NO_CARD;
+	} else if (u->t == STOCK) {
+		/* cascade -> free cells */
+		int top_f = find_top(f.t[u->f]);
+		f.t[u->f][top_f+1] = f.s[u->n];
+		f.s[u->n] = NO_CARD;
+		f.w &= ~(1<<u->n); /* mark cell as free */
+	} else if (u->t == FOUNDATION) {
+		/* cascade -> foundation */
+		int top_f = find_top(f.t[u->f]);
+		int top_t = find_top(f.f[u->n]);
+		/* move one card from foundation to cascade: */
+		f.t[u->f][top_f+1] = f.f[u->n][top_t];
+		f.f[u->n][top_t] = NO_CARD;
+	} else { // tableu -> tableu
+//TODO FREECELL: undo tableu->tableu
 	}
 #endif
 
