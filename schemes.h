@@ -27,7 +27,7 @@ struct scheme {
 	ULCARD("\017\033[2m" s "\033[22m", r)//WARN: requires hack in print_hi()
 #define USCARD(c) (char*[]){c}
 #define RUSCARD(c) (char*[]){"\033[91m" c "\033[39m"}
-#define BUSCARD(c) (char*[]){"\017\017\017\017\017" c}
+#define BUSCARD(c) (char*[]){c}
 
 const struct scheme unicode_large_mono = {
 	.width = 5,
