@@ -116,7 +116,6 @@ newgame:
 int sol(void) {
 	int ret;
 	long seed = time(NULL);
-seed = 1550150477;
 restart:
 	free_undo(f.u);
 	deal(seed);
