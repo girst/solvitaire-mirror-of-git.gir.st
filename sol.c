@@ -1476,9 +1476,8 @@ void win_anim(void) {
 	printf ("\033[?25l"); /* hide cursor */
 	for (;;) {
 		/* set cursor to random location */
-		//TODO: use actual terminal size instead!
-		int row = 1+rand()%(24-op.s->width);
-		int col = 1+rand()%(80-op.s->height);
+		int row = 1+rand()%(op.w[0]-op.s->width);
+		int col = 1+rand()%(op.w[1]-op.s->height);
 
 		/* draw random card */
 		int face = 1 + rand() % 52;
