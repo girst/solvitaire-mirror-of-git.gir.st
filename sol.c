@@ -424,14 +424,15 @@ int t2f(int from, int to, int opt) { /* 1:1 copy from KLONDIKE */
 		return OK;
 	} else return ERR;
 }
-int f2t(int from, int to, int opt) { /* 1:1 copy from KLONDIKE */
+int f2t(int from, int to, int opt) {
 	(void) from; /* don't need */
 	int top_to = find_top(f.t[to]);
 	from = opt;
 	int top_from = find_top(f.f[from]);
 
-	if ((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from]))
-	&& (rank_next(f.f[from][top_from], f.t[to][top_to]))) {
+	if (top_to < 0 /* empty tableu? */
+	||((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from]))
+	&& (rank_next(f.f[from][top_from], f.t[to][top_to])))) {
 		f.t[to][top_to+1] = f.f[from][top_from];
 		f.f[from][top_from] = NO_CARD;
 		undo_push(FOUNDATION, to, from, 0);
@@ -459,8 +460,9 @@ int c2t(int from, int to, int opt) {
 	int top_to = find_top(f.t[to]);
 	from = opt;
 
-	if ((get_color(f.t[to][top_to]) != get_color(f.s[from]))
-	&& (rank_next(f.s[from], f.t[to][top_to]))) {
+	if (top_to < 0 /* empty tableu? */
+	||((get_color(f.t[to][top_to]) != get_color(f.s[from]))
+	&& (rank_next(f.s[from], f.t[to][top_to])))) {
 		f.t[to][top_to+1] = f.s[from];
 		f.s[from] = NO_CARD;
 		f.w &= ~(1<<from); /* mark cell as free */
@@ -802,6 +804,7 @@ void cursor_right (struct cursor* cursor) {
 	op.h = 1;
 	if (is_tableu(cursor->pile)) {
 		if (cursor->pile < TAB_MAX) cursor->pile++;
+		cursor->opt = 0;
 	} else {
 		switch (cursor->pile) {
 		case STOCK:
@@ -1017,11 +1020,6 @@ to_l:	print_table(&active, &inactive);
 	}
 
 	/***/
-	/* if it was selected with a cursor, it's obvious: */
-	if (inactive.opt >= 0) {
-		*opt = inactive.opt;
-		return CMD_MOVE;
-	}
 #ifdef KLONDIKE
 	if (*from == FOUNDATION) {
 		if (inactive.opt >= 0) {
@@ -1085,6 +1083,12 @@ to_l:	print_table(&active, &inactive);
 	//TODO: if from is foundation or from is free cell, which one (if two possibilities), like klondike
 	//TODO FREECELL: if (*from==STOCK || *from==FOUNDATION) "select correct one"
 	//NOTE: this is more complicated, because *to can also point to stock or foundation in addition to tableu.
+
+	/* if it was selected with a cursor, it's obvious: */
+	if (inactive.opt >= 0) {
+		*opt = inactive.opt;
+		return CMD_MOVE;
+	}
 	if (*from == FOUNDATION && *to == STOCK) {
 		//can take from all non-empty foundations
 	} else if (*from == STOCK && *to == FOUNDATION) {
