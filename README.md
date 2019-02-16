@@ -25,11 +25,17 @@ You can use, study, share and improve this software under the terms of the GNU
 General Public License, version 3. Copyright 2019 Tobias Girstmair. For
 licensing details, see `LICENSE`.
 
-<!--
+<details><summary>
 ## TODO
+</summary>
 
 ### P1
- * none! \o/
+<!-- * none! \o/-->
+ * TODO FREECELL: t2t() multi card move and accompanying pop_undo()    
+   (also DO_HI and TOP_HI macros)
+ * TODO FREECELL: non-hjkl/cursor addressing:
+    - mouse (term2pile() cell encoding, set_mouse(), wait_mouse_up())
+    - direct addressing ("select correct cell/found pile")
 ### P2
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
@@ -41,6 +47,7 @@ licensing details, see `LICENSE`.
  * TODO: FreeCell (/u/CFWhitman) - req' algorithm for moving multiple cards around
          for first multicardmove impl.: allow moving (n+1) cards where n is empty spaces
 ### P4
+ * TODO: differentiate foundation placeholder from cells ph. (freecell)
  * TODO: mouse mode improvements:
           - spider: detect how many cards to move to empty pile
             (must find exact position despite `extreme_overlap`)
@@ -62,7 +69,7 @@ licensing details, see `LICENSE`.
          * once segfaulted on large column
          * sometimes doesn't work (ERR when it should be OK)
          Cannot reproduce
- * DONE: some input functions are in `x2y()` - - move them to `get_cmd()` (req.
+ * DONE: some input functions are in `x2y()` -- move them to `get_cmd()` (req.
          for mouse, hjkl modes)
  * DONE: sigint, sigcont handler! atexit() to avoid inconsistent term state
  * DONE: hjkl keyboard mode
@@ -104,7 +111,7 @@ licensing details, see `LICENSE`.
  * DONE: `:help` to show keyhelp (/u/Valley6660)
  * DONE: don't show cursor-highlight when inputting directly or with the mouse (/u/TooEarlyForMe)
  * DONE: remove sysmlink trickery and just call sol.c explicitly
--->
+</details>
 
 ## Notes
 
@@ -120,44 +127,3 @@ licensing details, see `LICENSE`.
                              []   {}
                                   []
 ```
-
-<!-- NOTE: these were written during the early stages of development and are no
-longer 100% accurate. 
- - data structures:
-    - enum for each card (e.g. `SPADES_ACE`, `HEARTS_10`)
-    - each pile is an array holding (13 open cards + up to 6 closed)    
-      [0] is the "northmost"/bottom-most card; unoccupied are NULL/NO_CARD
-    - a single card is represented in the 'cards' enum; if it is closed, it is negated.    
-    - the foundation are 4 arrays of size 13
-    - the stock pile is an array holding n cards and an index to the one to display
-      when removing, decrement stack size and move all cards above index 1 over
-    - previous states array: where to move which cards to get back to the state before    
-    - undo:    
-      double-linked list (follow `.prev` to undo, `.next` to redo)    
-      "N cards were moved from X to Y" (do Y->X to undo)    
-      allows jumping forwards in time as well (by repeating X->Y)    
-      warn: when appending state, must check if `.next` was non-NULL and free rest of chain if so.
- - multiple card sizes: schemes.h will store cards like below. if we want to draw a card 
-   that has one or more other cards below it, we only draw the first `.overlap` lines, 
-   otherwise if it is the last one, we draw the whole one.
-   this will give a look like in `~/solitaire-tests`
-```
-    .grid=7, /*vertical alignment*/
-    .overlap=2,
-    .cards = [
-       ["╭───╮",
-        "│♠ X│",
-        "│ ♠ │",
-        "╰───╯",
-          NULL],
-    ]
-    /*or:*/
-    .grid=2,
-    .overlap=1,
-    .cards = [
-      [ "🃖 ", NULL ],
-    ]
-```
-"open": face up card
-"closed": face down card
--->
