@@ -258,6 +258,7 @@ int t2t(int from, int to, int opt);
 int s2t(int from, int to, int opt);
 int t2f(int from, int to, int opt);
 #elif defined FREECELL
+int max_move(int from, int to);
 int t2t(int from, int to, int opt);
 int t2f(int from, int to, int opt);
 int f2t(int from, int to, int opt);
