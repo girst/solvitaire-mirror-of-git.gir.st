@@ -414,25 +414,24 @@ int max_move(int from, int to) {
 	if (f.t[to][0] == NO_CARD) free_tabs--;
 
 	/* theoretic maximum is limited by the number of cards on the pile */
-#ifdef STRICTER_THAN_NECESSARY // don't build cascades on the tableu but treat it as another free cell
-	int max_theory = 2 * (free_cells + !!free_tabs);
-#else
 	int max_theory = (1<<free_tabs) * (free_cells + 1);
-#endif
-	int max_effective = 1 + find_top(f.t[from]) - first_movable(f.t[from]); //TODO: verify
+	int max_effective = 1 + find_top(f.t[from]) - first_movable(f.t[from]);
 	return max_effective < max_theory? max_effective : max_theory;
 }
 int t2t(int from, int to, int opt) {
 	//TODO: if to empty: read number of cards from opt
+	//TODO: fail if user wants to move more cards than allowed (this can still happen if user wants to move to the empty tableu; something that cannot be checked in get_cmd() from:)
 	int top_to = find_top(f.t[to]);
 	int top_from = find_top(f.t[from]);
 	int count = 0; //NOTE: could probably be factored out
 	int cards = opt? opt : max_move(from, to); //as many as possible if user didn't specify
+//TODO: to empty only ever takes last card instead of all! (should be fixed in keyboard input)
 	for (int i = top_from; i >=0; i--) {
-		if (cards-->0 /*not enough space or attempted more than wanted*/
-		&& (((get_color(f.t[to][top_to]) != get_color(f.t[from][i]))
-		   && (rank_next(f.t[from][i], f.t[to][top_to])))
-		|| (top_to < 0 && get_rank(f.t[from][i]) == RANK_K))) {
+		if (cards-->0/*enough space and not more attempted than wanted*/
+		&& ((top_to >= 0 /* if destination not empty: make sure rank/color is OK */
+		   && ((get_color(f.t[to][top_to]) != get_color(f.t[from][i]))
+		   && (rank_next(f.t[from][i], f.t[to][top_to]))))
+		|| (top_to < 0 && !cards))) { /* if destination empty: exactly the amount wanted will be moved */ //TODO: moving to empty tableu does not work (which is the only place where opt is useful) //TODO: might be off by 1
 			/* move cards [i..top_from] to their destination */
 			for (;i <= top_from; i++) {
 				top_to++;
@@ -445,34 +444,6 @@ int t2t(int from, int to, int opt) {
 		}
 	}
 	return ERR; /* no such move possible */
-
-
-#if 0
-	(void) from; (void) to; (void) opt;
-	//XXX FREECELL TODO: tableu to tableu
-	//allow moving as many cards as free spaces on the field?
-	//use cascades to increase number of cards moved at once?
-	// https://github.com/amw-zero/freecell.rb/blob/master/lib/freecell/move_legality.rb
-	//  2**(open_cascades-to_empty_cascade?) + open_free_cells
-	// https://github.com/mserdarsanli/freecell/blob/master/src/freecell.cpp
-	//  (1 << empty_cascade_cnt-to_empty_cascade?) * (empty_cell_cnt+1)
-	// https://github.com/dubhater/LibreLibreCell/blob/master/src/librelibrecell.cpp
-	//  (emptySpaces+1) * (emptyColumns+1)
-	// https://github.com/thanthese/Freecell/blob/master/src/freecell/move.clj
-	//  (empty_freecells+1) * 2**(empty_columns-to_empty_cascade?)
-	// https://github.com/stanhebben/solitaire-for-android/issues/46
-	//  (1+free_spaces-to_empty_cascade?)*(1+free_cells)
-	// https://boardgames.stackexchange.com/q/45155/26498 
-	// http://solitairelaboratory.com/fcfaq.html#Supermove
-	//  (1+freecells) * 2**(free_tableaux-to_empty_tableu?)
-
-int top_to = find_top(f.t[to]);
-int top_from = find_top(f.t[from]);
-f.t[to][top_to+1] = f.t[from][top_from];
-f.t[from][top_from] = NO_CARD;
-return OK;
-	return ERR;
-#endif
 }
 int t2f(int from, int to, int opt) { /* 1:1 copy from KLONDIKE */
 	(void) to; (void) opt; /* don't need */
