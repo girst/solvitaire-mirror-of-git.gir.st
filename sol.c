@@ -175,6 +175,7 @@ int find_top(card_t* pile) {
 	return i;
 }
 int first_movable(card_t* pile) {
+	/* NOTE: in FREECELL this does not take max_move into account! */
 	int i = 0;
 	for (;pile[i] && !is_movable(pile, i); i++);
 	return i;
@@ -411,7 +412,7 @@ int max_move(int from, int to) {
 	for (int i = 0; i < NUM_CELLS; i++) free_cells += f.s[i]    == NO_CARD;
 
 	/* don't count the tableau we are moving to: */
-	if (f.t[to][0] == NO_CARD) free_tabs--;
+	if (to >= 0 && f.t[to][0] == NO_CARD) free_tabs--;
 
 	/* theoretic maximum is limited by the number of cards on the pile */
 	int max_theory = (1<<free_tabs) * (free_cells + 1);
@@ -812,9 +813,7 @@ void cursor_left (struct cursor* cursor) {
 void cursor_down (struct cursor* cursor) {
 	op.h = 1;
 	if (is_tableu(cursor->pile)) {
-		int first = first_movable(f.t[cursor->pile]);
-		int top = find_top(f.t[cursor->pile]);
-		if (first + cursor->opt < top)
+		if (cursor->opt < max_move(cursor->pile, -1)-1)
 			cursor->opt++;
 	} else {
 		cursor->pile = cursor->opt+NUM_CELLS*(cursor->pile==FOUNDATION);
@@ -1132,9 +1131,8 @@ to_l:	print_table(&active, &inactive);
 	/* if it was selected with a cursor, it's obvious: */
 	if (inactive.opt >= 0) {
 		if (is_tableu(*from)) {
-			//WARN: inefficient!
-			int movable = 1 + (find_top(f.t[*from]) - first_movable(f.t[*from]));
-			*opt = movable - inactive.opt;
+			/* NOTE: max_move same as in cursor_down() */
+			*opt = max_move(*from, -1); - inactive.opt;
 		} else {
 			*opt = inactive.opt;
 		}
@@ -1469,8 +1467,12 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 #define DO_HI(cursor) (cursor->pile == pile && (movable || empty))
 #define TOP_HI(c) 1 /* can't select partial stacks in KLONDIKE */
 #elif defined SPIDER || defined FREECELL
-	int offset[NUM_PILES]={0};
-//TODO FREECELL: multi-card-moving constraint! for DO_HI() and TOP_HI()
+	int offset[NUM_PILES]={0}; /* first card to highlight */
+#  ifdef FREECELL
+	int bottom[NUM_PILES]; /* first movable card */
+	for (int i=0; i<NUM_PILES; i++)
+		bottom[i] = find_top(f.t[i]) - max_move(i,-1);
+#  endif
 #define DO_HI(cursor) (cursor->pile == pile && (movable || empty) \
 	&& offset[pile] >= cursor->opt)
 #define TOP_HI(cursor) (cursor->pile == pile && movable \
@@ -1488,6 +1490,9 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 			card_t card = f.t[pile][row[pile]];
 			card_t next = f.t[pile][row[pile]+1];
 			int movable = is_movable(f.t[pile], row[pile]);
+#ifdef FREECELL
+			if(row[pile] <= bottom[pile]) movable = 0;
+#endif
 			int empty   = !card && row[pile] == 0;
 
 			print_hi (DO_HI(active), DO_HI(inactive), movable, (

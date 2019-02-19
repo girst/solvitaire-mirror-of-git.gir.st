@@ -31,7 +31,6 @@ licensing details, see `LICENSE`.
 
 ### P1
 <!-- * none! \o/-->
- * TODO FREECELL: don't allow selecting more cards than movable (`DO_HI, TOP_HI, cursor_{up,down}`)
  * TODO FREECELL: autodetect possible moves (card selector choice dialog)
 ### P2
  * TODO: suggest moves (`h` => hint)
@@ -44,6 +43,8 @@ licensing details, see `LICENSE`.
  * TODO: FreeCell (/u/CFWhitman) - req' algorithm for moving multiple cards around
          for first multicardmove impl.: allow moving (n+1) cards where n is empty spaces
 ### P4
+ * TODO: ellipsis overlap: if more than three cards in a row overlap, replace
+         middle ones with an ellipsis
  * TODO: differentiate foundation placeholder from cells ph. (freecell)
  * TODO: mouse mode improvements:
           - spider: detect how many cards to move to empty pile
@@ -110,6 +111,7 @@ licensing details, see `LICENSE`.
  * DONE: remove sysmlink trickery and just call sol.c explicitly
  * DONE FREECELL: t2t() multi card move and accompanying pop_undo()
  * DONE:   - mouse (term2pile() cell encoding, set_mouse(), wait_mouse_up())
+ * DONE FREECELL: don't allow selecting more cards than movable (`DO_HI, TOP_HI, cursor_{up,down}`)
 </details>
 
 ## Notes
