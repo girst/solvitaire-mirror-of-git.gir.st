@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 		case 'c': op.s = &unicode_large_color; break;
 		case 'm': op.s = &unicode_small_mono; break; /* "mini, monochrome" */
 		case 'M': op.s = &unicode_small_color; break; /* "mini, colorful" */
-		case 'V': op.v = 0; /* WARN: experimental; might change */
+		case 'V': op.v = 0; break; /* WARN: experimental; might change */
 		case 'h': default: goto error;
 		error:
 			fprintf (stderr, SHORTHELP LONGHELP KEYHELP, argv[0]);
