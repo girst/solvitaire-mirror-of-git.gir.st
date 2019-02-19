@@ -866,6 +866,7 @@ void cursor_to (struct cursor* cursor, int pile) {
 	cursor->opt = 0;
 }
 int set_mouse(int pile, int* main, int* opt) {
+//TODO: this should set cursor.opt, so card selector choice dialog does not trigger!
 	op.h = 0;
 	if (pile < 0) return 1;
 	*main = pile;
@@ -876,7 +877,10 @@ int set_mouse(int pile, int* main, int* opt) {
 #elif defined SPIDER
 	(void)opt;
 #elif defined FREECELL
-	(void)opt; //TODO FREECELL: needs to decode not-yet-decided term2pile STOCK/FOUNDATION encodings
+	if (pile > TAB_MAX) {
+		*main = pile-STOCK < NUM_CELLS? STOCK : FOUNDATION;
+		*opt = (pile-STOCK) % 4;
+	}
 #endif
 	return 0;
 }
@@ -960,6 +964,10 @@ from_l:	print_table(&active, &inactive);
 	case MOUSE_LEFT:
 		if (set_mouse(term2pile(mouse), from, opt))
 			return CMD_INVAL;
+#ifdef FREECELL
+		if (!is_tableu(*from))
+			inactive.opt = *opt; /* prevents card selector dialog */
+#endif
 		break;
 	/* misc keys: */
 	case ':':
@@ -1231,7 +1239,8 @@ int term2pile(unsigned char *mouse) {
 		if (column < 3) return STOCK;
 		return -1;
 #elif defined FREECELL
-		//TODO FREECELL: term2pile cells/foundation (how to encode open cells?)
+		if (column < NUM_SUITS + NUM_CELLS) return STOCK+column;
+		return -1;
 #endif
 	} else if (line > op.s->height) { /* tableu */
 		if (column <= TAB_MAX) return column;
@@ -1248,10 +1257,14 @@ int wait_mouse_up(unsigned char* mouse) {
 	int pile = term2pile(mouse);
 	cur.pile = pile;
 #ifdef KLONDIKE
-//TODO: need something similar from FREECELL
 	if (pile >= FOUNDATION) {
 		cur.pile = FOUNDATION;
 		cur.opt = pile-FOUNDATION;
+	}
+#elif defined FREECELL
+	if (pile > TAB_MAX) {
+		cur.pile = pile-STOCK < NUM_CELLS? STOCK : FOUNDATION;
+		cur.opt = (pile-STOCK) % 4;
 	}
 #endif
 	/* need to temporarily show the cursor, then revert to last state: */

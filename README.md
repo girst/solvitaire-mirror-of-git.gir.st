@@ -26,16 +26,13 @@ General Public License, version 3. Copyright 2019 Tobias Girstmair. For
 licensing details, see `LICENSE`.
 
 <details><summary>
-## TODO
+<h2>TODO</h2>
 </summary>
 
 ### P1
 <!-- * none! \o/-->
- * TODO FREECELL: t2t() multi card move and accompanying pop_undo()    
-   (also DO_HI and TOP_HI macros)
- * TODO FREECELL: non-hjkl/cursor addressing:
-    - mouse (term2pile() cell encoding, set_mouse(), wait_mouse_up())
-    - direct addressing ("select correct cell/found pile")
+ * TODO FREECELL: don't allow selecting more cards than movable (`DO_HI, TOP_HI, cursor_{up,down}`)
+ * TODO FREECELL: autodetect possible moves (card selector choice dialog)
 ### P2
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
@@ -111,6 +108,8 @@ licensing details, see `LICENSE`.
  * DONE: `:help` to show keyhelp (/u/Valley6660)
  * DONE: don't show cursor-highlight when inputting directly or with the mouse (/u/TooEarlyForMe)
  * DONE: remove sysmlink trickery and just call sol.c explicitly
+ * DONE FREECELL: t2t() multi card move and accompanying pop_undo()
+ * DONE:   - mouse (term2pile() cell encoding, set_mouse(), wait_mouse_up())
 </details>
 
 ## Notes
