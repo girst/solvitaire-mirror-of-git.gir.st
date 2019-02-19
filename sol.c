@@ -1132,7 +1132,7 @@ to_l:	print_table(&active, &inactive);
 	if (inactive.opt >= 0) {
 		if (is_tableu(*from)) {
 			/* NOTE: max_move same as in cursor_down() */
-			*opt = max_move(*from, -1); - inactive.opt;
+			*opt = max_move(*from, -1) - inactive.opt;
 		} else {
 			*opt = inactive.opt;
 		}
