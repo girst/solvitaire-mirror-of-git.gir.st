@@ -10,12 +10,14 @@ struct scheme {
 	char** card[_NUM_CARDS_internal];
 	char** facedown;
 	char** placeholder;
+	char** foundation;
 	char** halfstack; /* left half of stack (for spider) */
 	int* halfcard; /* byte offset of right half of cards (for spider) */
 	int halfwidth[3]; /* printed width of halfstack([0]) and halfcard([1]),
 	                     byte width of halfcard([2]) */
 };
 
+#define p "\017" /*padding, [RB]?CARD must have same length; alternative: \177*/
 #define ULCARD(s, r) (char*[]) \
 {"╭───╮",\
  "│"s" "r"│",\
@@ -24,10 +26,10 @@ struct scheme {
 #define RULCARD(s, r) \
 	ULCARD("\033[91m" s "\033[39m", r)
 #define BULCARD(s, r) \
-	ULCARD("\017\033[2m" s "\033[22m", r)//WARN: requires hack in print_hi()
+	ULCARD(p "\033[2m" s "\033[22m", r)//WARN: requires hack in print_hi()
 #define USCARD(c) (char*[]){c}
 #define RUSCARD(c) (char*[]){"\033[91m" c "\033[39m "}
-#define BUSCARD(c) (char*[]){"\017\017\017\017\017" c "\017\017\017\017\017 "}
+#define BUSCARD(c) (char*[]){c p p p p p p p p p p " "}
 
 const struct scheme unicode_large_mono = {
 	.width = 5,
@@ -77,6 +79,12 @@ const struct scheme unicode_large_mono = {
 		"╭╌╌╌╮",
 		"╎   ╎",
 		"╎   ╎",
+		"╰╌╌╌╯"
+	},
+	.foundation = (char*[]){
+		"╭╌╌╌╮",
+		"╎╭─╮╎",
+		"╎├─┤╎",
 		"╰╌╌╌╯"
 	},
 	.halfstack = (char*[]) {
@@ -138,6 +146,12 @@ const struct scheme unicode_large_color = {
 		"╎   ╎",
 		"╰╌╌╌╯"
 	},
+	.foundation = (char*[]){
+		"╭╌╌╌╮",
+		"╎\033[2m╭─╮\033[22m╎",
+		"╎\033[2m├─┤\033[22m╎",
+		"╰╌╌╌╯"
+	},
 	.halfstack = (char*[]) {
 		"╭─",
 		"│\033[94m▚\033[39m",
@@ -182,6 +196,7 @@ const struct scheme unicode_small_mono = {
 	},
 	.facedown = (char*[]){"🂠 "},
 	.placeholder = (char*[]){"❲❳"},
+	.foundation = (char*[]){"⟨⟩"},
 	.halfstack = (char*[]){"🂠"},
 	.halfcard = (int[]){0},
 	.halfwidth = {1, 1, 4},
@@ -221,8 +236,10 @@ const struct scheme unicode_small_color = {
 	},
 	.facedown = (char*[]){"🂠 "},
 	.placeholder = (char*[]){"❲❳"},
+	.foundation = (char*[]){"⟨⟩"},
 	.halfstack = (char*[]){"🂠"},
 	.halfcard = (int[]){0},
 	.halfwidth = {1, 1, 14},
 };
+#undef p
 #endif

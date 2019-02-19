@@ -40,14 +40,12 @@ licensing details, see `LICENSE`.
  * TODO: visbell changes: instead of screen, flash active {cursor,card} {red,twice}?
  * TODO: differential drawing mode (at least for highlighting cards)
  * TODO: `.` command (repeat last action)
- * TODO: FreeCell (/u/CFWhitman) - req' algorithm for moving multiple cards around
-         for first multicardmove impl.: allow moving (n+1) cards where n is empty spaces
 ### P4
  * TODO: ellipsis overlap: if more than three cards in a row overlap, replace
          middle ones with an ellipsis
  * TODO: differentiate foundation placeholder from cells ph. (freecell)
  * TODO: mouse mode improvements:
-          - spider: detect how many cards to move to empty pile
+          - spider/freecell: detect how many cards to move to empty pile
             (must find exact position despite `extreme_overlap`)
  * TODO: scores, variants: draw 3, max. n overturns
  * TODO: vt220 mode (problems: charset, slow baudrate and no differential drawing mode)

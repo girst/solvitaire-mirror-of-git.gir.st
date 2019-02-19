@@ -1407,7 +1407,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
 				), 1,
-				(card < 0)?op.s->placeholder[line]
+				(card < 0)?op.s->foundation[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
 		printf("\n");
@@ -1440,7 +1440,6 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 #elif defined FREECELL
 	/* print open cells, foundation: */
 	for (int line = 0; line < op.s->height; line++) {
-		//FREECELL TODO: cells and foundation look the same! (different placeholder?)
 		for (int pile = 0; pile < NUM_CELLS; pile++)
 			print_hi (active->pile==STOCK && active->opt==pile,
 				inactive->pile==STOCK && (
@@ -1456,7 +1455,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
 				), 1,
-				(card < 0)?op.s->placeholder[line]
+				(card < 0)?op.s->foundation[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
 		printf("\n");
