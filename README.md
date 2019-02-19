@@ -33,6 +33,8 @@ licensing details, see `LICENSE`.
 <!-- * none! \o/-->
  * TODO FREECELL: autodetect possible moves (card selector choice dialog)
 ### P2
+ * TODO FREECELL: join()
+ * TODO: klondike/freecell: auto-move to foundation (optional)
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
@@ -43,7 +45,6 @@ licensing details, see `LICENSE`.
 ### P4
  * TODO: ellipsis overlap: if more than three cards in a row overlap, replace
          middle ones with an ellipsis
- * TODO: differentiate foundation placeholder from cells ph. (freecell)
  * TODO: mouse mode improvements:
           - spider/freecell: detect how many cards to move to empty pile
             (must find exact position despite `extreme_overlap`)
@@ -110,6 +111,7 @@ licensing details, see `LICENSE`.
  * DONE FREECELL: t2t() multi card move and accompanying pop_undo()
  * DONE:   - mouse (term2pile() cell encoding, set_mouse(), wait_mouse_up())
  * DONE FREECELL: don't allow selecting more cards than movable (`DO_HI, TOP_HI, cursor_{up,down}`)
+ * DONE: differentiate foundation placeholder from cells ph. (freecell)
 </details>
 
 ## Notes

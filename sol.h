@@ -205,9 +205,9 @@ struct undo undo_sentinel;
 #elif defined FREECELL
 #define LONGHELP_SPECIFIC ""
 #define DIRECT_ADDR_KEYHELP \
+	"            or to a free cell\n" \
 	"    1 .. 8: directly address tableu\n" \
-	"    9, 0  : directly address cells and foundation\n" \
-	"    backsp: move card under cursor to a free cell\n"
+	"    9, 0  : directly address cells and foundation\n"
 #endif
 #define LONGHELP \
 	"OPTIONS:\n" \
@@ -225,13 +225,14 @@ struct undo undo_sentinel;
 	"    H,M,L : move cursor to first/centre/last tableu pile (or home/ins/end)\n" \
 	"    J     : join to here (or right mouse click)\n" \
 	/*"    K     : show hint\n" */\
-	"    space : select at cursor (or left mouse click)\n" \
 	"    return: draw from stock\n" \
+	"    space : select at cursor (or left mouse click)\n" \
+	"            double press to move to foundation\n" \
+	DIRECT_ADDR_KEYHELP \
 	"    :n    : new game\n" \
 	"    :r    : restart game\n" \
         "    :h    : show keyboard help\n" \
-	"    :q    : quit\n" \
-	DIRECT_ADDR_KEYHELP
+	"    :q    : quit\n"
 //}}}
 
 int sol(void);

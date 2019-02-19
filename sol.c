@@ -125,6 +125,11 @@ restart:
 		switch (get_cmd(&from, &to, &opt)) {
 		case CMD_MOVE:
 			ret = action[from][to](from,to,opt);
+#ifdef FREECELL
+			if (ret == ERR && is_tableu(from) && to == from) /*i.e. failed foundation move*/
+				ret = t2c(from, STOCK, 0);
+			else
+#endif
 			if (ret == ERR && is_tableu(from) && is_tableu(to))
 				/* try again with from/to swapped: */
 				ret = action[to][from](to,from,opt);
@@ -943,16 +948,6 @@ from_l:	print_table(&active, &inactive);
 #endif
 		inactive = active;
 		break;
-#ifdef FREECELL
-	//TODO: instead of backspace, use doublespace (first try x2t, then x2c)
-	case 0x7f: case '\b': /* backspace key sends DEL on most terminals */
-		if (active.pile == STOCK) return CMD_INVAL;
-		*from = active.pile;
-		*opt  = active.opt; /* when FOUNDATION */
-		*to   = STOCK;
-		return CMD_MOVE;
-	case '\n': return CMD_INVAL;//TODO: move card to foundation?
-#endif
 	/* mouse addressing: */
 	case MOUSE_MIDDLE: return CMD_NONE;
 	case MOUSE_RIGHT:
