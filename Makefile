@@ -6,7 +6,7 @@ ifdef DECIMAL_TEN
 CFLAGS += -DDECIMAL_TEN
 endif
 
-all: sol spider
+all: sol spider freecell
 
 #canfield:
 sol: sol.c sol.h schemes.h
@@ -19,7 +19,7 @@ freecell: sol.c sol.h schemes.h
 	$(CC) $(CFLAGS) -DFREECELL sol.c -o $@
 
 clean:
-	rm -f sol spider
+	rm -f sol spider freecell
 
 .PHONY: getfuns test
 getfuns: sol.c
