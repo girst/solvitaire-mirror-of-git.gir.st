@@ -418,20 +418,24 @@ int max_move(int from, int to) {
 	int max_effective = 1 + find_top(f.t[from]) - first_movable(f.t[from]);
 	return max_effective < max_theory? max_effective : max_theory;
 }
+//TODO FREECELL: auto move to tableu after each move (not all cards possible, only when it is the smallest rank still on the board)
 int t2t(int from, int to, int opt) {
-	//TODO: if to empty: read number of cards from opt
-	//TODO: fail if user wants to move more cards than allowed (this can still happen if user wants to move to the empty tableu; something that cannot be checked in get_cmd() from:)
 	int top_to = find_top(f.t[to]);
 	int top_from = find_top(f.t[from]);
 	int count = 0; //NOTE: could probably be factored out
-	int cards = opt? opt : max_move(from, to); //as many as possible if user didn't specify
-//TODO: to empty only ever takes last card instead of all! (should be fixed in keyboard input)
+	int cards = max_move(from, to);
+	if (top_to < 0) { /* moving to empty pile? */
+		if (opt > cards)
+			return ERR; /* cannot execute move */
+		cards = opt; /* user wants to move n cards*/
+	}
+
 	for (int i = top_from; i >=0; i--) {
 		if (cards-->0/*enough space and not more attempted than wanted*/
-		&& ((top_to >= 0 /* if destination not empty: make sure rank/color is OK */
+		&& ((top_to >= 0 /* if destn. not empty: check rank/color */
 		   && ((get_color(f.t[to][top_to]) != get_color(f.t[from][i]))
 		   && (rank_next(f.t[from][i], f.t[to][top_to]))))
-		|| (top_to < 0 && !cards))) { /* if destination empty: exactly the amount wanted will be moved */ //TODO: moving to empty tableu does not work (which is the only place where opt is useful) //TODO: might be off by 1
+		|| (top_to < 0 && !cards))) {/*if dest empty and right # cards*/
 			/* move cards [i..top_from] to their destination */
 			for (;i <= top_from; i++) {
 				top_to++;
@@ -982,6 +986,7 @@ join_l:
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
 	case 'u': return CMD_UNDO;
+	case 002: return CMD_NONE; /* sent by SIGWINCH */
 	case EOF: return CMD_NONE; /* sent by SIGCONT */
 	default: return CMD_INVAL;
 	}
@@ -1117,25 +1122,40 @@ to_l:	print_table(&active, &inactive);
 		/* `opt` is the rank of the highest card to move */
 	}
 #elif defined FREECELL
-	//TODO: if from is foundation or from is free cell, which one (if two possibilities), like klondike
-	//TODO FREECELL: if (*from==STOCK || *from==FOUNDATION) "select correct one"
-	//NOTE: this is more complicated, because *to can also point to stock or foundation in addition to tableu.
+	//TODO FREECELL: card selector choice dialog
 
 	/* if it was selected with a cursor, it's obvious: */
 	if (inactive.opt >= 0) {
-		*opt = inactive.opt;
-		return CMD_MOVE;
-	}
-	if (*from == FOUNDATION && *to == STOCK) {
+		if (is_tableu(*from)) {
+			//WARN: inefficient!
+			int movable = 1 + (find_top(f.t[*from]) - first_movable(f.t[*from]));
+			*opt = movable - inactive.opt;
+		} else {
+			*opt = inactive.opt;
+		}
+	/* moving from tableu to empty tableu? */
+	} else if (is_tableu(*from) && is_tableu(*to) && f.t[*to][0] == NO_CARD) {
+		// how many cards? (NOTE: spider asks "up to rank?"; do this then convert to number of cards?
+printf ("take how many (1-9): "); fflush (stdout);
+*opt = getch(NULL) - '0';
+if (*opt < 1 || *opt > 9) return CMD_INVAL;
+	/* moving between stock/foundation? */
+	} else if (*from == FOUNDATION && *to == STOCK) {
 		//can take from all non-empty foundations
+printf ("take from (1-4): "); fflush (stdout);
+*opt = getch(NULL) - '1';
+if (*opt < 0 || *opt > 3) return CMD_INVAL;
 	} else if (*from == STOCK && *to == FOUNDATION) {
-		//check which combinations are possible, 4*4 theoretically
-	} else if (*from == FOUNDATION || *from == STOCK) { // -> tableu
+		//check all non-empty cells
+printf ("take from (1-4): "); fflush (stdout);
+*opt = getch(NULL) - '1';
+if (*opt < 0 || *opt > 3) return CMD_INVAL;
+	} else if (*from == FOUNDATION || *from == STOCK) { /* -> tableu */
 		//foundation: 2 choices
 		//stock: 4 choices
-		visbell();
-		usleep (100000);
-		visbell();
+printf ("take from (1-4): "); fflush (stdout);
+*opt = getch(NULL) - '1';
+if (*opt < 0 || *opt > 3) return CMD_INVAL;
 	}
 #endif
 	return CMD_MOVE;
