@@ -964,10 +964,8 @@ from_l:	print_table(&active, &inactive);
 	case MOUSE_LEFT:
 		if (set_mouse(term2pile(mouse), from, opt))
 			return CMD_INVAL;
-#ifdef FREECELL
 		if (!is_tableu(*from))
 			inactive.opt = *opt; /* prevents card selector dialog */
-#endif
 		break;
 	/* misc keys: */
 	case ':':
@@ -1605,7 +1603,7 @@ void undo_pop (struct undo* u) {
 	} else if (u->f == WASTE) {
 		/* waste -> tableu */
 		/* move stock cards one position up to make room: */
-		for (int i = f.z; i >= u->n; i--) f.s[i+1] = f.s[i];
+		for (int i = f.z-1; i >= u->n; i--) f.s[i+1] = f.s[i];
 		/* move one card from tableu to waste: */
 		int top = find_top(f.t[u->t]);
 		f.s[u->n] = f.t[u->t][top];
