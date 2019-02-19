@@ -886,7 +886,6 @@ int set_mouse(int pile, int* main, int* opt) {
 }
 //}}}
 int get_cmd (int* from, int* to, int* opt) {
-//TODO FREECELL: allow selecting less cards; store number of cards to move in opt (0 == max)
 	int _f, t;
 	unsigned char mouse[6] = {0}; /* must clear [3]! */
 	struct cursor inactive = {-1,-1};
@@ -1544,8 +1543,8 @@ void win_anim(void) {
 	printf ("\033[?25l"); /* hide cursor */
 	for (;;) {
 		/* set cursor to random location */
-		int row = 1+rand()%(op.w[0]-op.s->width);
-		int col = 1+rand()%(op.w[1]-op.s->height);
+		int row = 1+rand()%(1+op.w[0]-op.s->height);
+		int col = 1+rand()%(1+op.w[1]-op.s->width);
 
 		/* draw random card */
 		int face = 1 + rand() % 52;
