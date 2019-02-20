@@ -1074,66 +1074,7 @@ to_l:	print_table(&active, &inactive);
 	}
 
 	/***/
-#ifdef KLONDIKE
-	if (*from == FOUNDATION) {
-		if (inactive.opt >= 0) {
-			*opt = inactive.opt;
-			return CMD_MOVE;
-		}
-		int top = find_top(f.t[*to]);
-		if (top < 0) return CMD_INVAL;
-		int color = get_color(f.t[*to][top]);
-		int choice_1 = 1-color; /* selects piles of   */
-		int choice_2 = 2+color; /* the opposite color */
-		int top_c1 = find_top(f.f[choice_1]);
-		int top_c2 = find_top(f.f[choice_2]);
-
-		switch ((rank_next(f.f[choice_1][top_c1], f.t[*to][top])
-		         && top_c1 >= 0 ) << 0
-		       |(rank_next(f.f[choice_2][top_c2], f.t[*to][top])
-		         && top_c2 >= 0 ) << 1) {
-		case (       1<<0): *opt = choice_1; break; /* choice_1 only */
-		case (1<<1       ): *opt = choice_2; break; /* choice_2 only */
-		case (1<<1 | 1<<0): /* both, ask user which to pick from */
-			printf ("take from (1-4): "); fflush (stdout);
-			*opt = getch(NULL) - '1';
-			if (*opt < 0 || *opt > 3) return CMD_INVAL;
-			break;
-		default: return CMD_INVAL; /* none matched */
-		}
-		/* `opt` is the foundation index (0..3) */
-	}
-#elif defined SPIDER
-	/* moving to empty tableu? */
-	if (is_tableu(*to) && f.t[*to][0] == NO_CARD) {
-		int bottom = first_movable(f.t[*from]);
-		if (inactive.opt >= 0) { /*if from was cursor addressed: */
-			*opt = get_rank(f.t[*from][bottom + inactive.opt]);
-			return CMD_MOVE;
-		}
-		int top = find_top(f.t[*from]);
-		if (top < 0) return CMD_INVAL;
-		if (top >= 0 && !is_movable(f.t[*from], top-1)) {
-			*opt = get_rank(f.t[*from][top]);
-		} else { /* only ask the user if it's unclear: */
-			printf ("\rup to ([a23456789xjqk] or space/return): ");
-			*opt = getch(NULL);
-			switch (*opt) {
-			case ' ': *opt = get_rank(f.t[*from][top]); break;
-			case'\n': *opt = get_rank(f.t[*from][bottom]); break;
-			case 'a': case 'A': *opt = RANK_A; break;
-			case '0': /* fallthrough */
-			case 'x': case 'X': *opt = RANK_X; break;
-			case 'j': case 'J': *opt = RANK_J; break;
-			case 'q': case 'Q': *opt = RANK_Q; break;
-			case 'k': case 'K': *opt = RANK_K; break;
-			default: *opt -= '1';
-			}
-			if (*opt < RANK_A || *opt > RANK_K) return CMD_INVAL;
-		}
-		/* `opt` is the rank of the highest card to move */
-	}
-#elif defined FREECELL
+#ifdef FREECELL
 	/* if it was selected with a cursor, it's obvious: */
 	if (inactive.opt >= 0) {
 		if (is_tableu(*from)) {
@@ -1214,14 +1155,73 @@ to_l:	print_table(&active, &inactive);
 			if (*opt < 0 || *opt > 3) return CMD_INVAL;
 		}
 		/* `opt` is the cell index (0..3) */
-	} else if (*from == FOUNDATION || *from == STOCK) { /* -> tableu */
+	} else if (*from == STOCK) { /* -> tableu */
 		//foundation: 2 choices
 		//stock: 4 choices
-//TODO FREECELL: foundation/freecells -> tableu card selector dialog
 
 printf ("take from (1-4): "); fflush (stdout);
 *opt = getch(NULL) - '1';
 if (*opt < 0 || *opt > 3) return CMD_INVAL;
+	} else
+#endif
+#if defined KLONDIKE || defined FREECELL
+	if (*from == FOUNDATION) {
+		if (inactive.opt >= 0) {
+			*opt = inactive.opt;
+			return CMD_MOVE;
+		}
+		int top = find_top(f.t[*to]);
+		if (top < 0) return CMD_INVAL;
+		int color = get_color(f.t[*to][top]);
+		int choice_1 = 1-color; /* selects piles of   */
+		int choice_2 = 2+color; /* the opposite color */
+		int top_c1 = find_top(f.f[choice_1]);
+		int top_c2 = find_top(f.f[choice_2]);
+
+		switch ((rank_next(f.f[choice_1][top_c1], f.t[*to][top])
+		         && top_c1 >= 0 ) << 0
+		       |(rank_next(f.f[choice_2][top_c2], f.t[*to][top])
+		         && top_c2 >= 0 ) << 1) {
+		case (       1<<0): *opt = choice_1; break; /* choice_1 only */
+		case (1<<1       ): *opt = choice_2; break; /* choice_2 only */
+		case (1<<1 | 1<<0): /* both, ask user which to pick from */
+			printf ("take from (1-4): "); fflush (stdout);
+			*opt = getch(NULL) - '1';
+			if (*opt < 0 || *opt > 3) return CMD_INVAL;
+			break;
+		default: return CMD_INVAL; /* none matched */
+		}
+		/* `opt` is the foundation index (0..3) */
+	}
+#elif defined SPIDER
+	/* moving to empty tableu? */
+	if (is_tableu(*to) && f.t[*to][0] == NO_CARD) {
+		int bottom = first_movable(f.t[*from]);
+		if (inactive.opt >= 0) { /*if from was cursor addressed: */
+			*opt = get_rank(f.t[*from][bottom + inactive.opt]);
+			return CMD_MOVE;
+		}
+		int top = find_top(f.t[*from]);
+		if (top < 0) return CMD_INVAL;
+		if (top >= 0 && !is_movable(f.t[*from], top-1)) {
+			*opt = get_rank(f.t[*from][top]);
+		} else { /* only ask the user if it's unclear: */
+			printf ("\rup to ([a23456789xjqk] or space/return): ");
+			*opt = getch(NULL);
+			switch (*opt) {
+			case ' ': *opt = get_rank(f.t[*from][top]); break;
+			case'\n': *opt = get_rank(f.t[*from][bottom]); break;
+			case 'a': case 'A': *opt = RANK_A; break;
+			case '0': /* fallthrough */
+			case 'x': case 'X': *opt = RANK_X; break;
+			case 'j': case 'J': *opt = RANK_J; break;
+			case 'q': case 'Q': *opt = RANK_Q; break;
+			case 'k': case 'K': *opt = RANK_K; break;
+			default: *opt -= '1';
+			}
+			if (*opt < RANK_A || *opt > RANK_K) return CMD_INVAL;
+		}
+		/* `opt` is the rank of the highest card to move */
 	}
 #endif
 	return CMD_MOVE;
