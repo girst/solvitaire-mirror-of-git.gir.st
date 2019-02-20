@@ -298,7 +298,7 @@ int f2t(int from, int to, int opt) { /* foundation to tableu */
 	from = opt;
 	int top_from = find_top(f.f[from]);
 	
-	if ((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from])) //TODO: color_ok()
+	if (color_ok(f.t[to][top_to], f.f[from][top_from])
 	&& (rank_next(f.f[from][top_from], f.t[to][top_to]))) {
 		f.t[to][top_to+1] = f.f[from][top_from];
 		f.f[from][top_from] = NO_CARD;
@@ -310,7 +310,7 @@ int w2t(int from, int to, int opt) { /* waste to tableu */
 	(void) from; (void) opt; /* don't need */
 	if (f.w < 0) return ERR;
 	int top_to = find_top(f.t[to]);
-	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w])) //TODO: color_ok()
+	if ((color_ok(f.t[to][top_to], f.s[f.w])
 	   && (rank_next(f.s[f.w], f.t[to][top_to])))
 	|| (top_to < 0 && get_rank(f.s[f.w]) == RANK_K)) {
 		undo_push(WASTE, to, f.w, 0);
@@ -323,7 +323,7 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 	int top_to = find_top(f.t[to]);
 	int top_from = find_top(f.t[from]);
 	for (int i = top_from; i >=0; i--) {
-		if (((get_color(f.t[to][top_to]) != get_color(f.t[from][i])) //TODO: color_ok()
+		if ((color_ok(f.t[to][top_to], f.t[from][i])
 		   && (rank_next(f.t[from][i], f.t[to][top_to]))
 		   && f.t[from][i] > NO_CARD) /* card face up? */
 		|| (top_to < 0 && get_rank(f.t[from][i]) == RANK_K)) {
@@ -441,7 +441,7 @@ int t2t(int from, int to, int opt) {
 	for (int i = top_from; i >=0; i--) {
 		if (cards-->0/*enough space and not more attempted than wanted*/
 		&& ((top_to >= 0 /* if destn. not empty: check rank/color */
-		   && ((get_color(f.t[to][top_to]) != get_color(f.t[from][i])) //TODO: color_ok()
+		   && (color_ok(f.t[to][top_to], f.t[from][i])
 		   && (rank_next(f.t[from][i], f.t[to][top_to]))))
 		|| (top_to < 0 && !cards))) {/*if dest empty and right # cards*/
 			/* move cards [i..top_from] to their destination */
@@ -479,7 +479,7 @@ int f2t(int from, int to, int opt) {
 	int top_from = find_top(f.f[from]);
 
 	if (top_to < 0 /* empty tableu? */
-	||((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from])) //TODO: color_ok()
+	||(color_ok(f.t[to][top_to], f.f[from][top_from])
 	&& (rank_next(f.f[from][top_from], f.t[to][top_to])))) {
 		f.t[to][top_to+1] = f.f[from][top_from];
 		f.f[from][top_from] = NO_CARD;
@@ -509,7 +509,7 @@ int c2t(int from, int to, int opt) {
 	from = opt;
 
 	if (top_to < 0 /* empty tableu? */
-	||((get_color(f.t[to][top_to]) != get_color(f.s[from])) //TODO: color_ok()
+	||(color_ok(f.t[to][top_to], f.s[from])
 	&& (rank_next(f.s[from], f.t[to][top_to])))) {
 		f.t[to][top_to+1] = f.s[from];
 		f.s[from] = NO_CARD;
