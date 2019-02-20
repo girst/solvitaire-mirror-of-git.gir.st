@@ -33,7 +33,6 @@ licensing details, see `LICENSE`.
 <!-- * none! \o/-->
  * TODO FREECELL: autodetect possible moves (card selector choice dialog)
 ### P2
- * TODO FREECELL: join()
  * TODO: klondike/freecell: auto-move to foundation (optional)
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
@@ -112,6 +111,7 @@ licensing details, see `LICENSE`.
  * DONE:   - mouse (term2pile() cell encoding, set_mouse(), wait_mouse_up())
  * DONE FREECELL: don't allow selecting more cards than movable (`DO_HI, TOP_HI, cursor_{up,down}`)
  * DONE: differentiate foundation placeholder from cells ph. (freecell)
+ * DONE FREECELL: join()
 </details>
 
 ## Notes

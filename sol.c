@@ -566,6 +566,7 @@ int f2c(int from, int to, int opt) {
 	(r[pile].pos == 0)
 
 int join(int to) {
+//TODO FREECELL: join to empty tableu (longest cascade?)
 	int top_to = find_top(f.t[to]);
 #ifdef SPIDER
 	int bottom_to = first_movable(f.t[to]);
@@ -630,12 +631,18 @@ int join(int to) {
 	for (int pile = 0; pile < NUM_PILES; pile++) {
 		r[pile].top = r[pile].pos = find_top(f.t[pile]);
 		/* backtrack until we find a compatible-to-'to'-pile card: */
+#ifdef FREECELL
+		int maxmove = max_move(pile, -1);
+#endif
 		while (r[pile].pos >= 0 && is_movable(f.t[pile], r[pile].pos)) {
 			int rankdiff = get_rank(f.t[pile][r[pile].pos])
 			               - get_rank(f.t[to][top_to]);
 			if (rankdiff >= 0) break; /* past our card */
+#ifdef FREECELL
+			if (!maxmove--) break; /* can't move this many cards */
+#endif
 			if (rankdiff == -1 /* rank matches */
-#ifdef KLONDIKE
+#if defined KLONDIKE || defined FREECELL
 			&& get_color(f.t[pile][r[pile].pos]) /* color OK */
 			   != get_color(f.t[to][top_to])
 #elif defined SPIDER
@@ -689,7 +696,7 @@ int join(int to) {
 #ifdef KLONDIKE
 	/* prefer waste if it wouldn't turn_over: */
 	/* NOTE: does not attempt to take from froundation */
-	if (!turn && w2t(WASTE, to, 0) == OK) //TODO: gives higher priority to waste than to empty!
+	if (!empty && !turn && w2t(WASTE, to, 0) == OK)
 		return OK;
 	if (from < 0) /* nothing found */
 		return ERR;
@@ -700,8 +707,13 @@ int join(int to) {
 	int bottom = first_movable(f.t[from]);
 	return t2t(from, to, get_rank(f.t[from][bottom]));
 #elif defined FREECELL
-	(void)from;
-	return ERR; //TODO FREECELL: implement join
+	if (from < 0) /* no tableu move found */ {
+		/* try all free cells before giving up: */
+		for (int i = 0; i < NUM_CELLS; i++)
+			if (c2t(STOCK, to, i) == OK) return OK;
+		return ERR;
+	}
+	return t2t(from, to, 0);
 #endif
 }
 #undef would_empty
