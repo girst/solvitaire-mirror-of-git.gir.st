@@ -126,7 +126,8 @@ restart:
 		case CMD_MOVE:
 			ret = action[from][to](from,to,opt);
 #ifdef FREECELL
-			if (ret == ERR && is_tableu(from) && to == from) /*i.e. failed foundation move*/
+			if (ret == ERR && is_tableu(from) && to == from)
+				/* t2f failed? try t2c! */
 				ret = t2c(from, STOCK, 0);
 			else
 #endif
@@ -1144,7 +1145,7 @@ to_l:	print_table(&active, &inactive);
 			*opt = inactive.opt;
 		}
 	/* moving from tableu to empty tableu? */
-	} else if (is_tableu(*from) && is_tableu(*to) && f.t[*to][0] == NO_CARD) {
+	} else if(is_tableu(*from) && is_tableu(*to) && f.t[*to][0] == NO_CARD){
 		// how many cards? (NOTE: spider asks "up to rank?"; do this then convert to number of cards?
 printf ("take how many (1-9): "); fflush (stdout);
 *opt = getch(NULL) - '0';
@@ -1152,14 +1153,41 @@ if (*opt < 1 || *opt > 9) return CMD_INVAL;
 	/* moving between stock/foundation? */
 	} else if (*from == FOUNDATION && *to == STOCK) {
 		//can take from all non-empty foundations
-printf ("take from (1-4): "); fflush (stdout);
-*opt = getch(NULL) - '1';
-if (*opt < 0 || *opt > 3) return CMD_INVAL;
+		if (f.w == (1<<NUM_CELLS)-1) return CMD_INVAL; /*no free cells*/
+		int ok_foundation; /* find compatible foundations: */
+		int used_fs=0; for (int i = 0; i < NUM_SUITS; i++)
+			if (!!f.f[i][0]) ok_foundation = i, used_fs++;
+
+		if (used_fs == 0) return CMD_INVAL; /* nowhere to take from */
+		if (used_fs == 1) { /* take from the only one */
+			return *opt = ok_foundation, CMD_MOVE;
+		} else { /* ask user */
+			printf ("take from (1-4): "); fflush (stdout);
+			*opt = getch(NULL) - '1';
+			if (*opt < 0 || *opt > 3) return CMD_INVAL;
+		}
+		/* `opt` is the foundation index (0..3) */
 	} else if (*from == STOCK && *to == FOUNDATION) {
 		//check all non-empty cells
-printf ("take from (1-4): "); fflush (stdout);
-*opt = getch(NULL) - '1';
-if (*opt < 0 || *opt > 3) return CMD_INVAL;
+		if (!f.w) return CMD_INVAL; /* no cell to take from */
+		int ok_cell; /* find compatible cells: */
+		int used_cs=0; for (int i = 0; i < NUM_CELLS; i++) {
+			int to = get_suit(f.s[i]);
+			int top_to = find_top(f.f[to]);
+			if ((top_to<0 && get_rank(f.s[i]) == RANK_A)
+			|| (rank_next(f.f[to][top_to], f.s[i])))
+				ok_cell = i, used_cs++;
+		}
+
+		if (used_cs == 0) return CMD_INVAL; /* nowhere to take from */
+		if (used_cs == 1) { /* take from the only one */
+			return *opt = ok_cell, CMD_MOVE;
+		} else { /* ask user */
+			printf ("take from (1-4): "); fflush (stdout);
+			*opt = getch(NULL) - '1';
+			if (*opt < 0 || *opt > 3) return CMD_INVAL;
+		}
+		/* `opt` is the cell index (0..3) */
 	} else if (*from == FOUNDATION || *from == STOCK) { /* -> tableu */
 		//foundation: 2 choices
 		//stock: 4 choices
@@ -1293,6 +1321,7 @@ int wait_mouse_up(unsigned char* mouse) {
 }
 
 int getch(unsigned char* buf) {
+//TODO: if buf==NULL disable mouse input
 /* returns a character, EOF, or constant for an escape/control sequence - NOT
 compatible with the ncurses implementation of same name */
 	int action;
