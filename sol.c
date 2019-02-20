@@ -1129,13 +1129,11 @@ to_l:	print_table(&active, &inactive);
 			case 'k': case 'K': *opt = RANK_K; break;
 			default: *opt -= '1';
 			}
-			if (*opt < RANK_A || *opt > RANK_K) return ERR;
+			if (*opt < RANK_A || *opt > RANK_K) return CMD_INVAL;
 		}
 		/* `opt` is the rank of the highest card to move */
 	}
 #elif defined FREECELL
-	//TODO FREECELL: card selector choice dialog
-
 	/* if it was selected with a cursor, it's obvious: */
 	if (inactive.opt >= 0) {
 		if (is_tableu(*from)) {
@@ -1146,11 +1144,39 @@ to_l:	print_table(&active, &inactive);
 		}
 	/* moving from tableu to empty tableu? */
 	} else if(is_tableu(*from) && is_tableu(*to) && f.t[*to][0] == NO_CARD){
-		// how many cards? (NOTE: spider asks "up to rank?"; do this then convert to number of cards?
-printf ("take how many (1-9): "); fflush (stdout);
-*opt = getch(NULL) - '0';
-if (*opt < 1 || *opt > 9) return CMD_INVAL;
+		int top = find_top(f.t[*from]);
+		int max = max_move(*from, *to);
+		int rank;
+		if (top < 0) return CMD_INVAL;
+		if (max == 1) { /* only 1 movable? */
+			return *opt = 1, CMD_MOVE;
+		} else { /* only ask the user if it's unclear: */
+			int bottom = top - (max-1);
+			printf ("\rup to ([a23456789xjqk] or space/return): ");
+			rank = getch(NULL);
+			switch (rank) {
+			case ' ': rank = get_rank(f.t[*from][top]); break;
+			case'\n': rank = get_rank(f.t[*from][bottom]); break;
+			case 'a': case 'A': rank = RANK_A; break;
+			case '0': /* fallthrough */
+			case 'x': case 'X': rank = RANK_X; break;
+			case 'j': case 'J': rank = RANK_J; break;
+			case 'q': case 'Q': rank = RANK_Q; break;
+			case 'k': case 'K': rank = RANK_K; break;
+			default: rank -= '1';
+			}
+			if (rank < RANK_A || rank > RANK_K) return CMD_INVAL;
+
+			for (int i = 0; max--; i++)
+				if (get_rank(f.t[*from][top-i]) == rank)
+					return *opt = 1+i, CMD_MOVE;
+
+			return CMD_INVAL;
+		}
+		/* `opt` is the number of cards to move */
 	/* moving between stock/foundation? */
+	} else if (*from == FOUNDATION && *to == FOUNDATION) {
+		return CMD_INVAL; /* nonsensical */
 	} else if (*from == FOUNDATION && *to == STOCK) {
 		//can take from all non-empty foundations
 		if (f.w == (1<<NUM_CELLS)-1) return CMD_INVAL; /*no free cells*/
@@ -1167,7 +1193,7 @@ if (*opt < 1 || *opt > 9) return CMD_INVAL;
 			if (*opt < 0 || *opt > 3) return CMD_INVAL;
 		}
 		/* `opt` is the foundation index (0..3) */
-	} else if (*from == STOCK && *to == FOUNDATION) {
+	} else if (*from == STOCK && !is_tableu(*to)) { /* cell -> foundation */
 		//check all non-empty cells
 		if (!f.w) return CMD_INVAL; /* no cell to take from */
 		int ok_cell; /* find compatible cells: */
@@ -1175,7 +1201,7 @@ if (*opt < 1 || *opt > 9) return CMD_INVAL;
 			int to = get_suit(f.s[i]);
 			int top_to = find_top(f.f[to]);
 			if ((top_to<0 && get_rank(f.s[i]) == RANK_A)
-			|| (rank_next(f.f[to][top_to], f.s[i])))
+			|| (top_to>=0 && rank_next(f.f[to][top_to], f.s[i])))
 				ok_cell = i, used_cs++;
 		}
 
@@ -1191,6 +1217,8 @@ if (*opt < 1 || *opt > 9) return CMD_INVAL;
 	} else if (*from == FOUNDATION || *from == STOCK) { /* -> tableu */
 		//foundation: 2 choices
 		//stock: 4 choices
+//TODO FREECELL: foundation/freecells -> tableu card selector dialog
+
 printf ("take from (1-4): "); fflush (stdout);
 *opt = getch(NULL) - '1';
 if (*opt < 0 || *opt > 3) return CMD_INVAL;
