@@ -13,10 +13,10 @@ sol: sol.c sol.h schemes.h
 	$(CC) $(CFLAGS) -DKLONDIKE $< -o $@
 
 spider: sol.c sol.h schemes.h
-	$(CC) $(CFLAGS) -DSPIDER sol.c -o $@
+	$(CC) $(CFLAGS) -DSPIDER $< -o $@
 
 freecell: sol.c sol.h schemes.h
-	$(CC) $(CFLAGS) -DFREECELL sol.c -o $@
+	$(CC) $(CFLAGS) -DFREECELL $< -o $@
 
 clean:
 	rm -f sol spider freecell
