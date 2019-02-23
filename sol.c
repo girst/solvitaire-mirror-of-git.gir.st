@@ -111,7 +111,7 @@ newgame:
 	}
 }
 
-#define is_tableu(where) (where <= TAB_MAX) // "card games helper functions"
+#define is_tableu(where) (where <= TAB_MAX) /* "card games helper functions" */
 
 int sol(void) {
 	int ret;
@@ -126,7 +126,8 @@ restart:
 		case CMD_MOVE:
 			ret = action[from][to](from,to,opt);
 #ifdef FREECELL
-			if (ret == ERR && is_tableu(from) && to == from) /*i.e. failed foundation move*/
+			if (ret == ERR && is_tableu(from) && to == from)
+				/* t2f failed? try t2c! */
 				ret = t2c(from, STOCK, 0);
 			else
 #endif
@@ -201,21 +202,23 @@ int check_won(void) {
 int rank_next (card_t a, card_t b) {
 	return get_rank(a) == get_rank(b)-1;
 }
+int color_ok (card_t a, card_t b) {
+#if defined KLONDIKE || defined FREECELL
+	/* color opposite? */
+	return (get_color(a) != get_color(b));
+#elif defined SPIDER
+	/* same suit? */
+	return (get_suit(a) == get_suit(b));
+#endif
+}
 int is_consecutive (card_t* pile, int pos) {
 	if (pos+1 >= PILE_SIZE) return 1; /* card is last */
 	if (pile[pos+1] == NO_CARD) return 1; /* card is first */
 
-#if defined KLONDIKE || defined FREECELL
 	/* ranks consecutive? */
 	if (!rank_next(pile[pos+1], pile[pos])) return 0;
-	/* color opposite? */
-	if (get_color(pile[pos+1]) == get_color(pile[pos])) return 0;
-#elif defined SPIDER
-	/* ranks consecutive? */
-	if (!rank_next(pile[pos+1], pile[pos])) return 0;
-	/* same suit? */
-	if (get_suit(pile[pos+1]) != get_suit(pile[pos])) return 0;
-#endif
+	/* color/suit OK? */
+	if (!color_ok(pile[pos+1], pile[pos])) return 0;
 
 	return 1;
 }
@@ -295,7 +298,7 @@ int f2t(int from, int to, int opt) { /* foundation to tableu */
 	from = opt;
 	int top_from = find_top(f.f[from]);
 	
-	if ((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from]))
+	if (color_ok(f.t[to][top_to], f.f[from][top_from])
 	&& (rank_next(f.f[from][top_from], f.t[to][top_to]))) {
 		f.t[to][top_to+1] = f.f[from][top_from];
 		f.f[from][top_from] = NO_CARD;
@@ -307,7 +310,7 @@ int w2t(int from, int to, int opt) { /* waste to tableu */
 	(void) from; (void) opt; /* don't need */
 	if (f.w < 0) return ERR;
 	int top_to = find_top(f.t[to]);
-	if (((get_color(f.t[to][top_to]) != get_color(f.s[f.w]))
+	if ((color_ok(f.t[to][top_to], f.s[f.w])
 	   && (rank_next(f.s[f.w], f.t[to][top_to])))
 	|| (top_to < 0 && get_rank(f.s[f.w]) == RANK_K)) {
 		undo_push(WASTE, to, f.w, 0);
@@ -319,13 +322,13 @@ int t2t(int from, int to, int opt) { /* tableu to tableu */
 	(void) opt; /* don't need */
 	int top_to = find_top(f.t[to]);
 	int top_from = find_top(f.t[from]);
-	int count = 0; //NOTE: could probably be factored out
 	for (int i = top_from; i >=0; i--) {
-		if (((get_color(f.t[to][top_to]) != get_color(f.t[from][i]))
+		if ((color_ok(f.t[to][top_to], f.t[from][i])
 		   && (rank_next(f.t[from][i], f.t[to][top_to]))
 		   && f.t[from][i] > NO_CARD) /* card face up? */
 		|| (top_to < 0 && get_rank(f.t[from][i]) == RANK_K)) {
 			/* move cards [i..top_from] to their destination */
+			int count = 0;
 			for (;i <= top_from; i++) {
 				top_to++;
 				f.t[to][top_to] = f.t[from][i];
@@ -366,7 +369,6 @@ int t2t(int from, int to, int opt) { //in dire need of cleanup
 	int top_from = find_top(f.t[from]);
 	int top_to = find_top(f.t[to]);
 	int empty_to = (top_to < 0)? opt: -1; /* empty pile? */
-	int count = 0; //NOTE: could probably be factored out
 
 	for (int i = top_from; i >= 0; i--) {
 		if (!is_consecutive(f.t[from], i)) break;
@@ -374,6 +376,7 @@ int t2t(int from, int to, int opt) { //in dire need of cleanup
 		/* is consecutive OR to empty pile and rank ok? */
 		if (rank_next(f.t[from][i], f.t[to][top_to])
 		|| (empty_to >= RANK_A && get_rank(f.t[from][i]) == empty_to)) {
+			int count = 0;
 			for (;i <= top_from; i++) {
 				top_to++;
 				f.t[to][top_to] = f.t[from][i];
@@ -428,7 +431,6 @@ int max_move(int from, int to) {
 int t2t(int from, int to, int opt) {
 	int top_to = find_top(f.t[to]);
 	int top_from = find_top(f.t[from]);
-	int count = 0; //NOTE: could probably be factored out
 	int cards = max_move(from, to);
 	if (top_to < 0) { /* moving to empty pile? */
 		if (opt > cards)
@@ -439,10 +441,11 @@ int t2t(int from, int to, int opt) {
 	for (int i = top_from; i >=0; i--) {
 		if (cards-->0/*enough space and not more attempted than wanted*/
 		&& ((top_to >= 0 /* if destn. not empty: check rank/color */
-		   && ((get_color(f.t[to][top_to]) != get_color(f.t[from][i]))
+		   && (color_ok(f.t[to][top_to], f.t[from][i])
 		   && (rank_next(f.t[from][i], f.t[to][top_to]))))
 		|| (top_to < 0 && !cards))) {/*if dest empty and right # cards*/
 			/* move cards [i..top_from] to their destination */
+			int count = 0;
 			for (;i <= top_from; i++) {
 				top_to++;
 				f.t[to][top_to] = f.t[from][i];
@@ -476,7 +479,7 @@ int f2t(int from, int to, int opt) {
 	int top_from = find_top(f.f[from]);
 
 	if (top_to < 0 /* empty tableu? */
-	||((get_color(f.t[to][top_to]) != get_color(f.f[from][top_from]))
+	||(color_ok(f.t[to][top_to], f.f[from][top_from])
 	&& (rank_next(f.f[from][top_from], f.t[to][top_to])))) {
 		f.t[to][top_to+1] = f.f[from][top_from];
 		f.f[from][top_from] = NO_CARD;
@@ -506,7 +509,7 @@ int c2t(int from, int to, int opt) {
 	from = opt;
 
 	if (top_to < 0 /* empty tableu? */
-	||((get_color(f.t[to][top_to]) != get_color(f.s[from]))
+	||(color_ok(f.t[to][top_to], f.s[from])
 	&& (rank_next(f.s[from], f.t[to][top_to])))) {
 		f.t[to][top_to+1] = f.s[from];
 		f.s[from] = NO_CARD;
@@ -566,6 +569,7 @@ int f2c(int from, int to, int opt) {
 	(r[pile].pos == 0)
 
 int join(int to) {
+//TODO FREECELL: join to empty tableu (longest cascade?)
 	int top_to = find_top(f.t[to]);
 #ifdef SPIDER
 	int bottom_to = first_movable(f.t[to]);
@@ -630,18 +634,18 @@ int join(int to) {
 	for (int pile = 0; pile < NUM_PILES; pile++) {
 		r[pile].top = r[pile].pos = find_top(f.t[pile]);
 		/* backtrack until we find a compatible-to-'to'-pile card: */
+#ifdef FREECELL
+		int maxmove = max_move(pile, -1);
+#endif
 		while (r[pile].pos >= 0 && is_movable(f.t[pile], r[pile].pos)) {
 			int rankdiff = get_rank(f.t[pile][r[pile].pos])
 			               - get_rank(f.t[to][top_to]);
 			if (rankdiff >= 0) break; /* past our card */
-			if (rankdiff == -1 /* rank matches */
-#ifdef KLONDIKE
-			&& get_color(f.t[pile][r[pile].pos]) /* color OK */
-			   != get_color(f.t[to][top_to])
-#elif defined SPIDER
-			&& get_suit(f.t[pile][r[pile].pos]) /* color OK */
-			   == get_suit(f.t[to][top_to])
+#ifdef FREECELL
+			if (!maxmove--) break; /* can't move this many cards */
 #endif
+			if (rankdiff == -1 && /* rank matches */
+			   color_ok(f.t[pile][r[pile].pos], f.t[to][top_to])
 			) {
 				r[pile].ok++;
 				complete |= would_complete(pile);
@@ -689,7 +693,7 @@ int join(int to) {
 #ifdef KLONDIKE
 	/* prefer waste if it wouldn't turn_over: */
 	/* NOTE: does not attempt to take from froundation */
-	if (!turn && w2t(WASTE, to, 0) == OK) //TODO: gives higher priority to waste than to empty!
+	if (!empty && !turn && w2t(WASTE, to, 0) == OK)
 		return OK;
 	if (from < 0) /* nothing found */
 		return ERR;
@@ -700,8 +704,13 @@ int join(int to) {
 	int bottom = first_movable(f.t[from]);
 	return t2t(from, to, get_rank(f.t[from][bottom]));
 #elif defined FREECELL
-	(void)from;
-	return ERR; //TODO FREECELL: implement join
+	if (from < 0) /* no tableu move found */ {
+		/* try all free cells before giving up: */
+		for (int i = 0; i < NUM_CELLS; i++)
+			if (c2t(STOCK, to, i) == OK) return OK;
+		return ERR;
+	}
+	return t2t(from, to, 0);
 #endif
 }
 #undef would_empty
@@ -1061,7 +1070,101 @@ to_l:	print_table(&active, &inactive);
 	}
 
 	/***/
-#ifdef KLONDIKE
+	/* direct addressing post-processing stage:
+	because foundations/freecells share the same key (and you can't select
+	partial piles) there are sometimes ambiguous situations where it isn't
+	clear from which pile (or how many cards) to take. the code below will
+	only ask the user if there are at least two possible moves and
+	automatically choose otherwise. */
+#ifdef FREECELL
+	/* if it was selected with a cursor, it's obvious: */
+	if (inactive.opt >= 0) {
+		if (is_tableu(*from)) {
+			/* NOTE: max_move same as in cursor_down() */
+			*opt = max_move(*from, -1) - inactive.opt;
+		} else {
+			*opt = inactive.opt;
+		}
+	/* moving from tableu to empty tableu? */
+	} else if(is_tableu(*from) && is_tableu(*to) && f.t[*to][0] == NO_CARD){
+		int top = find_top(f.t[*from]);
+		int max = max_move(*from, *to);
+		int rank;
+		if (top < 0) return CMD_INVAL;
+		if (max == 1) { /* only 1 movable? */
+			return *opt = 1, CMD_MOVE;
+		} else { /* only ask the user if it's unclear: */
+			int bottom = top - (max-1);
+			printf ("\rup to ([a23456789xjqk] or space/return): ");
+			rank = getch(NULL);
+			switch (rank) {
+			case ' ': rank = get_rank(f.t[*from][top]); break;
+			case'\n': rank = get_rank(f.t[*from][bottom]); break;
+			case 'a': case 'A': rank = RANK_A; break;
+			case '0': /* fallthrough */
+			case 'x': case 'X': rank = RANK_X; break;
+			case 'j': case 'J': rank = RANK_J; break;
+			case 'q': case 'Q': rank = RANK_Q; break;
+			case 'k': case 'K': rank = RANK_K; break;
+			default: rank -= '1';
+			}
+			if (rank < RANK_A || rank > RANK_K) return CMD_INVAL;
+
+			for (int i = 0; max--; i++)
+				if (get_rank(f.t[*from][top-i]) == rank)
+					return *opt = 1+i, CMD_MOVE;
+
+			return CMD_INVAL;
+		}
+		/* `opt` is the number of cards to move */
+	/* moving between stock/foundation? */
+	} else if (*from == FOUNDATION && *to == FOUNDATION) {
+		return CMD_INVAL; /* nonsensical */
+	} else if (*from == FOUNDATION && *to == STOCK) {
+		if (f.w == (1<<NUM_CELLS)-1) return CMD_INVAL; /*no free cells*/
+		int ok_foundation; /* find compatible (non-empty) foundations:*/
+		int used_fs=0; for (int i = 0; i < NUM_SUITS; i++)
+			if (!!f.f[i][0]) ok_foundation = i, used_fs++;
+
+		if (used_fs == 0) return CMD_INVAL; /* nowhere to take from */
+		if (used_fs == 1) { /* take from the only one */
+			return *opt = ok_foundation, CMD_MOVE;
+		} else { /* ask user */
+			printf ("take from (1-4): "); fflush (stdout);
+			*opt = getch(NULL) - '1';
+			if (*opt < 0 || *opt > 3) return CMD_INVAL;
+		}
+		/* `opt` is the foundation index (0..3) */
+	} else if (*from == STOCK) { /* cell -> foundation/tableu */
+		if (!f.w) return CMD_INVAL; /* no cell to take from */
+		int ok_cell; /* find compatible (non-empty) cells: */
+		int tab = is_tableu(*to);
+		int used_cs=0; for (int i = 0; i < NUM_CELLS; i++) {
+			card_t* pile = (tab?f.t[*to]:f.f[get_suit(f.s[i])]);
+			int top_to = find_top(pile);
+			if (tab? /* to tableu? */
+				((top_to<0)
+				||(top_to>=0 && rank_next(f.s[i], pile[top_to])
+				             && color_ok(f.s[i], pile[top_to])))
+			: /* to foundation? */
+				((top_to<0 && get_rank(f.s[i]) == RANK_A)
+				||(top_to>=0 && rank_next(pile[top_to],f.s[i])))
+			)
+				ok_cell = i, used_cs++;
+		}
+
+		if (used_cs == 0) return CMD_INVAL; /* nowhere to take from */
+		if (used_cs == 1) { /* take from the only one */
+			return *opt = ok_cell, CMD_MOVE;
+		} else { /* ask user */
+			printf ("take from (1-4): "); fflush (stdout);
+			*opt = getch(NULL) - '1';
+			if (*opt < 0 || *opt > 3) return CMD_INVAL;
+		}
+		/* `opt` is the cell index (0..3) */
+	} else
+#endif
+#if defined KLONDIKE || defined FREECELL
 	if (*from == FOUNDATION) {
 		if (inactive.opt >= 0) {
 			*opt = inactive.opt;
@@ -1116,44 +1219,9 @@ to_l:	print_table(&active, &inactive);
 			case 'k': case 'K': *opt = RANK_K; break;
 			default: *opt -= '1';
 			}
-			if (*opt < RANK_A || *opt > RANK_K) return ERR;
+			if (*opt < RANK_A || *opt > RANK_K) return CMD_INVAL;
 		}
 		/* `opt` is the rank of the highest card to move */
-	}
-#elif defined FREECELL
-	//TODO FREECELL: card selector choice dialog
-
-	/* if it was selected with a cursor, it's obvious: */
-	if (inactive.opt >= 0) {
-		if (is_tableu(*from)) {
-			/* NOTE: max_move same as in cursor_down() */
-			*opt = max_move(*from, -1) - inactive.opt;
-		} else {
-			*opt = inactive.opt;
-		}
-	/* moving from tableu to empty tableu? */
-	} else if (is_tableu(*from) && is_tableu(*to) && f.t[*to][0] == NO_CARD) {
-		// how many cards? (NOTE: spider asks "up to rank?"; do this then convert to number of cards?
-printf ("take how many (1-9): "); fflush (stdout);
-*opt = getch(NULL) - '0';
-if (*opt < 1 || *opt > 9) return CMD_INVAL;
-	/* moving between stock/foundation? */
-	} else if (*from == FOUNDATION && *to == STOCK) {
-		//can take from all non-empty foundations
-printf ("take from (1-4): "); fflush (stdout);
-*opt = getch(NULL) - '1';
-if (*opt < 0 || *opt > 3) return CMD_INVAL;
-	} else if (*from == STOCK && *to == FOUNDATION) {
-		//check all non-empty cells
-printf ("take from (1-4): "); fflush (stdout);
-*opt = getch(NULL) - '1';
-if (*opt < 0 || *opt > 3) return CMD_INVAL;
-	} else if (*from == FOUNDATION || *from == STOCK) { /* -> tableu */
-		//foundation: 2 choices
-		//stock: 4 choices
-printf ("take from (1-4): "); fflush (stdout);
-*opt = getch(NULL) - '1';
-if (*opt < 0 || *opt > 3) return CMD_INVAL;
 	}
 #endif
 	return CMD_MOVE;
@@ -1281,6 +1349,7 @@ int wait_mouse_up(unsigned char* mouse) {
 }
 
 int getch(unsigned char* buf) {
+//TODO: if buf==NULL disable mouse input
 /* returns a character, EOF, or constant for an escape/control sequence - NOT
 compatible with the ncurses implementation of same name */
 	int action;
