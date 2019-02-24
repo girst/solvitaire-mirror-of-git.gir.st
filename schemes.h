@@ -83,8 +83,8 @@ const struct scheme unicode_large_mono = {
 	},
 	.foundation = (char*[]){
 		"╭╌╌╌╮",
-		"╎╭─╮╎",
-		"╎├─┤╎",
+		"╎⢠⠒⡄╎",
+		"╎⠸⠉⠇╎",
 		"╰╌╌╌╯"
 	},
 	.halfstack = (char*[]) {
@@ -148,8 +148,8 @@ const struct scheme unicode_large_color = {
 	},
 	.foundation = (char*[]){
 		"╭╌╌╌╮",
-		"╎\033[2m╭─╮\033[22m╎",
-		"╎\033[2m├─┤\033[22m╎",
+		"╎\033[2m⢠⠒⡄\033[22m╎",
+		"╎\033[2m⠸⠉⠇\033[22m╎",
 		"╰╌╌╌╯"
 	},
 	.halfstack = (char*[]) {

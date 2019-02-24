@@ -1471,7 +1471,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 				inactive->pile==FOUNDATION && (
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
-				), 1,
+				), !!f.f[pile][0],
 				(card < 0)?op.s->foundation[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
@@ -1510,7 +1510,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 				inactive->pile==STOCK && (
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
-				), 1,
+				), !!f.s[pile],
 				((f.s[pile])?op.s->card[f.s[pile]]
 				:op.s->placeholder)[line]);
 		for (int pile = 0; pile < NUM_SUITS; pile++) {
@@ -1519,7 +1519,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 				inactive->pile==FOUNDATION && (
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
-				), 1,
+				), !!f.f[pile][0],
 				(card < 0)?op.s->foundation[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
