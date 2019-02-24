@@ -551,6 +551,8 @@ int f2c(int from, int to, int opt) {
 
 	return OK;
 }
+#define w2f nop /* for join()'s "to foundation" */
+#define w2t nop /* ditto. */
 #endif
 
 //TODO: generalize prediction engine for CMD_HINT
@@ -569,13 +571,12 @@ int f2c(int from, int to, int opt) {
 	(r[pile].pos == 0)
 
 int join(int to) {
-//TODO FREECELL: join to empty tableu (longest cascade?)
 	int top_to = find_top(f.t[to]);
 #ifdef SPIDER
 	int bottom_to = first_movable(f.t[to]);
 #endif
 
-#ifdef KLONDIKE
+#if defined KLONDIKE || defined FREECELL
 	if (to == WASTE || to == STOCK) return ERR; /*why would you do that!?*/
 
 	if (to == FOUNDATION) {
@@ -588,13 +589,29 @@ int join(int to) {
 			}
 		return status;
 	}
+#endif
 
+#ifdef KLONDIKE
 	if (top_to < 0) { /* move a king to empty pile: */
-		for (int i = 0; i < TAB_MAX; i++) {
+		for (int i = 0; i <= TAB_MAX; i++) {
 			if (f.t[i][0] < 0) /* i.e. would turn? */
 				if (t2t(i, to, 0) == OK) return OK;
 		}
 		return w2t(WASTE, to, 0);
+	}
+#elif defined FREECELL
+	if (top_to < 0) { /* move longest cascade to empty tableu: */ //TODO FREECELL:
+		int longest = -1;
+		int length = -1;
+		for (int i = 0; i <= TAB_MAX; i++) {
+			int m = max_move(i, to);
+			/*longest cascade that won't uncover another free pile*/
+			//TODO: don't rip apart cascades
+			if (m >= length && m <= find_top(f.t[i]))
+				length = m, longest = i;
+		}
+		if (longest < 0) return ERR;
+		return t2t(longest, to, length);
 	}
 #endif
 
@@ -962,7 +979,7 @@ from_l:	print_table(&active, &inactive);
 	case MOUSE_RIGHT:
 		if (set_mouse(term2pile(mouse), to, opt))
 			return CMD_INVAL;
-		goto join_l;
+		return CMD_JOIN;
 	case MOUSE_LEFT:
 		if (set_mouse(term2pile(mouse), from, opt))
 			return CMD_INVAL;
@@ -985,11 +1002,6 @@ from_l:	print_table(&active, &inactive);
 		}}
 	case 'J':
 		*to = active.pile;
-join_l:
-#ifdef KLONDIKE
-		if (*to == FOUNDATION) return CMD_JOIN;
-#endif
-		if (*to > TAB_MAX) return CMD_INVAL;
 		return CMD_JOIN;
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
@@ -1036,18 +1048,6 @@ to_l:	print_table(&active, &inactive);
 	case MOUSE_LEFT:
 		if (set_mouse(term2pile(mouse), to, opt))
 			return CMD_INVAL;
-/*#ifdef SPIDER
-		//TODO: set opt if to field is empty; suppress "up do" dialog from below
-		if (is_tableu(*to) && f.t[*to][0] == NO_CARD) {
-			int top = find_top(f.t[*from]);
-			if (top < 0) return CMD_INVAL;
-			if (top >= 0 && !is_movable(f.t[*from], top-1)) {
-				*opt = get_rank(f.t[*from][top]);
-			} else {
-			// ask user
-			}
-		}
-#endif*/
 		break;
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
@@ -1164,6 +1164,7 @@ to_l:	print_table(&active, &inactive);
 		/* `opt` is the cell index (0..3) */
 	} else
 #endif
+//TODO: mouse-friendly "up to?" dialog
 #if defined KLONDIKE || defined FREECELL
 	if (*from == FOUNDATION) {
 		if (inactive.opt >= 0) {

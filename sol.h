@@ -106,7 +106,7 @@ enum field_places {
 #elif defined FREECELL
 	TAB_8,
 	STOCK,             /* 4 open cells */
-#define WASTE 0            /* for action[][10] (must be valid index) */
+#define WASTE STOCK        /* for action[][10]; must =STOCK for join() */
 	FOUNDATION,
 #endif
 	NUM_PLACES,
