@@ -30,8 +30,7 @@ licensing details, see `LICENSE`.
 </summary>
 
 ### P1
-<!-- * none! \o/-->
- * TODO FREECELL: autodetect possible moves (card selector choice dialog)
+ * none! \o/
 ### P2
  * TODO: klondike/freecell: auto-move to foundation (optional)
  * TODO: suggest moves (`h` => hint)
@@ -41,6 +40,8 @@ licensing details, see `LICENSE`.
  * TODO: visbell changes: instead of screen, flash active {cursor,card} {red,twice}?
  * TODO: differential drawing mode (at least for highlighting cards)
  * TODO: `.` command (repeat last action)
+ * TODO: `wait_mouse_up()` sometimes hangs in kde konsole (trash the `level++`
+         and just return an error)
 ### P4
  * TODO: ellipsis overlap: if more than three cards in a row overlap, replace
          middle ones with an ellipsis
@@ -112,6 +113,7 @@ licensing details, see `LICENSE`.
  * DONE FREECELL: don't allow selecting more cards than movable (`DO_HI, TOP_HI, cursor_{up,down}`)
  * DONE: differentiate foundation placeholder from cells ph. (freecell)
  * DONE FREECELL: join()
+ * DONE FREECELL: autodetect possible moves (card selector choice dialog)
 </details>
 
 ## Notes
