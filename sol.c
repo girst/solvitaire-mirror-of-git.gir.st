@@ -398,12 +398,13 @@ int s2t(int from, int to, int opt) {
 	if (f.z <= 0) return ERR; /* stack out of cards */
 	for (int pile = 0; pile < NUM_PILES; pile++)
 		if (f.t[pile][0]==NO_CARD) return ERR; /*no piles may be empty*/
+
+	undo_push(STOCK, TABLEU, 1, 0); /* NOTE: before remove_if_complete()! */
 	for (int pile = 0; pile < NUM_PILES; pile++) {
 		f.t[pile][find_top(f.t[pile])+1] = f.s[--f.z];
 		remove_if_complete(pile);
 		if (check_won()) return WON;
 	}
-	undo_push(STOCK, TABLEU, 1, 0);/*NOTE: puts 1 card on each tableu pile*/
 	return OK;
 }
 int t2f(int from, int to, int opt) {
@@ -721,6 +722,7 @@ int join(int to) {
 	int bottom = first_movable(f.t[from]);
 	return t2t(from, to, get_rank(f.t[from][bottom]));
 #elif defined FREECELL
+	//TODO: if would rip apart, try freecells first (instead after)
 	if (from < 0) /* no tableu move found */ {
 		/* try all free cells before giving up: */
 		for (int i = 0; i < NUM_CELLS; i++)
