@@ -582,7 +582,7 @@ int join(int to) {
 
 	if (to == FOUNDATION) {
 		int status = ERR;
-		for (int i = 0; i <= TAB_MAX; i++)
+		for (int i = 0; i <= TAB_MAX+1; i++)
 			switch ((i?t2f:w2f)(i-1, FOUNDATION, 0)) {
 			case WON: return WON;
 			case OK:  status = OK;
