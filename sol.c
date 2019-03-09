@@ -523,6 +523,7 @@ int c2t(int from, int to, int opt) {
 int c2f(int from, int to, int opt) {
 	(void) from; (void) to; /* don't need */
 	from = opt;
+	if (f.s[from] == NO_CARD) return ERR;
 	to = get_suit(f.s[from]);
 	int top_to = find_top(f.f[to]);
 	if ((top_to < 0 && get_rank(f.s[from]) == RANK_A)
@@ -582,7 +583,8 @@ int join(int to) {
 	if (to == FOUNDATION) {
 		int status = ERR;
 		for (int i = 0; i < NUM_PILES+NUM_CELLS; i++)
-			switch ((is_tableu(i)?t2f(i, FOUNDATION, 0):w2f(STOCK, FOUNDATION, i))) {
+			switch (is_tableu(i)?t2f(i, FOUNDATION, 0)
+			                    :w2f(STOCK,FOUNDATION,i-NUM_PILES)){
 			case WON: return WON;
 			case OK:  status = OK;
 			case ERR: /* nop */;
