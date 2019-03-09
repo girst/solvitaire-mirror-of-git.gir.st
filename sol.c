@@ -552,8 +552,7 @@ int f2c(int from, int to, int opt) {
 
 	return OK;
 }
-#define w2f nop /* for join()'s "to foundation" */
-#define w2t nop /* ditto. */
+#define w2f c2f /* for join()'s "to foundation" */
 #endif
 
 //TODO: generalize prediction engine for CMD_HINT
@@ -1014,6 +1013,7 @@ from_l:	print_table(&active, &inactive);
 	}
 	inactive.pile = *from; /* for direct addressing highlighting */
 	if (is_tableu(*from) && f.t[*from][0] == NO_CARD) return CMD_INVAL;
+	//TODO: freecell: if from==stock && stock[x] == empty: return inval
 
 #ifndef FREECELL
 	if (*from == STOCK) {
