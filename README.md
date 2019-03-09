@@ -32,7 +32,6 @@ licensing details, see `LICENSE`.
 ### P1
  * none! \o/
 ### P2
- * TODO: klondike/freecell: auto-move to foundation (optional)
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
@@ -40,6 +39,7 @@ licensing details, see `LICENSE`.
  * TODO: visbell changes: instead of screen, flash active {cursor,card} {red,twice}?
  * TODO: differential drawing mode (at least for highlighting cards)
  * TODO: `.` command (repeat last action)
+         read data fron undo-head?
  * TODO: `wait_mouse_up()` sometimes hangs in kde konsole (trash the `level++`
          and just return an error)
 ### P4
@@ -49,6 +49,8 @@ licensing details, see `LICENSE`.
           - spider/freecell: detect how many cards to move to empty pile
             (must find exact position despite `extreme_overlap`)
  * TODO: scores, variants: draw 3, max. n overturns
+ * TODO: klondike/freecell: auto-move to foundation (optional)
+         workaround: multiple joins to foundation
  * TODO: vt220 mode (problems: charset, slow baudrate and no differential drawing mode)
  * TODO: ed(1) mode (solEDaire): playable on a line printer; ascii/ibm only?
 
