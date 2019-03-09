@@ -581,8 +581,8 @@ int join(int to) {
 
 	if (to == FOUNDATION) {
 		int status = ERR;
-		for (int i = 0; i <= TAB_MAX+1; i++)
-			switch ((i?t2f:w2f)(i-1, FOUNDATION, 0)) {
+		for (int i = 0; i < NUM_PILES+NUM_CELLS; i++)
+			switch ((is_tableu(i)?t2f(i, FOUNDATION, 0):w2f(STOCK, FOUNDATION, i))) {
 			case WON: return WON;
 			case OK:  status = OK;
 			case ERR: /* nop */;

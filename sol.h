@@ -5,6 +5,7 @@
 #define DECK_SIZE 52
 #ifdef KLONDIKE
 #define NUM_PILES 7
+#define NUM_CELLS 1  /*for join(); represents the waste*/
 #define MAX_HIDDEN 6 /*how many cards are turned over at most in a tableu pile*/
 #define MAX_STOCK 24 /*how many cards can be in the stock at most (=@start)*/
 #define NUM_DECKS 1
