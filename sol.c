@@ -1147,7 +1147,7 @@ to_l:	print_table(&active, &inactive);
 			card_t* pile = (tab?f.t[*to]:f.f[get_suit(f.s[i])]);
 			int top_to = find_top(pile);
 			if (tab? /* to tableu? */
-				((top_to<0)
+				((top_to<0 && f.s[i] > NO_CARD)
 				||(top_to>=0 && rank_next(f.s[i], pile[top_to])
 				             && color_ok(f.s[i], pile[top_to])))
 			: /* to foundation? */
