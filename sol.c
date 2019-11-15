@@ -114,13 +114,13 @@ newgame:
 #define is_tableu(where) (where <= TAB_MAX) /* "card games helper functions" */
 
 int sol(void) {
-	int ret;
 	long seed = time(NULL);
 restart:
 	free_undo(f.u);
 	deal(seed);
 
 	int from, to, opt;
+	int ret;
 	for(;;) {
 		switch (get_cmd(&from, &to, &opt)) {
 		case CMD_MOVE:
@@ -129,11 +129,12 @@ restart:
 			if (ret == ERR && is_tableu(from) && to == from)
 				/* t2f failed? try t2c! */
 				ret = t2c(from, STOCK, 0);
-			else
 #endif
+#ifdef INVERSE_MOVE
 			if (ret == ERR && is_tableu(from) && is_tableu(to))
 				/* try again with from/to swapped: */
 				ret = action[to][from](to,from,opt);
+#endif
 			switch (ret) {
 			case OK:  break;
 			case ERR: visbell(); break;
