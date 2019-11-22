@@ -996,13 +996,24 @@ from_l:	print_table(&active, &inactive);
 		raw_mode(0); /* turn on echo */
 		fgets (buf, 256, stdin);
 		raw_mode(1);
-		switch(buf[0]) {
+		 if(buf[0] == 'q' && buf[1] == 'u' && buf[2] == 'i' && buf[3] == 't' && (int)strlen(buf) - 1 == 4)
+		return CMD_QUIT;
+		else if(buf[0] == 'n' && buf[1] == 'e' && buf[2] == 'w' && (int)strlen(buf) - 1 == 3)
+		return CMD_NEW;
+		else if(buf[0] == 'r' && buf[1] == 'e' && buf[2] == 's' && buf[3] == 't' && buf[4] == 'a' && buf[5] == 'r' && buf[6] == 't' && (int)strlen(buf) - 1 == 7)
+		return CMD_AGAIN;
+		else if(buf[0] == 'h' && buf[1] == 'e' && buf[2] == 'l' && buf[3] == 'p' && (int)strlen(buf) - 1 == 4)
+		return CMD_HELP;
+		else
+		return CMD_INVAL;
+		/*switch(buf[0]) { // change 
 		case 'q': return CMD_QUIT;
 		case 'n': return CMD_NEW;
 		case 'r': return CMD_AGAIN;
 		case 'h': return CMD_HELP;
 		default:  return CMD_INVAL;
-		}}
+		}*/
+		}
 	case 'J':
 		*to = active.pile;
 		return CMD_JOIN;
