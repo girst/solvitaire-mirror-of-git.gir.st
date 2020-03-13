@@ -971,6 +971,7 @@ int get_cmd (int* from, int* to, int* opt) {
 	unsigned char mouse[6] = {0}; /* must clear [3]! */
 	struct cursor inactive = {-1,-1};
 	static struct cursor active = {0,0};
+	static char last_successful_action[2] = {0,0}; //TODO: dot implementation should be in main game loop (CMD_AGAIN)
 	if (is_tableu(active.pile))
 		active.opt = 0;
 
@@ -1038,6 +1039,10 @@ from_l:	print_table(&active, &inactive);
 			inactive.opt = *opt; /* prevents card selector dialog */
 		break;
 	/* misc keys: */
+	case '.':
+		ungetc(last_successful_action[1], stdin);
+		ungetc(last_successful_action[0], stdin); //XXX: 2nd ungetc() not portable!
+		goto from_l;
 	case ':':
 		{char buf[256];
 		fprintf (stderr, ":");
@@ -1124,6 +1129,8 @@ to_l:	print_table(&active, &inactive);
 		else
 			*to = t-'1';
 	}
+	last_successful_action[0] = _f;
+	last_successful_action[1] = t;
 
 	/***/
 	/* direct addressing post-processing stage:
