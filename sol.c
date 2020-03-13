@@ -274,6 +274,21 @@ int hls(card_t card, char* hi) {
 		case 'r': case 'R': if (get_color(card)!=RED) return 0; ok++; break;
 		case 'b': case 'B': if (get_color(card)!=BLK) return 0; ok++; break;
 
+		/* special: */
+#if defined KLONDIKE || defined FREECELL
+		case 'f': case 'F': { /* highlight cards that go on the foundation next */
+			card_t* foundation = f.f[get_suit(card)];
+			int top = find_top(foundation);
+			if (foundation[top]) {
+				if (rank_next(foundation[top], card) &&
+				    get_suit(card) == get_suit(foundation[top]))
+					return 1;
+			} else {
+				if (get_rank(card) == RANK_A) return 1;
+			}
+			return 0;}
+#endif // NOTE: makes no sense in SPIDER
+
 		/* number ranks: */
 		default:
 			if (*hi < '1' || *hi > '9') continue;
@@ -1514,16 +1529,16 @@ void print_hi(int invert, int grey_bg, int bold, int blink, char* str) {
 		blink?"\033[25m":"", grey_bg?"\033[49m":"", invert?"\033[27m":"",bold?"\033[22m":"");
 }
 void print_table(const struct cursor* active, const struct cursor* inactive) {
-	int do_blink = 0; //XXX: remove
 	printf("\033[2J\033[H"); /* clear screen, reset cursor */
 #ifdef KLONDIKE
 	/* print stock, waste and foundation: */
 	for (int line = 0; line < op.s->height; line++) {
 		/* stock: */
-		print_hi (active->pile == STOCK, inactive->pile == STOCK, 1, do_blink, (
+		print_hi (active->pile == STOCK, inactive->pile == STOCK, 1, 0, (
 			(f.w < f.z-1)?op.s->facedown
 			:op.s->placeholder)[line]);
 		/* waste: */
+		int do_blink = hls(f.s[f.w], f.h); //xxx: unnecessarily recalculating
 		print_hi (active->pile == WASTE, inactive->pile == WASTE, 1, do_blink, (
 			/* NOTE: cast, because f.w sometimes is (short)-1 !? */
 			((short)f.w >= 0)?op.s->card[f.s[f.w]]
@@ -1536,7 +1551,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 				inactive->pile==FOUNDATION && (
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
-				), !!f.f[pile][0], do_blink,
+				), !!f.f[pile][0], 0,
 				(card < 0)?op.s->foundation[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
@@ -1570,7 +1585,8 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 #elif defined FREECELL
 	/* print open cells, foundation: */
 	for (int line = 0; line < op.s->height; line++) {
-		for (int pile = 0; pile < NUM_CELLS; pile++)
+		for (int pile = 0; pile < NUM_CELLS; pile++) {
+			int do_blink = hls(f.s[pile], f.h);
 			print_hi (active->pile==STOCK && active->opt==pile,
 				inactive->pile==STOCK && (
 					/* cursor addr.     || direct addr.   */
@@ -1578,13 +1594,14 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 				), !!f.s[pile], do_blink,
 				((f.s[pile])?op.s->card[f.s[pile]]
 				:op.s->placeholder)[line]);
+		}
 		for (int pile = 0; pile < NUM_SUITS; pile++) {
 			int card = find_top(f.f[pile]);
 			print_hi (active->pile==FOUNDATION && active->opt==pile,
 				inactive->pile==FOUNDATION && (
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
-				), !!f.f[pile][0], do_blink,
+				), !!f.f[pile][0], 0,
 				(card < 0)?op.s->foundation[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
