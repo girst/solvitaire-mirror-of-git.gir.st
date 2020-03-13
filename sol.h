@@ -121,6 +121,8 @@ enum special_cmds {
 	CMD_AGAIN,
 	CMD_HINT,
 	CMD_JOIN,
+	CMD_FIND,
+	CMD_SEARCH,
 	CMD_UNDO,
 	CMD_HELP,
 };
@@ -157,6 +159,7 @@ enum difficulty {
 typedef signed char card_t;
 
 struct playfield {
+	char h[3]; /* highlight */ //XXX: not really a playfield-variable
 	int z; /* stock size */
 	int w; /* waste as index into stock in klondike, number of occupied 
 	          foundations in spider, occupied cells as bitmask in freecell*/
@@ -283,7 +286,7 @@ int term2pile(unsigned char *mouse);
 int wait_mouse_up(unsigned char* mouse);
 int getch(unsigned char* buf);
 void deal(long seed);
-void print_hi(int invert, int grey_bg, int bold, char* str);
+void print_hi(int invert, int grey_bg, int bold, int blink, char* str);
 void print_table(const struct cursor* active, const struct cursor* inactive);
 void visbell (void);
 void win_anim(void);

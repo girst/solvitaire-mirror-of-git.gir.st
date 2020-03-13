@@ -35,7 +35,9 @@ licensing details, see `LICENSE`.
  * TODO: suggest moves (`h` => hint)
  * TODO: cleanup: in `x2y()` functions there is a lot of replication and noise
          when calculating legal moves, top cards, etc. 
+ * TODO: clean up '/' and 'f' implementations
 ### P3
+ * TODO: some stuff in printed on stdout+fflush, some on stderr
  * TODO: visbell changes: instead of screen, flash active {cursor,card} {red,twice}?
  * TODO: differential drawing mode (at least for highlighting cards)
  * TODO: `.` command (repeat last action)
@@ -116,6 +118,7 @@ licensing details, see `LICENSE`.
  * DONE: differentiate foundation placeholder from cells ph. (freecell)
  * DONE FREECELL: join()
  * DONE FREECELL: autodetect possible moves (card selector choice dialog)
+ * DONE: f or / to search for rank or suit
 </details>
 
 ## Notes

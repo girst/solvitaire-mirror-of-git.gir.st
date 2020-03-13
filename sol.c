@@ -149,6 +149,18 @@ restart:
 			}
 			break;
 		case CMD_HINT:  break;//TODO: show a possible (and sensible) move. if possible, involve active cursor
+		case CMD_FIND:
+			f.h[0] = getchar(); /* NOTE: not using getch(), so f,esc clears hls */
+			f.h[1] = '\0';
+			break;
+		case CMD_SEARCH:
+			raw_mode(0);
+			printf("\r/"); fflush(stdout);
+			fgets(f.h, 3, stdin);
+			if (f.h[0] != '\n' && f.h[1] != '\n') while(getchar()!='\n'); // note: when we read 1 byte, it is followed by CR, NUL. if we read two bytes (or more), it is only followed by NUL, since there is no space for the CR. TODO: cleanup
+			raw_mode(1);
+			f.h[2] = '\0';
+			break;
 		case CMD_UNDO:  undo_pop(f.u); break;
 		case CMD_INVAL: visbell(); break;
 		case CMD_NEW:   return GAME_NEW;
@@ -236,6 +248,41 @@ int is_movable(card_t* pile, int n) {
 	}
 	return 0;
 #endif
+}
+
+int hls(card_t card, char* hi) {
+	/* checks if a card matches a highlight search. a hilight search might be a rank, a suit, a color or both. */
+	// TODO: now we use rankletters in keyboard input and here. that's ugly.
+	int ok = 0; /* prevent an invalid highlight from matching everything */
+	for (; *hi; hi++) {
+		switch(*hi) {
+		/* letter ranks: */
+		case 'a': case 'A': if (get_rank(card)!=RANK_A) return 0; ok++; break;
+		case '0':
+		case 'x': case 'X': if (get_rank(card)!=RANK_X) return 0; ok++; break;
+		case 'j': case 'J': if (get_rank(card)!=RANK_J) return 0; ok++; break;
+		case 'q': case 'Q': if (get_rank(card)!=RANK_Q) return 0; ok++; break;
+		case 'k': case 'K': if (get_rank(card)!=RANK_K) return 0; ok++; break;
+
+		/* suits: */
+		case 'c': case 'C': if (get_suit(card)!=CLUBS)  return 0; ok++; break;
+		case 'd': case 'D': if (get_suit(card)!=DIAMONDS)return 0;ok++; break;
+		case 'h': case 'H': if (get_suit(card)!=HEARTS) return 0; ok++; break;
+		case 's': case 'S': if (get_suit(card)!=SPADES) return 0; ok++; break;
+
+		/* colours: */
+		case 'r': case 'R': if (get_color(card)!=RED) return 0; ok++; break;
+		case 'b': case 'B': if (get_color(card)!=BLK) return 0; ok++; break;
+
+		/* number ranks: */
+		default:
+			if (*hi < '1' || *hi > '9') continue;
+			if (get_rank(card) != *hi - '1') return 0;
+			ok++;
+		}
+	}
+
+	return ok;
 }
 //}}}
 
@@ -1009,6 +1056,8 @@ from_l:	print_table(&active, &inactive);
 		return CMD_JOIN;
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
+	case 'f': return CMD_FIND;
+	case '/': return CMD_SEARCH;
 	case 'u': return CMD_UNDO;
 	case 002: return CMD_NONE; /* sent by SIGWINCH */
 	case EOF: return CMD_NONE; /* sent by SIGCONT */
@@ -1056,6 +1105,8 @@ to_l:	print_table(&active, &inactive);
 		break;
 	case 'K': /* fallthrough */
 	case '?': return CMD_HINT;
+	case 'f': return CMD_FIND; // XXX: will cancel from-card
+	case '/': return CMD_SEARCH; //ditto.
 	case 'u': return CMD_NONE; /* cancel selection */
 	case EOF: return CMD_NONE; /* sent by SIGCONT */
 	default:
@@ -1389,6 +1440,7 @@ compatible with the ncurses implementation of same name */
 
 // shuffling and dealing {{{
 void deal(long seed) {
+//TODO: clear hls/f.h
 	f = (const struct playfield){0}; /* clear playfield */
 	card_t deck[DECK_SIZE*NUM_DECKS];
 	int avail = DECK_SIZE*NUM_DECKS;
@@ -1439,32 +1491,33 @@ void deal(long seed) {
 //}}}
 
 // screen drawing routines {{{
-void print_hi(int invert, int grey_bg, int bold, char* str) {
+void print_hi(int invert, int grey_bg, int bold, int blink, char* str) {
 	if (!op.h) invert = 0; /* don't show invert if we used the mouse last */
 	if (bold && op.s == &unicode_large_color){ //awful hack for bold + faint
 		int offset = str[3]==017?16:str[4]==017?17:0;
-		printf ("%s%s%s""%.*s%s%s""%s%s%s",
-			"\033[1m", invert?"\033[7m":"", grey_bg?"\033[100m":"",
+		printf ("%s%s%s%s""%.*s%s%s""%s%s%s%s",
+			"\033[1m", invert?"\033[7m":"", grey_bg?"\033[100m":"", blink?"\033[5m":"",
 			offset, str, bold?"\033[1m":"", str+offset,
-			grey_bg?"\033[49m":"", invert?"\033[27m":"","\033[22m");
+			blink?"\033[25m":"", grey_bg?"\033[49m":"", invert?"\033[27m":"","\033[22m");
 		return;
 	}
-	printf ("%s%s%s%s%s%s%s",
-		bold?"\033[1m":"", invert?"\033[7m":"", grey_bg?"\033[100m":"",
+	printf ("%s%s%s%s%s%s%s%s%s",
+		bold?"\033[1m":"", invert?"\033[7m":"", grey_bg?"\033[100m":"", blink?"\033[5m":"",
 		str,
-		grey_bg?"\033[49m":"", invert?"\033[27m":"",bold?"\033[22m":"");
+		blink?"\033[25m":"", grey_bg?"\033[49m":"", invert?"\033[27m":"",bold?"\033[22m":"");
 }
 void print_table(const struct cursor* active, const struct cursor* inactive) {
+	int do_blink = 0; //XXX: remove
 	printf("\033[2J\033[H"); /* clear screen, reset cursor */
 #ifdef KLONDIKE
 	/* print stock, waste and foundation: */
 	for (int line = 0; line < op.s->height; line++) {
 		/* stock: */
-		print_hi (active->pile == STOCK, inactive->pile == STOCK, 1, (
+		print_hi (active->pile == STOCK, inactive->pile == STOCK, 1, do_blink, (
 			(f.w < f.z-1)?op.s->facedown
 			:op.s->placeholder)[line]);
 		/* waste: */
-		print_hi (active->pile == WASTE, inactive->pile == WASTE, 1, (
+		print_hi (active->pile == WASTE, inactive->pile == WASTE, 1, do_blink, (
 			/* NOTE: cast, because f.w sometimes is (short)-1 !? */
 			((short)f.w >= 0)?op.s->card[f.s[f.w]]
 			:op.s->placeholder)[line]);
@@ -1476,7 +1529,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 				inactive->pile==FOUNDATION && (
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
-				), !!f.f[pile][0],
+				), !!f.f[pile][0], do_blink,
 				(card < 0)?op.s->foundation[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
@@ -1515,7 +1568,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 				inactive->pile==STOCK && (
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
-				), !!f.s[pile],
+				), !!f.s[pile], do_blink,
 				((f.s[pile])?op.s->card[f.s[pile]]
 				:op.s->placeholder)[line]);
 		for (int pile = 0; pile < NUM_SUITS; pile++) {
@@ -1524,7 +1577,7 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 				inactive->pile==FOUNDATION && (
 					/* cursor addr.     || direct addr.   */
 					inactive->opt==pile || inactive->opt < 0
-				), !!f.f[pile][0],
+				), !!f.f[pile][0], do_blink,
 				(card < 0)?op.s->foundation[line]
 				:op.s->card[f.f[pile][card]][line]);
 		}
@@ -1559,12 +1612,13 @@ void print_table(const struct cursor* active, const struct cursor* inactive) {
 			card_t card = f.t[pile][row[pile]];
 			card_t next = f.t[pile][row[pile]+1];
 			int movable = is_movable(f.t[pile], row[pile]);
+			int do_blink = hls(card, f.h);
 #ifdef FREECELL
 			if(row[pile] <= bottom[pile]) movable = 0;
 #endif
 			int empty   = !card && row[pile] == 0;
 
-			print_hi (DO_HI(active), DO_HI(inactive), movable, (
+			print_hi (DO_HI(active), DO_HI(inactive), movable, do_blink, (
 				(!card && row[pile] == 0)?op.s->placeholder
 				:(card<0)?op.s->facedown
 				:op.s->card[card]
