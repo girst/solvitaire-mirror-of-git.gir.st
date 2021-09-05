@@ -1085,7 +1085,9 @@ from_l:	print_table(&active, &inactive);
 	}
 	inactive.pile = *from; /* for direct addressing highlighting */
 	if (is_tableu(*from) && f.t[*from][0] == NO_CARD) return CMD_INVAL;
-	//TODO: freecell: if from==stock && stock[x] == empty: return inval
+#ifdef FREECELL
+	if (*from == STOCK && f.s[active.opt] == NO_CARD) return CMD_INVAL;
+#endif
 
 #ifndef FREECELL
 	if (*from == STOCK) {
