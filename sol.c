@@ -1088,7 +1088,10 @@ from_l:	print_table(&active, &inactive);
 	/* prevent taking from empty tableu pile: */
 	if (is_tableu(*from) && f.t[*from][0] == NO_CARD) return CMD_INVAL;
 
-#ifdef FREECELL
+	/* prevent taking from empty stock: */
+#ifdef KLONDIKE
+	if (*from == WASTE && f.w == -1) return CMD_INVAL;
+#elif defined FREECELL
 	/* basic test and direct addressing: */
 	if (*from == STOCK && !(f.s[0]||f.s[1]||f.s[2]||f.s[3]))
 		return CMD_INVAL;
@@ -1097,6 +1100,19 @@ from_l:	print_table(&active, &inactive);
 		return CMD_INVAL;
 	/* mouse addressing: */
 	if (inactive.pile == STOCK && inactive.opt > -1 && f.s[inactive.opt] == NO_CARD)
+		return CMD_INVAL;
+#endif
+
+	/* prevent taking from empty foundation pile: */
+#ifndef SPIDER
+	/* basic test and direct addressing: */
+	if (*from == FOUNDATION && !(*f.f[0]||*f.f[1]||*f.f[2]||*f.f[3]))
+		return CMD_INVAL;
+	/* cursor keys addressing: */
+	if (active.pile == FOUNDATION && f.f[active.opt] == NO_CARD)
+		return CMD_INVAL;
+	/* mouse addressing: */
+	if (inactive.pile == FOUNDATION && inactive.opt > -1 && *f.f[inactive.opt] == NO_CARD)
 		return CMD_INVAL;
 #endif
 
