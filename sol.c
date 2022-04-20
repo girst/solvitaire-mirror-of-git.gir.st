@@ -1084,9 +1084,20 @@ from_l:	print_table(&active, &inactive);
 	default: return CMD_INVAL;
 	}
 	inactive.pile = *from; /* for direct addressing highlighting */
+
+	/* prevent taking from empty tableu pile: */
 	if (is_tableu(*from) && f.t[*from][0] == NO_CARD) return CMD_INVAL;
+
 #ifdef FREECELL
-	if (*from == STOCK && f.s[active.opt] == NO_CARD) return CMD_INVAL;
+	/* basic test and direct addressing: */
+	if (*from == STOCK && !(f.s[0]||f.s[1]||f.s[2]||f.s[3]))
+		return CMD_INVAL;
+	/* cursor keys addressing: */
+	if (active.pile == STOCK && f.s[active.opt] == NO_CARD)
+		return CMD_INVAL;
+	/* mouse addressing: */
+	if (inactive.pile == STOCK && inactive.opt > -1 && f.s[inactive.opt] == NO_CARD)
+		return CMD_INVAL;
 #endif
 
 #ifndef FREECELL
