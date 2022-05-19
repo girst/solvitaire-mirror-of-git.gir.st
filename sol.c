@@ -189,6 +189,7 @@ void quit(void) {
 	((get_suit(card) ^ get_suit(card)>>1) & 1)
 
 int find_top(card_t* pile) {
+	// TODO: on use, must check that result != -1
 	int i;
 	for(i=PILE_SIZE-1; i>=0 && !pile[i]; i--);
 	return i;
@@ -279,7 +280,7 @@ int hls(card_t card, char* hi) {
 		case 'f': case 'F': { /* highlight cards that go on the foundation next */
 			card_t* foundation = f.f[get_suit(card)];
 			int top = find_top(foundation);
-			if (foundation[top]) {
+			if (top >= 0 && foundation[top]) {
 				if (rank_next(foundation[top], card) &&
 				    get_suit(card) == get_suit(foundation[top]))
 					return 1;
